@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"D:\\\\Codes\\\\Next\\\\modbus-simulator\" -Recurse -Force)",
+      "Bash(Select-Object FullName, Length, LastWriteTime, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@latest *)"
+    ]
+  }
+}
