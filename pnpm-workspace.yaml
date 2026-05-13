@@ -1,0 +1,4 @@
+allowBuilds:
+  '@serialport/bindings-cpp': true
+  sharp: true
+  unrs-resolver: true

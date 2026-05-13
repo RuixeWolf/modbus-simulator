@@ -5,7 +5,27 @@
       "Bash(Select-Object FullName, Length, LastWriteTime, PSIsContainer)",
       "Bash(Sort-Object FullName)",
       "Bash(npm --version)",
-      "Bash(npx create-next-app@latest *)"
+      "Bash(npx create-next-app@latest *)",
+      "Bash(npm install *)",
+      "Bash(npx playwright *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Codes\\\\Next\\\\modbus-simulator\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(node *)",
+      "Bash(xargs ls -la)",
+      "Bash(timeout 15s npm run dev)",
+      "Bash(npx next *)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /F /PID 24116)",
+      "Bash(kill 24116)",
+      "PowerShell(Stop-Process *)",
+      "Bash(npm run *)",
+      "Bash(npx prettier *)",
+      "Bash(npm test *)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   }
 }

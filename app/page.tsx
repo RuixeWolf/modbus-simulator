@@ -1,65 +1,138 @@
-import Image from "next/image";
+'use client';
+
+import '@/src/i18n';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useModbusData } from '@/src/hooks/useModbusData';
+import { StatusIndicator } from '@/src/components/StatusIndicator';
+import { RegisterTable } from '@/src/components/RegisterTable';
+import { LogPanel } from '@/src/components/LogPanel';
+import { SettingsPanel } from '@/src/components/SettingsPanel';
+import { LanguageSwitcher } from '@/src/components/LanguageSwitcher';
+import { ThemeToggle } from '@/src/components/ThemeToggle';
+import { Tabs } from '@heroui/react';
+
+function detectLanguage(): string {
+  if (typeof window === 'undefined') return 'en';
+  const stored = localStorage.getItem('i18nextLng');
+  if (stored === 'zh' || stored === 'en') return stored;
+  const nav = navigator.language;
+  return nav.startsWith('zh') ? 'zh' : 'en';
+}
 
 export default function Home() {
+  const { t, i18n } = useTranslation();
+  const { state, logs, status, config, serialPorts, error, writeRegister, updateConfig } =
+    useModbusData();
+
+  useEffect(() => {
+    const lng = detectLanguage();
+    if (i18n.language !== lng) {
+      void i18n.changeLanguage(lng);
+    }
+  }, [i18n]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col flex-1 min-h-screen w-full p-5 sm:p-8 gap-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('app.title')}</h1>
+          <p className="text-text-muted text-sm mt-1">{t('app.subtitle')}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <StatusIndicator
+            tcp={status.tcp}
+            rtu={status.rtu}
+            tcpPort={config.tcpPort}
+            rtuPath={config.rtuSerialPath}
+          />
+          <LogPanel logs={logs} />
+          <ThemeToggle />
+          <LanguageSwitcher />
         </div>
-      </main>
+      </header>
+
+      {error && (
+        <div className="bg-red-500/10 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl text-sm flex items-center gap-2">
+          <span className="size-2 rounded-full bg-red-500 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      <SettingsPanel config={config} serialPorts={serialPorts} onApply={updateConfig} />
+
+      {/* Register Tables */}
+      <Tabs defaultSelectedKey="coils" className="w-full">
+        <Tabs.ListContainer>
+          <Tabs.List
+            aria-label="Register tables"
+            className="flex flex-row w-full bg-muted/50 rounded-full p-1 gap-1"
+          >
+            <Tabs.Tab
+              id="coils"
+              className="flex-1 justify-center text-center rounded-full px-3 py-2 text-xs sm:text-sm font-medium whitespace-nowrap text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground data-[selected=true]:shadow-sm transition-all"
+            >
+              {t('tabs.coils')}
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab
+              id="discrete"
+              className="flex-1 justify-center text-center rounded-full px-3 py-2 text-xs sm:text-sm font-medium whitespace-nowrap text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground data-[selected=true]:shadow-sm transition-all"
+            >
+              {t('tabs.discreteInputs')}
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab
+              id="holding"
+              className="flex-1 justify-center text-center rounded-full px-3 py-2 text-xs sm:text-sm font-medium whitespace-nowrap text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground data-[selected=true]:shadow-sm transition-all"
+            >
+              {t('tabs.holdingRegisters')}
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab
+              id="input"
+              className="flex-1 justify-center text-center rounded-full px-3 py-2 text-xs sm:text-sm font-medium whitespace-nowrap text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground data-[selected=true]:shadow-sm transition-all"
+            >
+              {t('tabs.inputRegisters')}
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
+        <Tabs.Panel id="coils" className="animate-fade-in">
+          <RegisterTable
+            title={t('tabs.coils')}
+            type="coil"
+            data={state.coils}
+            writable
+            onWrite={(addr, val) => writeRegister('coil', addr, val)}
+          />
+        </Tabs.Panel>
+        <Tabs.Panel id="discrete" className="animate-fade-in">
+          <RegisterTable
+            title={t('tabs.discreteInputs')}
+            type="discreteInput"
+            data={state.discreteInputs}
+          />
+        </Tabs.Panel>
+        <Tabs.Panel id="holding" className="animate-fade-in">
+          <RegisterTable
+            title={t('tabs.holdingRegisters')}
+            type="holdingRegister"
+            data={state.holdingRegisters}
+            writable
+            onWrite={(addr, val) => writeRegister('holdingRegister', addr, val)}
+          />
+        </Tabs.Panel>
+        <Tabs.Panel id="input" className="animate-fade-in">
+          <RegisterTable
+            title={t('tabs.inputRegisters')}
+            type="inputRegister"
+            data={state.inputRegisters}
+          />
+        </Tabs.Panel>
+      </Tabs>
+
     </div>
   );
 }

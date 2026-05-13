@@ -1,0 +1,64 @@
+{
+  "app": {
+    "title": "Modbus 设备模拟器",
+    "subtitle": "实时 Modbus TCP/RTU 寄存器监控与控制"
+  },
+  "header": {
+    "tcp": "TCP",
+    "rtu": "RTU",
+    "port": "端口",
+    "notSet": "未设置"
+  },
+  "settings": {
+    "title": "服务器设置",
+    "tcpPort": "TCP 端口",
+    "rtuSerialPort": "RTU 串口",
+    "default": "默认: {{port}}",
+    "selectSerialPort": "-- 选择串口 --",
+    "noSerialPorts": "未检测到串口",
+    "serialPortHint": "选择 RTU 模式的 COM 端口",
+    "apply": "应用并重启服务器",
+    "baudRate": "波特率",
+    "parity": "校验位",
+    "parityNone": "无校验",
+    "parityEven": "偶校验",
+    "parityOdd": "奇校验",
+    "dataBits": "数据位",
+    "stopBits": "停止位"
+  },
+  "tabs": {
+    "coils": "线圈",
+    "discreteInputs": "离散输入",
+    "holdingRegisters": "保持寄存器",
+    "inputRegisters": "输入寄存器"
+  },
+  "registerTable": {
+    "address": "地址",
+    "value": "值",
+    "action": "操作",
+    "prev": "上一页",
+    "next": "下一页",
+    "range": "{{start}} - {{end}}",
+    "noData": "无可用数据",
+    "true": "真",
+    "false": "假",
+    "on": "开",
+    "off": "关",
+    "set": "设置"
+  },
+  "logs": {
+    "title": "通信日志",
+    "entries": "{{count}} 条记录",
+    "noLogs": "暂无日志...",
+    "read": "读取",
+    "write": "写入",
+    "error": "错误"
+  },
+  "common": {
+    "close": "关闭"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文"
+  }
+}

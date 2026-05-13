@@ -1,0 +1,64 @@
+{
+  "app": {
+    "title": "Modbus Device Simulator",
+    "subtitle": "Real-time Modbus TCP/RTU register monitoring and control"
+  },
+  "header": {
+    "tcp": "TCP",
+    "rtu": "RTU",
+    "port": "Port",
+    "notSet": "Not set"
+  },
+  "settings": {
+    "title": "Server Settings",
+    "tcpPort": "TCP Port",
+    "rtuSerialPort": "RTU Serial Port",
+    "default": "Default: {{port}}",
+    "selectSerialPort": "-- Select a serial port --",
+    "noSerialPorts": "No serial ports detected",
+    "serialPortHint": "Select a COM port for RTU mode",
+    "apply": "Apply & Restart Servers",
+    "baudRate": "Baud Rate",
+    "parity": "Parity",
+    "parityNone": "None",
+    "parityEven": "Even",
+    "parityOdd": "Odd",
+    "dataBits": "Data Bits",
+    "stopBits": "Stop Bits"
+  },
+  "tabs": {
+    "coils": "Coils",
+    "discreteInputs": "Discrete Inputs",
+    "holdingRegisters": "Holding Registers",
+    "inputRegisters": "Input Registers"
+  },
+  "registerTable": {
+    "address": "Address",
+    "value": "Value",
+    "action": "Action",
+    "prev": "Prev",
+    "next": "Next",
+    "range": "{{start}} - {{end}}",
+    "noData": "No data available",
+    "true": "TRUE",
+    "false": "FALSE",
+    "on": "ON",
+    "off": "OFF",
+    "set": "Set"
+  },
+  "logs": {
+    "title": "Communication Logs",
+    "entries": "{{count}} entries",
+    "noLogs": "No logs yet...",
+    "read": "READ",
+    "write": "WRITE",
+    "error": "ERROR"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文"
+  }
+}
