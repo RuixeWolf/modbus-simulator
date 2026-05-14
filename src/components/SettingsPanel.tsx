@@ -68,8 +68,9 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
     const port = Number.parseInt(tcpPort, 10)
     if (Number.isNaN(port) || port < 1 || port > 65535) return
     // Validate slave ID: must be a valid integer string (digits only, no decimals/scientific notation/whitespace)
-    if (!/^\d+$/.test(slaveId.trim())) return
-    const sid = Number.parseInt(slaveId, 10)
+    const trimmedSlaveId = slaveId.trim()
+    if (!/^\d+$/.test(trimmedSlaveId)) return
+    const sid = Number.parseInt(trimmedSlaveId, 10)
     if (sid < 1 || sid > 247) return
     const baudRate = Number.parseInt(rtuBaudRate, 10)
     if (Number.isNaN(baudRate)) return
