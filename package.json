@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -c -- next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
-    "start": "next start",
+    "build:standalone": "node scripts/build-standalone.mjs",
+    "start": "node .next/standalone/start.mjs",
     "format": "prettier --write .",
     "lint": "eslint",
     "format-lint": "npm run format && npm run lint",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@eslint-react/eslint-plugin": "^5.7.7",
     "@eslint/js": "^10.0.1",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@next/eslint-plugin-next": "^16.2.6",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
@@ -51,6 +53,7 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",

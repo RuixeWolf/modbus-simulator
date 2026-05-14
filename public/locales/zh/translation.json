@@ -18,6 +18,8 @@
     "noSerialPorts": "未检测到串口",
     "serialPortHint": "选择 RTU 模式的 COM 端口",
     "apply": "应用并重启服务器",
+    "slaveId": "设备地址",
+    "slaveIdHint": "范围: 1–247",
     "baudRate": "波特率",
     "parity": "校验位",
     "parityNone": "无校验",

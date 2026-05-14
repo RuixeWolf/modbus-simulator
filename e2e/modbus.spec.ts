@@ -1,128 +1,128 @@
-import { test, expect } from '@playwright/test';
-import { MockModbusClient } from '../src/lib/modbus/mock-client';
+import { expect, test } from '@playwright/test'
+import { MockModbusClient } from '../src/lib/modbus/mock-client'
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'serial' })
 
 test.describe('Modbus Simulator E2E', () => {
   test('UI to Protocol: modify holding register via UI and read via Modbus client', async ({
-    page,
+    page
   }) => {
     // Navigate to the app
-    await page.goto('/');
+    await page.goto('/')
 
     // Wait for the page to load and TCP server to be running
     await expect(page.getByTestId('tcp-status')).toContainText('11502', {
-      timeout: 30000,
-    });
+      timeout: 30000
+    })
 
     // Switch to Holding Registers tab
-    await page.getByRole('tab', { name: /Holding Registers/i }).click();
+    await page.getByRole('tab', { name: /Holding Registers/i }).click()
 
     // Find the holding register input for address 0 and enter a value
-    const input = page.getByTestId('register-input-0');
-    await input.fill('1234');
+    const input = page.getByTestId('register-input-0')
+    await input.fill('1234')
 
     // Click the Set button
-    await page.getByTestId('register-submit-0').click();
+    await page.getByTestId('register-submit-0').click()
 
     // Wait a moment for the API call to complete
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(500)
 
     // Connect a mock Modbus client and read the value
-    const client = new MockModbusClient('tcp', 'localhost', 11502);
-    await client.connect();
+    const client = new MockModbusClient('tcp', 'localhost', 11502)
+    await client.connect()
 
     try {
-      const value = await client.readHoldingRegister(0);
-      expect(value).toBe(1234);
+      const value = await client.readHoldingRegister(0)
+      expect(value).toBe(1234)
     } finally {
-      await client.disconnect();
+      await client.disconnect()
     }
-  });
+  })
 
   test('Protocol to UI: write via Modbus client and verify UI update', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/')
 
     // Wait for server
     await expect(page.getByTestId('tcp-status')).toContainText('11502', {
-      timeout: 30000,
-    });
+      timeout: 30000
+    })
 
     // Write via Modbus client
-    const client = new MockModbusClient('tcp', 'localhost', 11502);
-    await client.connect();
+    const client = new MockModbusClient('tcp', 'localhost', 11502)
+    await client.connect()
 
     try {
-      await client.writeHoldingRegister(5, 5678);
+      await client.writeHoldingRegister(5, 5678)
     } finally {
-      await client.disconnect();
+      await client.disconnect()
     }
 
     // Wait for the UI to poll and update
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(1500)
 
     // Switch to Holding Registers tab and verify the UI shows the updated value
-    await page.getByRole('tab', { name: /Holding Registers/i }).click();
-    const row = page.getByTestId('row-holdingRegister-5');
-    await expect(row).toContainText('5678');
-    await expect(row).toContainText('0x162e');
-  });
+    await page.getByRole('tab', { name: /Holding Registers/i }).click()
+    const row = page.getByTestId('row-holdingRegister-5')
+    await expect(row).toContainText('5678')
+    await expect(row).toContainText('0x162e')
+  })
 
   test('Coil read/write: UI toggle and client verification', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/')
 
     await expect(page.getByTestId('tcp-status')).toContainText('11502', {
-      timeout: 30000,
-    });
+      timeout: 30000
+    })
 
     // Toggle coil 0 via UI
-    const coilSwitch = page.getByTestId('coil-switch-0');
-    await coilSwitch.click();
+    const coilSwitch = page.getByTestId('coil-switch-0')
+    await coilSwitch.click()
 
     // Verify button text changed to ON
-    await expect(coilSwitch).toContainText('ON');
+    await expect(coilSwitch).toContainText('ON')
 
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(500)
 
     // Verify via client
-    const client = new MockModbusClient('tcp', 'localhost', 11502);
-    await client.connect();
+    const client = new MockModbusClient('tcp', 'localhost', 11502)
+    await client.connect()
 
     try {
-      const value = await client.readCoil(0);
-      expect(value).toBe(true);
+      const value = await client.readCoil(0)
+      expect(value).toBe(true)
 
       // Write coil 1 via client
-      await client.writeCoil(1, true);
+      await client.writeCoil(1, true)
     } finally {
-      await client.disconnect();
+      await client.disconnect()
     }
 
     // Wait for UI update
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(1500)
 
     // Verify coil 1 is now TRUE in UI
-    const row = page.getByTestId('row-coil-1');
-    await expect(row).toContainText('TRUE');
-  });
+    const row = page.getByTestId('row-coil-1')
+    await expect(row).toContainText('TRUE')
+  })
 
   test('Error handling: illegal address request logs error', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/')
 
     await expect(page.getByTestId('tcp-status')).toContainText('11502', {
-      timeout: 30000,
-    });
+      timeout: 30000
+    })
 
     // Request an illegal address via client to trigger server-side error
-    const client = new MockModbusClient('tcp', 'localhost', 11502);
-    await client.connect();
+    const client = new MockModbusClient('tcp', 'localhost', 11502)
+    await client.connect()
 
     try {
-      await client.readHoldingRegister(99999);
+      await client.readHoldingRegister(99999)
     } catch {
       // Expected to fail - modbus-serial throws on exception response
     } finally {
-      await client.disconnect();
+      await client.disconnect()
     }
 
     // Also trigger an error via REST API to ensure error logging works
@@ -130,15 +130,15 @@ test.describe('Modbus Simulator E2E', () => {
       await fetch('/api/registers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registerType: 'holdingRegister', address: 99999, value: 1 }),
-      });
-    });
+        body: JSON.stringify({ registerType: 'holdingRegister', address: 99999, value: 1 })
+      })
+    })
 
     // Wait for log to appear via polling
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(2000)
 
     // Check that the log panel shows an error
-    const logPanel = page.getByTestId('log-panel');
-    await expect(logPanel).toContainText('ERROR', { timeout: 10000 });
-  });
-});
+    const logPanel = page.getByTestId('log-panel')
+    await expect(logPanel).toContainText('ERROR', { timeout: 10000 })
+  })
+})
