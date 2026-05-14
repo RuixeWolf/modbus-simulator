@@ -68,29 +68,12 @@
 
 ## 截图预览
 
-### 仪表板总览
-
-实时监控 Modbus TCP/RTU 寄存器，包含服务器状态、设置和带分页的寄存器表格。
-
-![仪表板总览](docs/screenshots/dashboard.png)
-
-### 保持寄存器
-
-直接在界面上查看和编辑 16 位保持寄存器值。
-
-![保持寄存器](docs/screenshots/holding-registers.png)
-
-### 通信日志
-
-实时监控所有 Modbus 请求、响应和错误信息。
-
-![通信日志](docs/screenshots/communication-logs.png)
-
-### 暗色模式
-
-完整的暗色主题支持，适合低光环境使用。
-
-![暗色模式](docs/screenshots/dark-mode.png)
+> _正式发布前将在此处添加截图。_
+>
+> - 仪表板总览
+> - 带分页的寄存器表格
+> - 通信日志面板
+> - 服务器配置界面
 
 ## 快速开始
 

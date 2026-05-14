@@ -12,24 +12,21 @@ export class MockModbusClient {
   private mode: ConnectionMode;
   private host: string;
   private port: number;
-  private slaveId: number;
   private connected = false;
 
   /**
-   * @param mode    – Transport mode ('tcp' or 'rtu'); currently both use TCP under the hood.
-   * @param host    – Target host (default "localhost").
-   * @param port    – Target port (default 502 for TCP, 5021 for RTU bridge).
-   * @param slaveId – Modbus slave ID / unit ID (default 1).
+   * @param mode – Transport mode ('tcp' or 'rtu'); currently both use TCP under the hood.
+   * @param host – Target host (default "localhost").
+   * @param port – Target port (default 502 for TCP, 5021 for RTU bridge).
    */
-  constructor(mode: ConnectionMode = 'tcp', host = 'localhost', port?: number, slaveId = 1) {
+  constructor(mode: ConnectionMode = 'tcp', host = 'localhost', port?: number) {
     this.mode = mode;
     this.host = host;
     this.port = port ?? (mode === 'tcp' ? 502 : 5021);
-    this.slaveId = slaveId;
     this.client = new ModbusRTU();
   }
 
-  /** Opens the underlying TCP connection and sets the configured slave ID. */
+  /** Opens the underlying TCP connection and sets slave ID to 1. */
   async connect(): Promise<void> {
     if (this.connected) return;
 
@@ -38,7 +35,7 @@ export class MockModbusClient {
     } else {
       await this.client.connectTCP(this.host, { port: this.port });
     }
-    this.client.setID(this.slaveId);
+    this.client.setID(1);
     this.connected = true;
   }
 

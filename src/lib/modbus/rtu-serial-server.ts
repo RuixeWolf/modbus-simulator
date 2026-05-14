@@ -49,8 +49,8 @@ function appendCRC(data: Buffer): Buffer {
   return result;
 }
 
-/** Default Modbus slave ID for incoming frames. */
-let slaveId = 1;
+/** Expected Modbus slave ID for incoming frames. */
+const SLAVE_ID = 1;
 
 /** Active SerialPort instance, or null when stopped. */
 let serialPort: SerialPort | null = null;
@@ -84,7 +84,7 @@ function computeFrameTimeout(baudRate: number): number {
  * @returns RTU response frame with updated CRC, or null when the slave ID does not match.
  */
 function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
-  if (frame[0] !== slaveId) return null;
+  if (frame[0] !== SLAVE_ID) return null;
 
   const funcCode = frame[1];
 
@@ -108,7 +108,7 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
       0,
       `RTU frame too short for FC 0x${funcCode.toString(16)}: ${frame.length} bytes`
     );
-    return Buffer.from([slaveId, funcCode | 0x80, 0x03]);
+    return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
   }
 
   let responseData: Buffer;
@@ -200,7 +200,7 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
             address,
             `FC 0x0F frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`
           );
-          return Buffer.from([slaveId, funcCode | 0x80, 0x03]);
+          return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
         }
         for (let i = 0; i < quantity; i++) {
           const byteIndex = Math.floor(i / 8);
@@ -224,7 +224,7 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
             address,
             `FC 0x10 frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`
           );
-          return Buffer.from([slaveId, funcCode | 0x80, 0x03]);
+          return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
         }
         for (let i = 0; i < quantity; i++) {
           const regValue = frame.readUInt16BE(7 + i * 2);
@@ -237,23 +237,15 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
       }
       default:
         // Exception: illegal function
-        return Buffer.from([slaveId, funcCode | 0x80, 0x01]);
+        return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x01]);
     }
 
-    const response = Buffer.concat([Buffer.from([slaveId, funcCode]), responseData]);
+    const response = Buffer.concat([Buffer.from([SLAVE_ID, funcCode]), responseData]);
     return appendCRC(response);
   } catch (e) {
     const errorCode = (e as Error).message.includes('out of range') ? 0x02 : 0x04;
-    return Buffer.from([slaveId, funcCode | 0x80, errorCode]);
+    return Buffer.from([SLAVE_ID, funcCode | 0x80, errorCode]);
   }
-}
-
-/**
- * Updates the Modbus slave ID used by the RTU serial server.
- * @param id – New slave ID (range 1-247).
- */
-export function setSlaveId(id: number): void {
-  slaveId = id;
 }
 
 /**
@@ -262,16 +254,11 @@ export function setSlaveId(id: number): void {
  *
  * @param serialPath – OS path to the serial port (e.g. "COM1" or "/dev/ttyUSB0").
  * @param serialConfig – Serial port parameters (baud rate, parity, data bits, stop bits).
- * @param unitID – Modbus slave ID for this device (default 1, range 1-247).
  */
 export function startRTUSerialServer(
   serialPath: string,
-  serialConfig: SerialConfig = { baudRate: 9600, parity: 'none', dataBits: 8, stopBits: 1 },
-  unitID?: number
+  serialConfig: SerialConfig = { baudRate: 9600, parity: 'none', dataBits: 8, stopBits: 1 }
 ): void {
-  if (unitID !== undefined) {
-    slaveId = unitID;
-  }
   if (serialPort) {
     return;
   }

@@ -106,69 +106,6 @@ test.describe('Modbus Simulator E2E', () => {
     await expect(row).toContainText('TRUE');
   });
 
-  test('Slave ID: default value is 1 and can be changed', async ({ page }) => {
-    await page.goto('/');
-
-    await expect(page.getByTestId('tcp-status')).toContainText('11502', {
-      timeout: 30000,
-    });
-
-    // Verify default Slave ID is 1
-    const slaveIdInput = page.getByTestId('slave-id-input');
-    await expect(slaveIdInput).toHaveValue('1');
-
-    // Change Slave ID to 5
-    await slaveIdInput.fill('5');
-
-    // Apply settings
-    await page.getByTestId('apply-settings').click();
-
-    // Wait for servers to restart
-    await page.waitForTimeout(1500);
-
-    // Verify via config API
-    const configRes = await page.evaluate(async () => {
-      const res = await fetch('/api/config');
-      return res.json();
-    });
-    expect(configRes.slaveId).toBe(5);
-
-    // Client with correct slave ID (5) should work
-    const correctClient = new MockModbusClient('tcp', 'localhost', 11502, 5);
-    await correctClient.connect();
-    try {
-      const value = await correctClient.readHoldingRegister(0);
-      expect(typeof value).toBe('number');
-    } finally {
-      await correctClient.disconnect();
-    }
-
-    // Client with wrong slave ID (1) should fail (server ignores mismatched unit ID)
-    const wrongClient = new MockModbusClient('tcp', 'localhost', 11502, 1);
-    await wrongClient.connect();
-    try {
-      // The server will not respond to a mismatched unit ID, so the request hangs.
-      // Race it against a short timeout to avoid stalling the test.
-      await Promise.race([
-        wrongClient.readHoldingRegister(0),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out — wrong slave ID rejected')), 3000)
-        ),
-      ]);
-      // Should not reach here — server should reject wrong unit ID
-      expect(false).toBe(true);
-    } catch {
-      // Expected to fail
-    } finally {
-      await wrongClient.disconnect();
-    }
-
-    // Reset slave ID back to 1 for subsequent tests
-    await slaveIdInput.fill('1');
-    await page.getByTestId('apply-settings').click();
-    await page.waitForTimeout(1500);
-  });
-
   test('Error handling: illegal address request logs error', async ({ page }) => {
     await page.goto('/');
 
@@ -199,9 +136,6 @@ test.describe('Modbus Simulator E2E', () => {
 
     // Wait for log to appear via polling
     await page.waitForTimeout(2000);
-
-    // Open the Communication Logs modal
-    await page.getByRole('button', { name: /Communication Logs/i }).click();
 
     // Check that the log panel shows an error
     const logPanel = page.getByTestId('log-panel');
