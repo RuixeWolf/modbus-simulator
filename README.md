@@ -68,29 +68,12 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 
 ## Screenshots
 
-### Dashboard Overview
-
-Real-time Modbus TCP/RTU register monitoring with server status, settings, and paginated register tables.
-
-![Dashboard Overview](docs/screenshots/dashboard.png)
-
-### Holding Registers
-
-View and edit 16-bit holding register values directly from the UI.
-
-![Holding Registers](docs/screenshots/holding-registers.png)
-
-### Communication Logs
-
-Monitor all Modbus requests, responses, and errors in real time.
-
-![Communication Logs](docs/screenshots/communication-logs.png)
-
-### Dark Mode
-
-Full dark theme support for comfortable low-light usage.
-
-![Dark Mode](docs/screenshots/dark-mode.png)
+> _Screenshots will be added here before release._
+>
+> - Dashboard overview
+> - Register tables with pagination
+> - Communication logs panel
+> - Server configuration
 
 ## Quick Start
 

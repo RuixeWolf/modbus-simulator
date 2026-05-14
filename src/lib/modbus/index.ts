@@ -4,7 +4,6 @@ import {
   stopRTUSerialServer,
   isRTUSerialServerRunning,
   getRTUSerialPath,
-  setSlaveId,
 } from './rtu-serial-server';
 
 /** Mutable server configuration shared across TCP and RTU. */
@@ -21,8 +20,6 @@ export interface ServerConfig {
   rtuDataBits: number;
   /** Serial stop bits for RTU: 1 | 2 (default 1). */
   rtuStopBits: number;
-  /** Modbus slave ID / unit ID for this device (default 1, range 1-247). */
-  slaveId: number;
 }
 
 /** Set to true after the first call to prevent duplicate server startups. Uses globalThis to survive Next.js module reloads. */
@@ -35,7 +32,6 @@ const config: ServerConfig = {
   rtuParity: 'none',
   rtuDataBits: 8,
   rtuStopBits: 1,
-  slaveId: 1,
 };
 
 /**
@@ -68,9 +64,6 @@ export function setConfig(newConfig: Partial<ServerConfig>): void {
   if (newConfig.rtuStopBits !== undefined) {
     config.rtuStopBits = newConfig.rtuStopBits;
   }
-  if (newConfig.slaveId !== undefined) {
-    config.slaveId = newConfig.slaveId;
-  }
 }
 
 /**
@@ -89,7 +82,7 @@ export function startServers(): void {
   // Start TCP server
   if (!isTCPServerRunning()) {
     try {
-      startTCPServer(config.tcpPort, config.slaveId);
+      startTCPServer(config.tcpPort);
     } catch (e) {
       console.warn('Failed to start Modbus TCP server:', (e as Error).message);
     }
@@ -98,7 +91,6 @@ export function startServers(): void {
   // Start RTU serial server if path is configured
   if (config.rtuSerialPath && !isRTUSerialServerRunning()) {
     try {
-      setSlaveId(config.slaveId);
       startRTUSerialServer(config.rtuSerialPath, {
         baudRate: config.rtuBaudRate,
         parity: config.rtuParity,
@@ -118,7 +110,7 @@ export function restartServers(): void {
     stopTCPServer();
   }
   try {
-    startTCPServer(config.tcpPort, config.slaveId);
+    startTCPServer(config.tcpPort);
   } catch (e) {
     console.warn('Failed to restart Modbus TCP server:', (e as Error).message);
   }
@@ -129,7 +121,6 @@ export function restartServers(): void {
   }
   if (config.rtuSerialPath) {
     try {
-      setSlaveId(config.slaveId);
       startRTUSerialServer(config.rtuSerialPath, {
         baudRate: config.rtuBaudRate,
         parity: config.rtuParity,

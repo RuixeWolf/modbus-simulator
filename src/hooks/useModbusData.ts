@@ -34,8 +34,6 @@ export interface ServerConfig {
   rtuParity: 'none' | 'even' | 'odd';
   rtuDataBits: number;
   rtuStopBits: number;
-  /** Modbus slave ID / unit ID for this device (range 1-247). */
-  slaveId: number;
 }
 
 /** Metadata for an available serial port. */
@@ -70,7 +68,6 @@ export function useModbusData() {
     rtuParity: 'none',
     rtuDataBits: 8,
     rtuStopBits: 1,
-    slaveId: 1,
   });
   const [serialPorts, setSerialPorts] = useState<SerialPortInfo[]>([]);
   const [error, setError] = useState<string | null>(null);

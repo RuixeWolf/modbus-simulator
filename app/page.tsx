@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/src/components/ThemeToggle';
 import { Tabs } from '@heroui/react';
 
 function detectLanguage(): string {
-  if (globalThis.window === undefined) return 'en';
+  if (typeof window === 'undefined') return 'en';
   const stored = localStorage.getItem('i18nextLng');
   if (stored === 'zh' || stored === 'en') return stored;
   const nav = navigator.language;
@@ -60,12 +60,7 @@ export default function Home() {
         </div>
       )}
 
-      <SettingsPanel
-        key={`${config.tcpPort}-${config.rtuSerialPath}-${config.rtuBaudRate}-${config.slaveId}`}
-        config={config}
-        serialPorts={serialPorts}
-        onApply={updateConfig}
-      />
+      <SettingsPanel config={config} serialPorts={serialPorts} onApply={updateConfig} />
 
       {/* Register Tables */}
       <Tabs defaultSelectedKey="coils" className="w-full">
@@ -118,8 +113,6 @@ export default function Home() {
             title={t('tabs.discreteInputs')}
             type="discreteInput"
             data={state.discreteInputs}
-            writable
-            onWrite={(addr, val) => writeRegister('discreteInput', addr, val)}
           />
         </Tabs.Panel>
         <Tabs.Panel id="holding" className="animate-fade-in">
@@ -136,8 +129,6 @@ export default function Home() {
             title={t('tabs.inputRegisters')}
             type="inputRegister"
             data={state.inputRegisters}
-            writable
-            onWrite={(addr, val) => writeRegister('inputRegister', addr, val)}
           />
         </Tabs.Panel>
       </Tabs>
