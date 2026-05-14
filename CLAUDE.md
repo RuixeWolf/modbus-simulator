@@ -8,22 +8,34 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 
 ## Common Commands
 
-| Command                                                          | Purpose                                                         |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| `pnpm run dev`                                                   | Start Next.js dev server with Turbopack (default port 5000)     |
-| `pnpm run build`                                                 | Production build                                                |
-| `pnpm run start`                                                 | Start production server                                         |
-| `pnpm run lint`                                                  | Run ESLint                                                      |
-| `pnpm run format`                                                | Run Prettier on all files                                       |
-| `pnpm run format-lint`                                           | Run Prettier then ESLint                                        |
-| `pnpm run type-check`                                            | Run TypeScript compiler (no emit)                               |
-| `pnpm run test:unit`                                             | Run Vitest unit tests                                           |
-| `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)               |
-| `pnpm run test`                                                  | Run unit tests then E2E tests                                   |
-| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                     |
-| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                                   |
+| Command                                                          | Purpose                                                     |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| `pnpm run dev`                                                   | Start Next.js dev server with Turbopack (default port 5000) |
+| `pnpm run build`                                                 | Production build                                            |
+| `pnpm run start`                                                 | Start production server                                     |
+| `pnpm run lint`                                                  | Run ESLint                                                  |
+| `pnpm run format`                                                | Run Prettier on all files                                   |
+| `pnpm run format-lint`                                           | Run Prettier then ESLint                                    |
+| `pnpm run type-check`                                            | Run TypeScript compiler (no emit)                           |
+| `pnpm run test:unit`                                             | Run Vitest unit tests                                       |
+| `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)           |
+| `pnpm run test`                                                  | Run unit tests then E2E tests                               |
+| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
+| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
 
 `.env.local` sets `PORT=5000` and is loaded automatically by `dotenv-cli` in the dev script.
+
+### Pre-commit Checks
+
+**lint-staged** (configured in `lint-staged.config.mjs`) runs automatically on every `git commit` via the `.husky/pre-commit` hook:
+
+| File pattern                    | Commands run                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `*.{js,jsx,ts,tsx,mjs,cjs}`     | `prettier --write` → `eslint --fix`                                               |
+| `*.{ts,tsx}`                    | `tsc --noEmit` (via function signature so lint-staged does not append file paths) |
+| `*.{json,md,css,yml,yaml,html}` | `prettier --write`                                                                |
+
+`tsc` uses a function signature `() => 'tsc --noEmit'` because lint-staged appends staged file paths to string commands by default, which causes TypeScript to ignore `tsconfig.json`.
 
 ## Architecture
 
