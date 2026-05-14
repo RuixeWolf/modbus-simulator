@@ -60,7 +60,7 @@ async function diagnoseTCP(host = 'localhost', port = 502): Promise<void> {
         `Port ${port} is not accepting connections. ` +
           `The Modbus TCP server may not have started yet. ` +
           `Try opening the web UI first (triggers lazy startup), ` +
-          `or check if another process is using port ${port}.`,
+          `or check if another process is using port ${port}.`
       );
     }
   });
@@ -187,7 +187,7 @@ async function diagnoseTCP(host = 'localhost', port = 502): Promise<void> {
     } catch (err) {
       const msg = (err as Error).message;
       if (!msg.includes('exception') && !msg.includes('Exception')) {
-        throw new Error(`Unexpected error type: ${msg}`);
+        throw new Error(`Unexpected error type: ${msg}`, { cause: err });
       }
     }
   });
@@ -210,43 +210,41 @@ function printSummary(): void {
   if (failed > 0) {
     console.log(`\n${YELLOW}⚠ 问题诊断:${RESET}\n`);
 
-    const connFailure = results.find((r) => r.name === 'TCP port is listening (raw socket)' && !r.passed);
+    const connFailure = results.find(
+      (r) => r.name === 'TCP port is listening (raw socket)' && !r.passed
+    );
     if (connFailure) {
       console.log(`  ${YELLOW}1. TCP Server 延迟启动（最可能的原因）${RESET}`);
       console.log(
-        `     Modbus TCP 服务器只在第一个 HTTP API 请求到达时才启动（Next.js 按需加载机制）。`,
+        `     Modbus TCP 服务器只在第一个 HTTP API 请求到达时才启动（Next.js 按需加载机制）。`
       );
       console.log(
-        `     如果用户直接运行 'npm run dev' 后立即用 Modbus 软件连接，端口 502 还未监听。`,
+        `     如果用户直接运行 'npm run dev' 后立即用 Modbus 软件连接，端口 502 还未监听。`
       );
-      console.log(
-        `     修复方案：在 Next.js instrumentation 钩子中立即启动服务器。\n`,
-      );
+      console.log(`     修复方案：在 Next.js instrumentation 钩子中立即启动服务器。\n`);
     }
 
     const batchReadFailures = results.filter(
       (r) =>
         !r.passed &&
         (r.name.includes('multiple') || r.name.includes('qty=10')) &&
-        !r.name.includes('write'),
+        !r.name.includes('write')
     );
     if (batchReadFailures.length > 0) {
       console.log(`  ${YELLOW}2. TCP Server 缺少批量读取回调${RESET}`);
       console.log(
-        `     ServerTCP vector 未注册 getCoils/getHoldingRegisters/getInputRegisters/getDiscreteInputs，`,
+        `     ServerTCP vector 未注册 getCoils/getHoldingRegisters/getInputRegisters/getDiscreteInputs，`
       );
-      console.log(
-        `     导致批量读取请求失败。\n`,
-      );
+      console.log(`     导致批量读取请求失败。\n`);
     }
 
     const batchWriteFailures = results.filter(
-      (r) => !r.passed && r.name.includes('multiple') && r.name.includes('write'),
+      (r) => !r.passed && r.name.includes('multiple') && r.name.includes('write')
     );
     if (batchWriteFailures.length > 0) {
       console.log(`  ${YELLOW}3. Server 缺少批量写入支持${RESET}`);
       console.log(
-        `     功能码 0x0F (Write Multiple Coils) 和 0x10 (Write Multiple Registers) 未正确实现。\n`,
+        `     功能码 0x0F (Write Multiple Coils) 和 0x10 (Write Multiple Registers) 未正确实现。\n`
       );
     }
 

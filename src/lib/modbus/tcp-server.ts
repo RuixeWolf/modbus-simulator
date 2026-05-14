@@ -42,7 +42,7 @@ export function startTCPServer(port?: number): ServerTCP {
       addr: number,
       length: number,
       _unitID: number,
-      callback: (err: Error | null, values: boolean[]) => void,
+      callback: (err: Error | null, values: boolean[]) => void
     ) {
       try {
         callback(null, engine.readCoils(addr, length));
@@ -54,7 +54,7 @@ export function startTCPServer(port?: number): ServerTCP {
     getDiscreteInput(
       addr: number,
       _unitID: number,
-      callback: (err: Error | null, value: boolean) => void,
+      callback: (err: Error | null, value: boolean) => void
     ) {
       try {
         callback(null, engine.readDiscreteInput(addr));
@@ -67,7 +67,7 @@ export function startTCPServer(port?: number): ServerTCP {
       addr: number,
       length: number,
       _unitID: number,
-      callback: (err: Error | null, values: boolean[]) => void,
+      callback: (err: Error | null, values: boolean[]) => void
     ) {
       try {
         callback(null, engine.readDiscreteInputs(addr, length));
@@ -79,7 +79,7 @@ export function startTCPServer(port?: number): ServerTCP {
     getInputRegister(
       addr: number,
       _unitID: number,
-      callback: (err: Error | null, value: number) => void,
+      callback: (err: Error | null, value: number) => void
     ) {
       try {
         callback(null, engine.readInputRegister(addr));
@@ -92,7 +92,7 @@ export function startTCPServer(port?: number): ServerTCP {
       addr: number,
       length: number,
       _unitID: number,
-      callback: (err: Error | null, values: number[]) => void,
+      callback: (err: Error | null, values: number[]) => void
     ) {
       try {
         callback(null, engine.readInputRegisters(addr, length));
@@ -104,7 +104,7 @@ export function startTCPServer(port?: number): ServerTCP {
     getHoldingRegister(
       addr: number,
       _unitID: number,
-      callback: (err: Error | null, value: number) => void,
+      callback: (err: Error | null, value: number) => void
     ) {
       try {
         callback(null, engine.readHoldingRegister(addr));
@@ -117,7 +117,7 @@ export function startTCPServer(port?: number): ServerTCP {
       addr: number,
       length: number,
       _unitID: number,
-      callback: (err: Error | null, values: number[]) => void,
+      callback: (err: Error | null, values: number[]) => void
     ) {
       try {
         callback(null, engine.readHoldingRegisters(addr, length));
@@ -139,7 +139,7 @@ export function startTCPServer(port?: number): ServerTCP {
       addr: number,
       value: number,
       _unitID: number,
-      callback: (err: Error | null) => void,
+      callback: (err: Error | null) => void
     ) {
       try {
         engine.writeHoldingRegister(addr, value);

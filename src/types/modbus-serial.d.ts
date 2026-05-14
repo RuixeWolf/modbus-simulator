@@ -9,34 +9,34 @@ declare module 'modbus-serial' {
     getCoil(
       addr: number,
       unitID: number,
-      callback: (err: Error | null, value: boolean) => void,
+      callback: (err: Error | null, value: boolean) => void
     ): void;
     getDiscreteInput(
       addr: number,
       unitID: number,
-      callback: (err: Error | null, value: boolean) => void,
+      callback: (err: Error | null, value: boolean) => void
     ): void;
     getInputRegister(
       addr: number,
       unitID: number,
-      callback: (err: Error | null, value: number) => void,
+      callback: (err: Error | null, value: number) => void
     ): void;
     getHoldingRegister(
       addr: number,
       unitID: number,
-      callback: (err: Error | null, value: number) => void,
+      callback: (err: Error | null, value: number) => void
     ): void;
     setCoil(
       addr: number,
       value: boolean,
       unitID: number,
-      callback: (err: Error | null) => void,
+      callback: (err: Error | null) => void
     ): void;
     setRegister(
       addr: number,
       value: number,
       unitID: number,
-      callback: (err: Error | null) => void,
+      callback: (err: Error | null) => void
     ): void;
   }
 

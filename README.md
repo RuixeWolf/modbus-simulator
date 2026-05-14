@@ -53,18 +53,18 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | [Next.js](https://nextjs.org/) 16 (App Router) |
-| UI Library | [React](https://react.dev/) 19 |
-| Components | [HeroUI](https://www.heroui.com/) v3 |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) v4 |
-| Language | [TypeScript](https://www.typescriptlang.org/) |
-| Modbus TCP | [modbus-serial](https://github.com/yaacov/node-modbus-serial) |
-| Modbus RTU | [serialport](https://serialport.io/) + custom frame parser |
-| Testing | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) |
-| Icons | [Iconify](https://iconify.design/) (Lucide) |
-| Animation | [Framer Motion](https://www.framer.com/motion/) |
+| Layer      | Technology                                                            |
+| ---------- | --------------------------------------------------------------------- |
+| Framework  | [Next.js](https://nextjs.org/) 16 (App Router)                        |
+| UI Library | [React](https://react.dev/) 19                                        |
+| Components | [HeroUI](https://www.heroui.com/) v3                                  |
+| Styling    | [Tailwind CSS](https://tailwindcss.com/) v4                           |
+| Language   | [TypeScript](https://www.typescriptlang.org/)                         |
+| Modbus TCP | [modbus-serial](https://github.com/yaacov/node-modbus-serial)         |
+| Modbus RTU | [serialport](https://serialport.io/) + custom frame parser            |
+| Testing    | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) |
+| Icons      | [Iconify](https://iconify.design/) (Lucide)                           |
+| Animation  | [Framer Motion](https://www.framer.com/motion/)                       |
 
 ## Screenshots
 
@@ -166,15 +166,15 @@ Configure the RTU serial path (e.g., `COM3` on Windows, `/dev/ttyUSB0` on Linux)
 
 All API routes are prefixed with `/api` and require the dev server to be running.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/registers` | Dump full Modbus engine state |
-| POST | `/api/registers` | Write a coil or holding register. Body: `{ registerType, address, value }` |
-| GET | `/api/logs` | Get all communication logs |
-| GET | `/api/status` | Server status: `{ tcp: boolean, rtu: boolean }` |
-| GET | `/api/config` | Get current configuration |
-| POST | `/api/config` | Update configuration and restart servers. Body: partial config object |
-| GET | `/api/serial-ports` | List available serial ports |
+| Method | Endpoint            | Description                                                                |
+| ------ | ------------------- | -------------------------------------------------------------------------- |
+| GET    | `/api/registers`    | Dump full Modbus engine state                                              |
+| POST   | `/api/registers`    | Write a coil or holding register. Body: `{ registerType, address, value }` |
+| GET    | `/api/logs`         | Get all communication logs                                                 |
+| GET    | `/api/status`       | Server status: `{ tcp: boolean, rtu: boolean }`                            |
+| GET    | `/api/config`       | Get current configuration                                                  |
+| POST   | `/api/config`       | Update configuration and restart servers. Body: partial config object      |
+| GET    | `/api/serial-ports` | List available serial ports                                                |
 
 ## Project Structure
 
@@ -235,17 +235,17 @@ npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server with Turbopack (port 3000) |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format all files with Prettier |
-| `npm run type-check` | Run TypeScript compiler (no emit) |
-| `npm run test:unit` | Run Vitest unit tests |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run test` | Run unit tests then E2E tests |
+| Script               | Description                                         |
+| -------------------- | --------------------------------------------------- |
+| `npm run dev`        | Start development server with Turbopack (port 3000) |
+| `npm run build`      | Production build                                    |
+| `npm run start`      | Start production server                             |
+| `npm run lint`       | Run ESLint                                          |
+| `npm run format`     | Format all files with Prettier                      |
+| `npm run type-check` | Run TypeScript compiler (no emit)                   |
+| `npm run test:unit`  | Run Vitest unit tests                               |
+| `npm run test:e2e`   | Run Playwright E2E tests                            |
+| `npm run test`       | Run unit tests then E2E tests                       |
 
 ## License
 
