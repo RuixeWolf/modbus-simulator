@@ -60,7 +60,12 @@ export default function Home() {
         </div>
       )}
 
-      <SettingsPanel config={config} serialPorts={serialPorts} onApply={updateConfig} />
+      <SettingsPanel
+        key={`${config.tcpPort}-${config.rtuSerialPath}-${config.rtuBaudRate}-${config.slaveId}`}
+        config={config}
+        serialPorts={serialPorts}
+        onApply={updateConfig}
+      />
 
       {/* Register Tables */}
       <Tabs defaultSelectedKey="coils" className="w-full">
@@ -113,6 +118,8 @@ export default function Home() {
             title={t('tabs.discreteInputs')}
             type="discreteInput"
             data={state.discreteInputs}
+            writable
+            onWrite={(addr, val) => writeRegister('discreteInput', addr, val)}
           />
         </Tabs.Panel>
         <Tabs.Panel id="holding" className="animate-fade-in">
@@ -129,6 +136,8 @@ export default function Home() {
             title={t('tabs.inputRegisters')}
             type="inputRegister"
             data={state.inputRegisters}
+            writable
+            onWrite={(addr, val) => writeRegister('inputRegister', addr, val)}
           />
         </Tabs.Panel>
       </Tabs>

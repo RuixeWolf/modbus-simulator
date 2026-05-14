@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, Button, Input, Select, Label, ListBox } from '@heroui/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Key } from '@heroui/react';
 
@@ -63,17 +63,6 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
   const [rtuParity, setRtuParity] = useState(config.rtuParity);
   const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits));
   const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits));
-
-  // Sync local state when external config changes (e.g. after initial API load)
-  useEffect(() => {
-    setTcpPort(String(config.tcpPort));
-    setSlaveId(String(config.slaveId));
-    setRtuPath(config.rtuSerialPath || '');
-    setRtuBaudRate(String(config.rtuBaudRate));
-    setRtuParity(config.rtuParity);
-    setRtuDataBits(String(config.rtuDataBits));
-    setRtuStopBits(String(config.rtuStopBits));
-  }, [config]);
 
   const handleApply = () => {
     const port = Number.parseInt(tcpPort, 10);
@@ -149,9 +138,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 className="w-32"
                 data-testid="slave-id-input"
               />
-              <span className="text-xs text-text-muted">
-                {t('settings.slaveIdHint')}
-              </span>
+              <span className="text-xs text-text-muted">{t('settings.slaveIdHint')}</span>
             </div>
           </div>
 
