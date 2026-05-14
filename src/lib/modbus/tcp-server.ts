@@ -18,14 +18,16 @@ let currentPort: number = g.__modbus_tcp_port__ ?? 502;
  * Starts a Modbus TCP server backed by the singleton ModbusEngine.
  * If the server is already running the existing instance is returned.
  *
- * @param port – TCP port to listen on (default 502).
+ * @param port   – TCP port to listen on (default 502).
+ * @param unitID – Modbus unit identifier for this device (default 1, range 1-247).
  * @returns The started ServerTCP instance.
  */
-export function startTCPServer(port?: number): ServerTCP {
+export function startTCPServer(port?: number, unitID?: number): ServerTCP {
   if (server) {
     return server;
   }
   currentPort = port ?? (Number(process.env.MODBUS_TCP_PORT) || 502);
+  const slaveId = unitID ?? 1;
 
   const engine = ModbusEngine.getInstance();
 
@@ -151,7 +153,7 @@ export function startTCPServer(port?: number): ServerTCP {
     },
   };
 
-  server = new ServerTCP(vector, { host: '0.0.0.0', port, debug: false, unitID: 1 });
+  server = new ServerTCP(vector, { host: '0.0.0.0', port, debug: false, unitID: slaveId });
   isRunning = true;
   g.__modbus_tcp_server__ = server;
   g.__modbus_tcp_running__ = true;

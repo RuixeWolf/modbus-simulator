@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/src/components/ThemeToggle';
 import { Tabs } from '@heroui/react';
 
 function detectLanguage(): string {
-  if (typeof window === 'undefined') return 'en';
+  if (globalThis.window === undefined) return 'en';
   const stored = localStorage.getItem('i18nextLng');
   if (stored === 'zh' || stored === 'en') return stored;
   const nav = navigator.language;

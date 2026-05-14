@@ -24,7 +24,9 @@
     "parityEven": "Even",
     "parityOdd": "Odd",
     "dataBits": "Data Bits",
-    "stopBits": "Stop Bits"
+    "stopBits": "Stop Bits",
+    "slaveId": "Slave ID",
+    "slaveIdHint": "Range: 1-247"
   },
   "tabs": {
     "coils": "Coils",

@@ -24,7 +24,9 @@
     "parityEven": "偶校验",
     "parityOdd": "奇校验",
     "dataBits": "数据位",
-    "stopBits": "停止位"
+    "stopBits": "停止位",
+    "slaveId": "设备地址",
+    "slaveIdHint": "范围: 1-247"
   },
   "tabs": {
     "coils": "线圈",

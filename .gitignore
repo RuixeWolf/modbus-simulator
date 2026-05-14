@@ -50,4 +50,4 @@ next-env.d.ts
 *.tmp
 *.temp
 *.log
-./.firecrawl
+.firecrawl

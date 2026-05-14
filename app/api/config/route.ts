@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     rtuParity?: 'none' | 'even' | 'odd';
     rtuDataBits?: number;
     rtuStopBits?: number;
+    slaveId?: number;
   } = {};
 
   if (body.tcpPort !== undefined) {
@@ -63,6 +64,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid stop bits' }, { status: 400 });
     }
     updates.rtuStopBits = sb;
+  }
+
+  if (body.slaveId !== undefined) {
+    const sid = Number(body.slaveId);
+    if (Number.isNaN(sid) || sid < 1 || sid > 247) {
+      return NextResponse.json({ error: 'Invalid slave ID (must be 1-247)' }, { status: 400 });
+    }
+    updates.slaveId = sid;
   }
 
   setConfig(updates);

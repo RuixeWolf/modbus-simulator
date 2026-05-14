@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, Button, Input, Select, Label, ListBox } from '@heroui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Key } from '@heroui/react';
 
@@ -20,6 +20,7 @@ interface ServerConfig {
   rtuParity: 'none' | 'even' | 'odd';
   rtuDataBits: number;
   rtuStopBits: number;
+  slaveId: number;
 }
 
 /** Props for {@link SettingsPanel}. */
@@ -56,15 +57,29 @@ const STOP_BITS = [1, 2];
 export function SettingsPanel({ config, serialPorts, onApply }: Readonly<SettingsPanelProps>) {
   const { t } = useTranslation();
   const [tcpPort, setTcpPort] = useState(String(config.tcpPort));
+  const [slaveId, setSlaveId] = useState(String(config.slaveId));
   const [rtuPath, setRtuPath] = useState(config.rtuSerialPath || '');
   const [rtuBaudRate, setRtuBaudRate] = useState(String(config.rtuBaudRate));
   const [rtuParity, setRtuParity] = useState(config.rtuParity);
   const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits));
   const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits));
 
+  // Sync local state when external config changes (e.g. after initial API load)
+  useEffect(() => {
+    setTcpPort(String(config.tcpPort));
+    setSlaveId(String(config.slaveId));
+    setRtuPath(config.rtuSerialPath || '');
+    setRtuBaudRate(String(config.rtuBaudRate));
+    setRtuParity(config.rtuParity);
+    setRtuDataBits(String(config.rtuDataBits));
+    setRtuStopBits(String(config.rtuStopBits));
+  }, [config]);
+
   const handleApply = () => {
     const port = Number.parseInt(tcpPort, 10);
     if (Number.isNaN(port) || port < 1 || port > 65535) return;
+    const sid = Number.parseInt(slaveId, 10);
+    if (Number.isNaN(sid) || sid < 1 || sid > 247) return;
     const baudRate = Number.parseInt(rtuBaudRate, 10);
     if (Number.isNaN(baudRate)) return;
     const dataBits = Number.parseInt(rtuDataBits, 10);
@@ -78,6 +93,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
       rtuParity,
       rtuDataBits: dataBits,
       rtuStopBits: stopBits,
+      slaveId: sid,
     });
   };
 
@@ -113,6 +129,28 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
               />
               <span className="text-xs text-text-muted">
                 {t('settings.default', { port: 502 })}
+              </span>
+            </div>
+
+            {/* Slave ID */}
+            <div className="flex items-center gap-2 pt-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              <label className="text-sm font-semibold text-foreground">
+                {t('settings.slaveId')}
+              </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                value={slaveId}
+                onChange={(e) => setSlaveId(e.target.value)}
+                min={1}
+                max={247}
+                className="w-32"
+                data-testid="slave-id-input"
+              />
+              <span className="text-xs text-text-muted">
+                {t('settings.slaveIdHint')}
               </span>
             </div>
           </div>
