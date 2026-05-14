@@ -75,6 +75,7 @@ loadEnvFile(join(projectRoot, '.env.local'))
 
 // Apply CLI arguments as environment variables
 if (args.port) process.env.PORT = String(args.port)
+else if (!process.env.PORT) process.env.PORT = '5000'
 if (args.tcpPort) process.env.MODBUS_TCP_PORT = String(args.tcpPort)
 if (args.serialPort) process.env.MODBUS_RTU_SERIAL_PATH = args.serialPort
 
