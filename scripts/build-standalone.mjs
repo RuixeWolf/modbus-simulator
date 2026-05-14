@@ -8,6 +8,8 @@
  * 3. Prints usage instructions.
  */
 import { execSync } from 'node:child_process'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   copyFileSync,
   cpSync,
@@ -16,9 +18,7 @@ import {
   readFileSync,
   rmSync,
   writeFileSync
-} from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+} from './lib/fs-helpers.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = dirname(__dirname)

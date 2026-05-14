@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { existsSync, readFileSync } from './lib/fs-helpers.mjs'
 import { HELP_TEXT, parseArgs } from './lib/parse-args.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = dirname(__dirname)
-
-/** Known environment variable keys that the simulator uses. */
-const KNOWN_ENV_KEYS = ['PORT', 'MODBUS_TCP_PORT', 'MODBUS_RTU_SERIAL_PATH']
 
 /** Load a simple key=value env file without overwriting existing env vars. */
 function loadEnvFile(filePath) {
@@ -22,8 +19,15 @@ function loadEnvFile(filePath) {
     if (eqIndex === -1) continue
     const key = trimmed.slice(0, eqIndex).trim()
     const value = trimmed.slice(eqIndex + 1).trim()
-    if (KNOWN_ENV_KEYS.includes(key) && process.env[key] === undefined) {
-      process.env[key] = value
+    if (key === 'PORT' && process.env.PORT === undefined) {
+      process.env.PORT = value
+    } else if (key === 'MODBUS_TCP_PORT' && process.env.MODBUS_TCP_PORT === undefined) {
+      process.env.MODBUS_TCP_PORT = value
+    } else if (
+      key === 'MODBUS_RTU_SERIAL_PATH' &&
+      process.env.MODBUS_RTU_SERIAL_PATH === undefined
+    ) {
+      process.env.MODBUS_RTU_SERIAL_PATH = value
     }
   }
 }
