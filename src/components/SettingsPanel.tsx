@@ -102,9 +102,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <label className="text-foreground text-sm font-semibold">
-                {t('settings.tcpPort')}
-              </label>
+              <span className="text-foreground text-sm font-semibold">{t('settings.tcpPort')}</span>
             </div>
             <div className="flex items-center gap-3">
               <Input
@@ -125,9 +123,9 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
             <div className="pt-2">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-amber-500" />
-                <label className="text-foreground text-sm font-semibold">
+                <span className="text-foreground text-sm font-semibold">
                   {t('settings.slaveId')}
-                </label>
+                </span>
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <Input
@@ -150,9 +148,9 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <label className="text-foreground text-sm font-semibold">
+              <span className="text-foreground text-sm font-semibold">
                 {t('settings.rtuSerialPort')}
-              </label>
+              </span>
             </div>
 
             <Select

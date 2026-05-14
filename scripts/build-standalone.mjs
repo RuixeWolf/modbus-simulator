@@ -86,7 +86,7 @@ try {
   const distPkg = JSON.parse(readFileSync(distPkgPath, 'utf-8'))
   delete distPkg.devDependencies
   delete distPkg.scripts
-  writeFileSync(distPkgPath, JSON.stringify(distPkg, null, 2) + '\n')
+  writeFileSync(distPkgPath, `${JSON.stringify(distPkg, null, 2)}\n`)
 
   // Remove the incomplete pnpm node_modules before reinstalling
   const distNodeModules = join(distDir, 'node_modules')
@@ -115,7 +115,7 @@ console.log('To run the simulator:')
 console.log(`  cd ${distDir}`)
 console.log('  node start.mjs [options]\n')
 console.log('Options:')
-console.log('  -p, --port <number>        HTTP server port (default: 5000)')
-console.log('  -t, --tcp-port <number>    Modbus TCP listening port (default: 502)')
-console.log('  -s, --serial-port <path>   Modbus RTU serial port (e.g., COM1, /dev/ttyUSB0)')
+console.log('  -p, --port {number}        HTTP server port (default: 5000)')
+console.log('  -t, --tcp-port {number}    Modbus TCP listening port (default: 502)')
+console.log('  -s, --serial-port {path}   Modbus RTU serial port (e.g., COM1, /dev/ttyUSB0)')
 console.log('  -h, --help                 Show help message\n')
