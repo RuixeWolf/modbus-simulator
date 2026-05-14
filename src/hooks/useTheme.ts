@@ -46,7 +46,7 @@ function subscribeSystem(callback: () => void) {
 export function useTheme() {
   const systemTheme = useSyncExternalStore(subscribeSystem, getSystemTheme, () => 'light' as const);
 
-  const [theme, setThemeState] = useState<Theme>(() => {
+  const [themeState, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
@@ -57,11 +57,11 @@ export function useTheme() {
     return 'system';
   });
 
-  const resolvedTheme = theme === 'system' ? systemTheme : theme;
+  const resolvedTheme = themeState === 'system' ? systemTheme : themeState;
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    applyTheme(themeState);
+  }, [themeState]);
 
   /**
    * Updates the stored theme and immediately applies it.
@@ -77,5 +77,5 @@ export function useTheme() {
     }
   }, []);
 
-  return { theme, setTheme, resolvedTheme };
+  return { theme: themeState, setTheme, resolvedTheme };
 }

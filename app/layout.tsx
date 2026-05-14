@@ -48,10 +48,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full w-full flex flex-col items-stretch bg-zinc-50 dark:bg-[#08080c] transition-colors duration-300"
-      >
+      <body className="min-h-full w-full flex flex-col items-stretch bg-zinc-50 dark:bg-[#08080c] transition-colors duration-300">
         {children}
       </body>
     </html>

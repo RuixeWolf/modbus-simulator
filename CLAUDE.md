@@ -8,18 +8,22 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 
 ## Common Commands
 
-| Command                                                          | Purpose                                              |
-| ---------------------------------------------------------------- | ---------------------------------------------------- |
-| `npm run dev`                                                    | Start Next.js dev server with Turbopack (default port 5000) |
-| `.env.local`                                                     | Set `PORT` and other env vars (loaded automatically by Next.js) |
-| `npm run build`                                                  | Production build                                     |
-| `npm run lint`                                                   | Run ESLint                                           |
-| `npm run format`                                                 | Run Prettier on all files                            |
-| `npm run test:unit`                                              | Run Vitest unit tests                                |
-| `npm run test:e2e`                                               | Run Playwright E2E tests (auto-starts dev server)    |
-| `npm run test`                                                   | Run unit tests then E2E tests                        |
-| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                          |
-| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                        |
+| Command                                                          | Purpose                                                         |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| `pnpm run dev`                                                   | Start Next.js dev server with Turbopack (default port 5000)     |
+| `pnpm run build`                                                 | Production build                                                |
+| `pnpm run start`                                                 | Start production server                                         |
+| `pnpm run lint`                                                  | Run ESLint                                                      |
+| `pnpm run format`                                                | Run Prettier on all files                                       |
+| `pnpm run format-lint`                                           | Run Prettier then ESLint                                        |
+| `pnpm run type-check`                                            | Run TypeScript compiler (no emit)                               |
+| `pnpm run test:unit`                                             | Run Vitest unit tests                                           |
+| `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)               |
+| `pnpm run test`                                                  | Run unit tests then E2E tests                                   |
+| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                     |
+| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                                   |
+
+`.env.local` sets `PORT=5000` and is loaded automatically by `dotenv-cli` in the dev script.
 
 ## Architecture
 
@@ -54,6 +58,7 @@ Use `ModbusEngine.getInstance()` everywhere. `resetInstance()` exists **only for
 - `ensureServersStarted()` — called at module level in API routes; starts TCP server and RTU serial server (if configured)
 - `getConfig()` / `setConfig()` — read/write `tcpPort`, `rtuSerialPath`, `rtuBaudRate`, `rtuParity`, `rtuDataBits`, `rtuStopBits`
 - `restartServers()` — stops and restarts both servers with current config
+- Uses `globalThis.__modbus_initialized__` to survive Next.js HMR / module reloads in dev mode
 
 **Critical**: API routes import `ensureServersStarted()` at the module level (not inside handlers). This causes Next.js to start the Modbus servers when the first API request is handled. The servers persist for the process lifetime.
 
@@ -84,7 +89,6 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - Native HTML `<table>` is used instead of HeroUI `Table` because HeroUI Table requires a react-aria collection context that breaks outside specific setups
 - Native HTML `<select>` is used for dropdowns instead of HeroUI `Select` (which uses react-aria-components compound pattern)
 - Coil toggles use HeroUI `Button` with ON/OFF text, not `Switch` (Switch required children for visibility in test snapshots)
-- Do **not** use `Tabs.Indicator` — it causes a runtime `<SharedElement>` error in this setup
 
 **Tailwind CSS v4**: Uses `@import "tailwindcss"` in `app/globals.css`. No `tailwind.config.js` — theme customization is done via `@theme inline` in CSS. Custom CSS variables (`--background`, `--foreground`, `--surface`, etc.) drive both light and dark modes.
 
@@ -99,14 +103,14 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 **Unit tests** (`vitest.config.ts`):
 
 - Environment: `jsdom`, `globals: true`
-- Run with `npm run test:unit`
+- Run with `pnpm run test:unit`
 - `src/lib/modbus/engine.test.ts` tests singleton behavior, register R/W, events, and clamping
 
 **E2E tests** (`playwright.config.ts`):
 
-- `webServer` auto-starts `npm run dev` before tests
+- `webServer` auto-starts `pnpm run dev` before tests
 - Environment variable `MODBUS_TCP_PORT=11502` is set for E2E tests to avoid port conflicts
-- Tests run serially (`mode: 'serial'`) because they share the singleton ModbusEngine state
+- Tests run serially (`workers: 1` in CI, `fullyParallel: true` locally) because they share the singleton ModbusEngine state
 - `MockModbusClient` in `src/lib/modbus/mock-client.ts` connects via `modbus-serial`'s `ModbusRTU` **default export** (not named import)
 - Tests verify UI→Protocol, Protocol→UI, coil toggles, and error logging
 
@@ -119,3 +123,4 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - The old `src/lib/modbus/rtu-server.ts` (TCP bridge on port 5021) is no longer used; RTU is now handled by `rtu-serial-server.ts`
 - `next.config.ts` enables `reactCompiler: true`
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
+- ESLint uses flat config (`eslint.config.mjs`) with typescript-eslint, @eslint-react, eslint-plugin-react-hooks, and @next/eslint-plugin-next

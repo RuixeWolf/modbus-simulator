@@ -42,7 +42,9 @@ const MAX_LOGS = 1000;
  * - `'change'` – when a coil or holding register is written.
  * - `'log'`    – on every logged read, write, or error.
  */
-const gEngine = globalThis as typeof globalThis & { __modbus_engine_instance__?: ModbusEngine | null };
+const gEngine = globalThis as typeof globalThis & {
+  __modbus_engine_instance__?: ModbusEngine | null;
+};
 
 export class ModbusEngine extends EventEmitter {
   private static instance: ModbusEngine | null = gEngine.__modbus_engine_instance__ ?? null;

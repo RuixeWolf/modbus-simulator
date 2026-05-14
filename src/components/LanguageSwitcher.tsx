@@ -17,7 +17,12 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <Button size="sm" variant="ghost" onPress={toggleLanguage} className="text-xs font-medium rounded-full bg-surface shadow-sm px-3">
+    <Button
+      size="sm"
+      variant="ghost"
+      onPress={toggleLanguage}
+      className="text-xs font-medium rounded-full bg-surface shadow-sm px-3"
+    >
       {i18n.language === 'zh' ? t('language.en') : t('language.zh')}
     </Button>
   );

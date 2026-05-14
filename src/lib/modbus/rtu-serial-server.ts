@@ -92,13 +92,22 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
   // 0x01-0x06: slaveID(1) + func(1) + addr(2) + count/value(2) + CRC(2) = 8 bytes
   // 0x0F/0x10: slaveID(1) + func(1) + addr(2) + quantity(2) + byteCount(1) + data + CRC(2) >= 9 bytes
   const minLengths: Record<number, number> = {
-    0x01: 8, 0x02: 8, 0x03: 8, 0x04: 8,
-    0x05: 8, 0x06: 8,
-    0x0f: 9, 0x10: 9,
+    0x01: 8,
+    0x02: 8,
+    0x03: 8,
+    0x04: 8,
+    0x05: 8,
+    0x06: 8,
+    0x0f: 9,
+    0x10: 9,
   };
 
   if (minLengths[funcCode] !== undefined && frame.length < minLengths[funcCode]) {
-    engine.addErrorLog('rtu', 0, `RTU frame too short for FC 0x${funcCode.toString(16)}: ${frame.length} bytes`);
+    engine.addErrorLog(
+      'rtu',
+      0,
+      `RTU frame too short for FC 0x${funcCode.toString(16)}: ${frame.length} bytes`
+    );
     return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
   }
 
@@ -186,7 +195,11 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
         const quantity = frame.readUInt16BE(4);
         const byteCount = frame[6];
         if (frame.length !== 9 + byteCount) {
-          engine.addErrorLog('rtu', address, `FC 0x0F frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`);
+          engine.addErrorLog(
+            'rtu',
+            address,
+            `FC 0x0F frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`
+          );
           return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
         }
         for (let i = 0; i < quantity; i++) {
@@ -206,7 +219,11 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
         const quantity = frame.readUInt16BE(4);
         const byteCount = frame[6];
         if (frame.length !== 9 + byteCount) {
-          engine.addErrorLog('rtu', address, `FC 0x10 frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`);
+          engine.addErrorLog(
+            'rtu',
+            address,
+            `FC 0x10 frame length mismatch: expected ${9 + byteCount}, got ${frame.length}`
+          );
           return Buffer.from([SLAVE_ID, funcCode | 0x80, 0x03]);
         }
         for (let i = 0; i < quantity; i++) {
@@ -240,7 +257,7 @@ function processFrame(frame: Buffer, engine: ModbusEngine): Buffer | null {
  */
 export function startRTUSerialServer(
   serialPath: string,
-  serialConfig: SerialConfig = { baudRate: 9600, parity: 'none', dataBits: 8, stopBits: 1 },
+  serialConfig: SerialConfig = { baudRate: 9600, parity: 'none', dataBits: 8, stopBits: 1 }
 ): void {
   if (serialPort) {
     return;
@@ -294,7 +311,7 @@ export function startRTUSerialServer(
     serialPort.on('open', () => {
       console.log(
         `Modbus RTU Serial Server started on ${serialPath} ` +
-          `(${serialConfig.baudRate}/${serialConfig.dataBits}-${serialConfig.parity.charAt(0).toUpperCase()}-${serialConfig.stopBits})`,
+          `(${serialConfig.baudRate}/${serialConfig.dataBits}-${serialConfig.parity.charAt(0).toUpperCase()}-${serialConfig.stopBits})`
       );
     });
 

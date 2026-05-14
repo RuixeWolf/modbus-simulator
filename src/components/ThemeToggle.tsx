@@ -20,7 +20,7 @@ function useMounted() {
   return useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false,
+    () => false
   );
 }
 
@@ -69,11 +69,7 @@ export function ThemeToggle() {
           >
             <Icon
               icon={
-                key === 'light'
-                  ? 'lucide:sun'
-                  : key === 'dark'
-                    ? 'lucide:moon'
-                    : 'lucide:monitor'
+                key === 'light' ? 'lucide:sun' : key === 'dark' ? 'lucide:moon' : 'lucide:monitor'
               }
               width={16}
               height={16}

@@ -15,7 +15,7 @@ interface LogPanelProps {
  *
  * @returns A trigger button that opens a modal dialog containing the log list.
  */
-export function LogPanel({ logs }: LogPanelProps) {
+export function LogPanel({ logs }: Readonly<LogPanelProps>) {
   const { t } = useTranslation();
 
   const getTypeBadge = (type: string) => {
@@ -75,7 +75,7 @@ export function LogPanel({ logs }: LogPanelProps) {
                   )}
                   {[...logs].reverse().map((log, i) => (
                     <div
-                      key={i}
+                      key={`${log.timestamp}-${i}`}
                       className={`flex items-center gap-3 py-1.5 px-5 ${
                         i % 2 === 0 ? 'bg-muted/20' : ''
                       }`}

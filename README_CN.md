@@ -53,18 +53,18 @@
 
 ## 技术栈
 
-| 层级 | 技术 |
-|------|------|
-| 框架 | [Next.js](https://nextjs.org/) 16（App Router） |
-| UI 库 | [React](https://react.dev/) 19 |
-| 组件库 | [HeroUI](https://www.heroui.com/) v3 |
-| 样式 | [Tailwind CSS](https://tailwindcss.com/) v4 |
-| 语言 | [TypeScript](https://www.typescriptlang.org/) |
-| Modbus TCP | [modbus-serial](https://github.com/yaacov/node-modbus-serial) |
-| Modbus RTU | [serialport](https://serialport.io/) + 自定义帧解析器 |
-| 测试 | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) |
-| 图标 | [Iconify](https://iconify.design/)（Lucide） |
-| 动画 | [Framer Motion](https://www.framer.com/motion/) |
+| 层级       | 技术                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 框架       | [Next.js](https://nextjs.org/) 16（App Router）                       |
+| UI 库      | [React](https://react.dev/) 19                                        |
+| 组件库     | [HeroUI](https://www.heroui.com/) v3                                  |
+| 样式       | [Tailwind CSS](https://tailwindcss.com/) v4                           |
+| 语言       | [TypeScript](https://www.typescriptlang.org/)                         |
+| Modbus TCP | [modbus-serial](https://github.com/yaacov/node-modbus-serial)         |
+| Modbus RTU | [serialport](https://serialport.io/) + 自定义帧解析器                 |
+| 测试       | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) |
+| 图标       | [Iconify](https://iconify.design/)（Lucide）                          |
+| 动画       | [Framer Motion](https://www.framer.com/motion/)                       |
 
 ## 截图预览
 
@@ -166,15 +166,15 @@ client.close();
 
 所有 API 路由均以 `/api` 为前缀，需要开发服务器在运行中。
 
-| 方法 | 接口 | 说明 |
-|------|------|------|
-| GET | `/api/registers` | 获取完整的 Modbus 引擎状态 |
-| POST | `/api/registers` | 写入线圈或保持寄存器。请求体：`{ registerType, address, value }` |
-| GET | `/api/logs` | 获取所有通信日志 |
-| GET | `/api/status` | 服务器状态：`{ tcp: boolean, rtu: boolean }` |
-| GET | `/api/config` | 获取当前配置 |
-| POST | `/api/config` | 更新配置并重启服务器。请求体：部分配置对象 |
-| GET | `/api/serial-ports` | 列出可用串口 |
+| 方法 | 接口                | 说明                                                             |
+| ---- | ------------------- | ---------------------------------------------------------------- |
+| GET  | `/api/registers`    | 获取完整的 Modbus 引擎状态                                       |
+| POST | `/api/registers`    | 写入线圈或保持寄存器。请求体：`{ registerType, address, value }` |
+| GET  | `/api/logs`         | 获取所有通信日志                                                 |
+| GET  | `/api/status`       | 服务器状态：`{ tcp: boolean, rtu: boolean }`                     |
+| GET  | `/api/config`       | 获取当前配置                                                     |
+| POST | `/api/config`       | 更新配置并重启服务器。请求体：部分配置对象                       |
+| GET  | `/api/serial-ports` | 列出可用串口                                                     |
 
 ## 项目结构
 
@@ -235,17 +235,17 @@ npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"
 
 ## 可用脚本
 
-| 脚本 | 说明 |
-|------|------|
-| `npm run dev` | 启动开发服务器（带 Turbopack，端口 3000） |
-| `npm run build` | 生产构建 |
-| `npm run start` | 启动生产服务器 |
-| `npm run lint` | 运行 ESLint |
-| `npm run format` | 使用 Prettier 格式化所有文件 |
-| `npm run type-check` | 运行 TypeScript 编译器（不输出文件） |
-| `npm run test:unit` | 运行 Vitest 单元测试 |
-| `npm run test:e2e` | 运行 Playwright 端到端测试 |
-| `npm run test` | 先运行单元测试，再运行端到端测试 |
+| 脚本                 | 说明                                      |
+| -------------------- | ----------------------------------------- |
+| `npm run dev`        | 启动开发服务器（带 Turbopack，端口 3000） |
+| `npm run build`      | 生产构建                                  |
+| `npm run start`      | 启动生产服务器                            |
+| `npm run lint`       | 运行 ESLint                               |
+| `npm run format`     | 使用 Prettier 格式化所有文件              |
+| `npm run type-check` | 运行 TypeScript 编译器（不输出文件）      |
+| `npm run test:unit`  | 运行 Vitest 单元测试                      |
+| `npm run test:e2e`   | 运行 Playwright 端到端测试                |
+| `npm run test`       | 先运行单元测试，再运行端到端测试          |
 
 ## 开源协议
 
