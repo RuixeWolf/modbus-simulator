@@ -1,17 +1,17 @@
-'use client';
+'use client'
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'
 
 /** Props for {@link StatusIndicator}. */
 interface StatusIndicatorProps {
   /** Whether the TCP server is currently running. */
-  tcp: boolean;
+  tcp: boolean
   /** Whether the RTU serial server is currently running. */
-  rtu: boolean;
+  rtu: boolean
   /** TCP port displayed next to the TCP label. */
-  tcpPort?: number;
+  tcpPort?: number
   /** Active serial port path; shown as "Not set" when null. */
-  rtuPath?: string | null;
+  rtuPath?: string | null
 }
 
 /**
@@ -23,17 +23,17 @@ export function StatusIndicator({
   tcp,
   rtu,
   tcpPort = 502,
-  rtuPath,
+  rtuPath
 }: Readonly<StatusIndicatorProps>) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
 
   return (
-    <div className="flex items-center gap-4 bg-surface rounded-full px-4 py-2 shadow-sm">
+    <div className="bg-surface flex items-center gap-4 rounded-full px-4 py-2 shadow-sm">
       <div className="flex items-center gap-2" data-testid="tcp-status">
         <span className="relative flex size-2">
           <span
             className={`absolute inline-flex h-full w-full rounded-full ${
-              tcp ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'
+              tcp ? 'animate-pulse bg-emerald-400' : 'bg-red-400'
             }`}
           />
           <span
@@ -43,20 +43,20 @@ export function StatusIndicator({
           />
         </span>
         <div className="flex flex-col">
-          <span className="text-[11px] font-semibold text-foreground">{t('header.tcp')}</span>
-          <span className="text-[10px] text-text-muted font-mono">
+          <span className="text-foreground text-[11px] font-semibold">{t('header.tcp')}</span>
+          <span className="text-text-muted font-mono text-[10px]">
             {tcpPort} {tcp ? '●' : '○'}
           </span>
         </div>
       </div>
 
-      <div className="w-px h-5 bg-border" />
+      <div className="bg-border h-5 w-px" />
 
       <div className="flex items-center gap-2">
         <span className="relative flex size-2">
           <span
             className={`absolute inline-flex h-full w-full rounded-full ${
-              rtu ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'
+              rtu ? 'animate-pulse bg-emerald-400' : 'bg-red-400'
             }`}
           />
           <span
@@ -66,12 +66,12 @@ export function StatusIndicator({
           />
         </span>
         <div className="flex flex-col">
-          <span className="text-[11px] font-semibold text-foreground">{t('header.rtu')}</span>
-          <span className="text-[10px] text-text-muted font-mono max-w-[80px] truncate">
+          <span className="text-foreground text-[11px] font-semibold">{t('header.rtu')}</span>
+          <span className="text-text-muted max-w-[80px] truncate font-mono text-[10px]">
             {rtuPath || t('header.notSet')}
           </span>
         </div>
       </div>
     </div>
-  );
+  )
 }

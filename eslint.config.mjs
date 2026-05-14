@@ -1,11 +1,11 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import js from '@eslint/js';
-import nextPlugin from '@next/eslint-plugin-next';
-import eslintConfigPrettier from 'eslint-config-prettier';
-import eslintReact from '@eslint-react/eslint-plugin';
-import pluginReactHooks from 'eslint-plugin-react-hooks';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier'
+import pluginReactHooks from 'eslint-plugin-react-hooks'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
+import eslintReact from '@eslint-react/eslint-plugin'
+import js from '@eslint/js'
+import nextPlugin from '@next/eslint-plugin-next'
 
 export default defineConfig([
   {
@@ -14,9 +14,9 @@ export default defineConfig([
       ecmaVersion: 'latest',
       globals: {
         ...globals.browser,
-        ...globals.node,
-      },
-    },
+        ...globals.node
+      }
+    }
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -25,12 +25,12 @@ export default defineConfig([
   eslintConfigPrettier,
   {
     plugins: {
-      '@next/next': nextPlugin,
+      '@next/next': nextPlugin
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
-      ...nextPlugin.configs['core-web-vitals'].rules,
-    },
+      ...nextPlugin.configs['core-web-vitals'].rules
+    }
   },
   {
     rules: {
@@ -40,19 +40,20 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
+          caughtErrorsIgnorePattern: '^_'
+        }
       ],
-      '@eslint-react/no-array-index-key': 'off',
-    },
+      '@eslint-react/no-array-index-key': 'off'
+    }
   },
   globalIgnores([
     '.next/**',
     'out/**',
     'build/**',
+    'dist/**',
     'next-env.d.ts',
     'coverage/**',
     'playwright-report/**',
-    'test-results/**',
-  ]),
-]);
+    'test-results/**'
+  ])
+])

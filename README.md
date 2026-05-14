@@ -3,7 +3,7 @@
 # Modbus Device Simulator
 
 <p>
-  <a href="README_CN.md">中文</a>
+  <a href="docs/README_CN.md">中文</a>
 </p>
 
 A professional Modbus TCP / RTU Serial device simulator with a real-time web dashboard.
@@ -68,12 +68,25 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 
 ## Screenshots
 
-> _Screenshots will be added here before release._
->
-> - Dashboard overview
-> - Register tables with pagination
-> - Communication logs panel
-> - Server configuration
+### Dashboard Overview
+
+![Dashboard — Coils](docs/screenshots/dashboard-coils.png)
+
+### Holding Registers
+
+![Dashboard — Holding Registers](docs/screenshots/dashboard-holding-registers.png)
+
+### Communication Logs
+
+![Communication Logs](docs/screenshots/communication-logs.png)
+
+### Server Configuration
+
+![Server Settings](docs/screenshots/server-settings.png)
+
+### Dark Mode
+
+![Dashboard — Dark Mode](docs/screenshots/dashboard-dark.png)
 
 ## Quick Start
 
@@ -144,18 +157,18 @@ Server settings (TCP port, RTU serial path, baud rate, parity, etc.) can also be
 **Modbus TCP (using [modbus-serial](https://github.com/yaacov/node-modbus-serial)):**
 
 ```javascript
-const { ModbusTCP } = require('modbus-serial');
-const client = new ModbusTCP();
-await client.connectTCP('127.0.0.1', { port: 502 });
+const { ModbusTCP } = require('modbus-serial')
+const client = new ModbusTCP()
+await client.connectTCP('127.0.0.1', { port: 502 })
 
 // Read holding registers
-const data = await client.readHoldingRegisters(0, 10);
-console.log(data.data);
+const data = await client.readHoldingRegisters(0, 10)
+console.log(data.data)
 
 // Write a coil
-await client.writeCoil(0, true);
+await client.writeCoil(0, true)
 
-client.close();
+client.close()
 ```
 
 **Modbus RTU (serial port):**

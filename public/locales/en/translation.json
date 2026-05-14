@@ -18,6 +18,8 @@
     "noSerialPorts": "No serial ports detected",
     "serialPortHint": "Select a COM port for RTU mode",
     "apply": "Apply & Restart Servers",
+    "slaveId": "Device Address",
+    "slaveIdHint": "Range: 1–247",
     "baudRate": "Baud Rate",
     "parity": "Parity",
     "parityNone": "None",

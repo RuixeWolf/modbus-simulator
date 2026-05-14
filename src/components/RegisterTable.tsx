@@ -1,25 +1,25 @@
-'use client';
+'use client'
 
-import { Input, Button, Card } from '@heroui/react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Button, Card, Input } from '@heroui/react'
 
 /** Props for {@link RegisterTable}. */
 interface RegisterTableProps {
   /** Localised title shown in the card header. */
-  title: string;
+  title: string
   /** Register category rendered by this table. */
-  type: 'coil' | 'holdingRegister' | 'inputRegister' | 'discreteInput';
+  type: 'coil' | 'holdingRegister' | 'inputRegister' | 'discreteInput'
   /** Full register array; only a single page is rendered at a time. */
-  data: boolean[] | number[];
+  data: boolean[] | number[]
   /** When true the last column shows write controls. */
-  writable?: boolean;
+  writable?: boolean
   /** Callback fired when the user submits a new value. */
-  onWrite?: (address: number, value: number | boolean) => void;
+  onWrite?: (address: number, value: number | boolean) => void
 }
 
 /** Number of rows shown per page. */
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 20
 
 /**
  * Paginated table for displaying and optionally editing Modbus registers.
@@ -31,31 +31,31 @@ export function RegisterTable({
   type,
   data,
   writable = false,
-  onWrite,
+  onWrite
 }: Readonly<RegisterTableProps>) {
-  const { t } = useTranslation();
-  const [startAddr, setStartAddr] = useState(0);
+  const { t } = useTranslation()
+  const [startAddr, setStartAddr] = useState(0)
   /** Staging values for holding-register inputs, keyed by address. */
-  const [editValue, setEditValue] = useState<Record<number, string>>({});
+  const [editValue, setEditValue] = useState<Record<number, string>>({})
 
-  const displayData = data.slice(startAddr, startAddr + PAGE_SIZE);
+  const displayData = data.slice(startAddr, startAddr + PAGE_SIZE)
 
   const handleCoilToggle = (address: number, value: boolean) => {
-    onWrite?.(address, !value);
-  };
+    onWrite?.(address, !value)
+  }
 
   const handleRegisterSubmit = (address: number) => {
-    const val = Number.parseInt(editValue[address] || '0', 10);
+    const val = Number.parseInt(editValue[address] || '0', 10)
     if (!Number.isNaN(val)) {
-      onWrite?.(address, val & 0xffff);
+      onWrite?.(address, val & 0xffff)
     }
-    setEditValue((prev) => ({ ...prev, [address]: '' }));
-  };
+    setEditValue((prev) => ({ ...prev, [address]: '' }))
+  }
 
   return (
-    <Card className="w-full rounded-2xl shadow-lg shadow-black/5 bg-surface border border-border/40">
+    <Card className="bg-surface border-border/40 w-full rounded-2xl border shadow-lg shadow-black/5">
       <Card.Header className="px-5 py-4">
-        <div className="flex items-center justify-between w-full">
+        <div className="flex w-full items-center justify-between">
           <h2 className="text-base font-semibold">{title}</h2>
           <div className="flex items-center gap-2">
             <Button
@@ -66,10 +66,10 @@ export function RegisterTable({
             >
               {t('registerTable.prev')}
             </Button>
-            <span className="text-sm text-text-muted bg-muted px-3 py-1 rounded-full font-mono ">
+            <span className="text-text-muted bg-muted rounded-full px-3 py-1 font-mono text-sm">
               {t('registerTable.range', {
                 start: startAddr,
-                end: Math.min(startAddr + PAGE_SIZE, data.length),
+                end: Math.min(startAddr + PAGE_SIZE, data.length)
               })}
             </span>
             <Button
@@ -83,18 +83,18 @@ export function RegisterTable({
           </div>
         </div>
       </Card.Header>
-      <Card.Content className="p-0! overflow-x-auto">
+      <Card.Content className="overflow-x-auto p-0!">
         <table className="w-full text-sm" data-testid={`table-${type}`}>
           <thead>
             <tr className="bg-muted/50">
-              <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-text-muted uppercase tracking-wider font-mono rounded-tl-lg">
+              <th className="text-text-muted rounded-tl-lg px-5 py-2.5 text-left font-mono text-[11px] font-semibold tracking-wider uppercase">
                 {t('registerTable.address')}
               </th>
-              <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-text-muted uppercase tracking-wider font-mono">
+              <th className="text-text-muted px-5 py-2.5 text-left font-mono text-[11px] font-semibold tracking-wider uppercase">
                 {t('registerTable.value')}
               </th>
               {writable && (
-                <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-text-muted uppercase tracking-wider font-mono rounded-tr-lg">
+                <th className="text-text-muted rounded-tr-lg px-5 py-2.5 text-left font-mono text-[11px] font-semibold tracking-wider uppercase">
                   {t('registerTable.action')}
                 </th>
               )}
@@ -103,13 +103,13 @@ export function RegisterTable({
           <tbody>
             {displayData.length === 0 && (
               <tr>
-                <td colSpan={writable ? 3 : 2} className="py-8 text-center text-text-muted italic">
+                <td colSpan={writable ? 3 : 2} className="text-text-muted py-8 text-center italic">
                   {t('registerTable.noData')}
                 </td>
               </tr>
             )}
             {displayData.map((value, idx) => {
-              const address = startAddr + idx;
+              const address = startAddr + idx
               return (
                 <tr
                   key={address}
@@ -118,8 +118,8 @@ export function RegisterTable({
                   }`}
                   data-testid={`row-${type}-${address}`}
                 >
-                  <td className="py-2.5 px-5 font-mono text-xs text-text-muted">{address}</td>
-                  <td className="py-2.5 px-5 font-mono text-xs">
+                  <td className="text-text-muted px-5 py-2.5 font-mono text-xs">{address}</td>
+                  <td className="px-5 py-2.5 font-mono text-xs">
                     {typeof value === 'boolean' ? (
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
@@ -140,7 +140,7 @@ export function RegisterTable({
                     )}
                   </td>
                   {writable && (
-                    <td className="py-2.5 px-5">
+                    <td className="px-5 py-2.5">
                       {type === 'coil' ? (
                         <Button
                           size="sm"
@@ -158,7 +158,7 @@ export function RegisterTable({
                             onChange={(e) =>
                               setEditValue((prev) => ({
                                 ...prev,
-                                [address]: e.target.value,
+                                [address]: e.target.value
                               }))
                             }
                             className="w-24"
@@ -176,11 +176,11 @@ export function RegisterTable({
                     </td>
                   )}
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
       </Card.Content>
     </Card>
-  );
+  )
 }

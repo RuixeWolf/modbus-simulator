@@ -3,7 +3,7 @@
 # Modbus 设备模拟器
 
 <p>
-  <a href="README.md">English</a>
+  <a href="../README.md">English</a>
 </p>
 
 一款支持 Modbus TCP / RTU 串口的设备模拟器，配有实时 Web 仪表板。
@@ -68,12 +68,25 @@
 
 ## 截图预览
 
-> _正式发布前将在此处添加截图。_
->
-> - 仪表板总览
-> - 带分页的寄存器表格
-> - 通信日志面板
-> - 服务器配置界面
+### 仪表板总览
+
+![仪表板 — 线圈](docs/screenshots/dashboard-coils.png)
+
+### 保持寄存器
+
+![仪表板 — 保持寄存器](docs/screenshots/dashboard-holding-registers.png)
+
+### 通信日志
+
+![通信日志](docs/screenshots/communication-logs.png)
+
+### 服务器配置
+
+![服务器设置](docs/screenshots/server-settings.png)
+
+### 暗色模式
+
+![仪表板 — 暗色模式](docs/screenshots/dashboard-dark.png)
 
 ## 快速开始
 
@@ -144,18 +157,18 @@ MODBUS_TCP_PORT=502
 **Modbus TCP（使用 [modbus-serial](https://github.com/yaacov/node-modbus-serial)）：**
 
 ```javascript
-const { ModbusTCP } = require('modbus-serial');
-const client = new ModbusTCP();
-await client.connectTCP('127.0.0.1', { port: 502 });
+const { ModbusTCP } = require('modbus-serial')
+const client = new ModbusTCP()
+await client.connectTCP('127.0.0.1', { port: 502 })
 
 // 读取保持寄存器
-const data = await client.readHoldingRegisters(0, 10);
-console.log(data.data);
+const data = await client.readHoldingRegisters(0, 10)
+console.log(data.data)
 
 // 写入线圈
-await client.writeCoil(0, true);
+await client.writeCoil(0, true)
 
-client.close();
+client.close()
 ```
 
 **Modbus RTU（串口）：**

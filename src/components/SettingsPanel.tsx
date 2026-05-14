@@ -1,52 +1,53 @@
-'use client';
+'use client'
 
-import { Card, Button, Input, Select, Label, ListBox } from '@heroui/react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { Key } from '@heroui/react';
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Button, Card, Input, Label, ListBox, Select } from '@heroui/react'
+import type { Key } from '@heroui/react'
 
 /** Metadata for an available serial port. */
 interface SerialPortInfo {
-  path: string;
-  manufacturer: string | null;
-  serialNumber: string | null;
+  path: string
+  manufacturer: string | null
+  serialNumber: string | null
 }
 
 /** Mutable server configuration. */
 interface ServerConfig {
-  tcpPort: number;
-  rtuSerialPath: string | null;
-  rtuBaudRate: number;
-  rtuParity: 'none' | 'even' | 'odd';
-  rtuDataBits: number;
-  rtuStopBits: number;
+  tcpPort: number
+  slaveId: number
+  rtuSerialPath: string | null
+  rtuBaudRate: number
+  rtuParity: 'none' | 'even' | 'odd'
+  rtuDataBits: number
+  rtuStopBits: number
 }
 
 /** Props for {@link SettingsPanel}. */
 interface SettingsPanelProps {
   /** Current server configuration. */
-  config: ServerConfig;
+  config: ServerConfig
   /** Available serial ports discovered by the backend. */
-  serialPorts: SerialPortInfo[];
+  serialPorts: SerialPortInfo[]
   /** Called when the user presses "Apply". */
-  onApply: (config: ServerConfig) => void;
+  onApply: (config: ServerConfig) => void
 }
 
 /** Available baud rates for RTU serial communication. */
-const BAUD_RATES = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200];
+const BAUD_RATES = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]
 
 /** Available parity options. */
 const PARITY_OPTIONS: { value: 'none' | 'even' | 'odd'; labelKey: string }[] = [
   { value: 'none', labelKey: 'settings.parityNone' },
   { value: 'even', labelKey: 'settings.parityEven' },
-  { value: 'odd', labelKey: 'settings.parityOdd' },
-];
+  { value: 'odd', labelKey: 'settings.parityOdd' }
+]
 
 /** Available data bit options. */
-const DATA_BITS = [5, 6, 7, 8];
+const DATA_BITS = [5, 6, 7, 8]
 
 /** Available stop bit options. */
-const STOP_BITS = [1, 2];
+const STOP_BITS = [1, 2]
 
 /**
  * Card that lets the user change the TCP port and configure RTU serial parameters.
@@ -54,52 +55,57 @@ const STOP_BITS = [1, 2];
  * @returns HeroUI Card with two columns (TCP and RTU) and an apply button.
  */
 export function SettingsPanel({ config, serialPorts, onApply }: Readonly<SettingsPanelProps>) {
-  const { t } = useTranslation();
-  const [tcpPort, setTcpPort] = useState(String(config.tcpPort));
-  const [rtuPath, setRtuPath] = useState(config.rtuSerialPath || '');
-  const [rtuBaudRate, setRtuBaudRate] = useState(String(config.rtuBaudRate));
-  const [rtuParity, setRtuParity] = useState(config.rtuParity);
-  const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits));
-  const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits));
+  const { t } = useTranslation()
+  const [tcpPort, setTcpPort] = useState(String(config.tcpPort))
+  const [slaveId, setSlaveId] = useState(String(config.slaveId))
+  const [rtuPath, setRtuPath] = useState(config.rtuSerialPath || '')
+  const [rtuBaudRate, setRtuBaudRate] = useState(String(config.rtuBaudRate))
+  const [rtuParity, setRtuParity] = useState(config.rtuParity)
+  const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits))
+  const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits))
 
   const handleApply = () => {
-    const port = Number.parseInt(tcpPort, 10);
-    if (Number.isNaN(port) || port < 1 || port > 65535) return;
-    const baudRate = Number.parseInt(rtuBaudRate, 10);
-    if (Number.isNaN(baudRate)) return;
-    const dataBits = Number.parseInt(rtuDataBits, 10);
-    if (Number.isNaN(dataBits)) return;
-    const stopBits = Number.parseInt(rtuStopBits, 10);
-    if (Number.isNaN(stopBits)) return;
+    const port = Number.parseInt(tcpPort, 10)
+    if (Number.isNaN(port) || port < 1 || port > 65535) return
+    // Validate slave ID: must be a valid integer string (digits only, no decimals/scientific notation/whitespace)
+    const trimmedSlaveId = slaveId.trim()
+    if (!/^\d+$/.test(trimmedSlaveId)) return
+    const sid = Number.parseInt(trimmedSlaveId, 10)
+    if (sid < 1 || sid > 247) return
+    const baudRate = Number.parseInt(rtuBaudRate, 10)
+    if (Number.isNaN(baudRate)) return
+    const dataBits = Number.parseInt(rtuDataBits, 10)
+    if (Number.isNaN(dataBits)) return
+    const stopBits = Number.parseInt(rtuStopBits, 10)
+    if (Number.isNaN(stopBits)) return
     onApply({
       tcpPort: port,
+      slaveId: sid,
       rtuSerialPath: rtuPath || null,
       rtuBaudRate: baudRate,
       rtuParity,
       rtuDataBits: dataBits,
-      rtuStopBits: stopBits,
-    });
-  };
+      rtuStopBits: stopBits
+    })
+  }
 
   return (
-    <Card className="w-full rounded-2xl shadow-lg shadow-black/5 bg-surface border border-border/40">
+    <Card className="bg-surface border-border/40 w-full rounded-2xl border shadow-lg shadow-black/5">
       <Card.Header className="px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground text-sm font-bold">
+          <div className="bg-muted text-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
             ⚙
           </div>
           <h2 className="text-base font-semibold">{t('settings.title')}</h2>
         </div>
       </Card.Header>
       <Card.Content className="px-5 py-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* TCP Port */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <label className="text-sm font-semibold text-foreground">
-                {t('settings.tcpPort')}
-              </label>
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
+              <span className="text-foreground text-sm font-semibold">{t('settings.tcpPort')}</span>
             </div>
             <div className="flex items-center gap-3">
               <Input
@@ -111,19 +117,43 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 className="w-32"
                 data-testid="tcp-port-input"
               />
-              <span className="text-xs text-text-muted">
+              <span className="text-text-muted text-xs">
                 {t('settings.default', { port: 502 })}
               </span>
+            </div>
+
+            {/* Slave ID */}
+            <div className="pt-2">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="text-foreground text-sm font-semibold">
+                  {t('settings.slaveId')}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <Input
+                  type="number"
+                  value={slaveId}
+                  onChange={(e) => {
+                    setSlaveId(e.target.value)
+                  }}
+                  min={1}
+                  max={247}
+                  className="w-32"
+                  data-testid="slave-id-input"
+                />
+                <span className="text-text-muted text-xs">{t('settings.slaveIdHint')}</span>
+              </div>
             </div>
           </div>
 
           {/* RTU Serial Port */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <label className="text-sm font-semibold text-foreground">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-foreground text-sm font-semibold">
                 {t('settings.rtuSerialPort')}
-              </label>
+              </span>
             </div>
 
             <Select
@@ -169,7 +199,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-baud-rate"
                 className="w-full"
               >
-                <Label className="text-xs font-medium text-text-muted">
+                <Label className="text-text-muted text-xs font-medium">
                   {t('settings.baudRate')}
                 </Label>
                 <Select.Trigger>
@@ -197,7 +227,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-parity"
                 className="w-full"
               >
-                <Label className="text-xs font-medium text-text-muted">
+                <Label className="text-text-muted text-xs font-medium">
                   {t('settings.parity')}
                 </Label>
                 <Select.Trigger>
@@ -223,7 +253,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-data-bits"
                 className="w-full"
               >
-                <Label className="text-xs font-medium text-text-muted">
+                <Label className="text-text-muted text-xs font-medium">
                   {t('settings.dataBits')}
                 </Label>
                 <Select.Trigger>
@@ -249,7 +279,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-stop-bits"
                 className="w-full"
               >
-                <Label className="text-xs font-medium text-text-muted">
+                <Label className="text-text-muted text-xs font-medium">
                   {t('settings.stopBits')}
                 </Label>
                 <Select.Trigger>
@@ -269,21 +299,21 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
               </Select>
             </div>
 
-            <p className="text-xs text-text-muted">{t('settings.serialPortHint')}</p>
+            <p className="text-text-muted text-xs">{t('settings.serialPortHint')}</p>
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-border flex justify-end">
+        <div className="border-border mt-5 flex justify-end border-t pt-4">
           <Button
             variant="primary"
             onPress={handleApply}
             data-testid="apply-settings"
-            className="px-6 rounded-full"
+            className="rounded-full px-6"
           >
             {t('settings.apply')}
           </Button>
         </div>
       </Card.Content>
     </Card>
-  );
+  )
 }

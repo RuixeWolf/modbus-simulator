@@ -1,4 +1,4 @@
-import { ensureServersStarted } from '@/src/lib/modbus';
+import { ensureServersStarted } from '@/src/lib/modbus'
 
 /**
  * Next.js instrumentation hook.
@@ -7,5 +7,5 @@ import { ensureServersStarted } from '@/src/lib/modbus';
  * instead of waiting for the first HTTP API request (lazy loading).
  */
 export async function register(): Promise<void> {
-  ensureServersStarted();
+  ensureServersStarted()
 }

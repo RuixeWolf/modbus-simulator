@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
 import {
-  isTCPServerRunning,
-  isRTUSerialServerRunning,
   ensureServersStarted,
-} from '@/src/lib/modbus';
+  isRTUSerialServerRunning,
+  isTCPServerRunning
+} from '@/src/lib/modbus'
 
-ensureServersStarted();
+ensureServersStarted()
 
 export async function GET() {
   return NextResponse.json({
     tcp: isTCPServerRunning(),
-    rtu: isRTUSerialServerRunning(),
-  });
+    rtu: isRTUSerialServerRunning()
+  })
 }
