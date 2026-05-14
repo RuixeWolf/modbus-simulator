@@ -67,8 +67,8 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
   const handleApply = () => {
     const port = Number.parseInt(tcpPort, 10)
     if (Number.isNaN(port) || port < 1 || port > 65535) return
-    const sid = Number.parseInt(slaveId, 10)
-    if (Number.isNaN(sid) || sid < 1 || sid > 247) return
+    const sid = Number(slaveId)
+    if (!Number.isInteger(sid) || sid < 1 || sid > 247) return
     const baudRate = Number.parseInt(rtuBaudRate, 10)
     if (Number.isNaN(baudRate)) return
     const dataBits = Number.parseInt(rtuDataBits, 10)

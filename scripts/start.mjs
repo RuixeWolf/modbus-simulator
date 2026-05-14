@@ -76,6 +76,15 @@ const proc = spawn(process.execPath, [serverPath], {
   env: process.env
 })
 
+// Forward termination signals to child process
+process.on('SIGTERM', () => {
+  proc.kill('SIGTERM')
+})
+
+process.on('SIGINT', () => {
+  proc.kill('SIGINT')
+})
+
 proc.on('exit', (code) => {
   process.exit(code ?? 0)
 })
