@@ -134,7 +134,7 @@ export function RegisterTable({
                       <span className="text-foreground">
                         {value}{' '}
                         <span className="text-text-muted">
-                          (0x{(value as number).toString(16).padStart(4, '0')})
+                          (0x{value.toString(16).padStart(4, '0')})
                         </span>
                       </span>
                     )}
