@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
 
   if (body.slaveId !== undefined) {
     const sid = Number(body.slaveId)
-    if (Number.isNaN(sid) || sid < 1 || sid > 247) {
-      return NextResponse.json({ error: 'Invalid slave ID (must be 1-247)' }, { status: 400 })
+    if (!Number.isInteger(sid) || sid < 1 || sid > 247) {
+      return NextResponse.json({ error: 'Invalid slave ID (must be an integer 1-247)' }, { status: 400 })
     }
     updates.slaveId = sid
   }
