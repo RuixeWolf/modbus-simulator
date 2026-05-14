@@ -195,7 +195,7 @@ export function useModbusData() {
       await fetchConfig()
       await fetchSerialPorts()
     }
-    init()
+    void init()
 
     const interval = setInterval(() => {
       void fetchState()
@@ -203,7 +203,9 @@ export function useModbusData() {
       void fetchStatus()
     }, POLL_INTERVAL)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+    }
   }, [fetchState, fetchLogs, fetchStatus, fetchConfig, fetchSerialPorts])
 
   return {

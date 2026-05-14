@@ -133,7 +133,9 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 <Input
                   type="number"
                   value={slaveId}
-                  onChange={(e) => setSlaveId(e.target.value)}
+                  onChange={(e) => {
+                    setSlaveId(e.target.value)
+                  }}
                   min={1}
                   max={247}
                   className="w-32"
