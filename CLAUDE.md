@@ -12,7 +12,8 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 | ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | `pnpm run dev`                                                   | Start Next.js dev server with Turbopack (default port 5000) |
 | `pnpm run build`                                                 | Production build                                            |
-| `pnpm run start`                                                 | Start production server                                     |
+| `pnpm run build:standalone`                                      | Build standalone distributable into `dist/`                 |
+| `pnpm run start`                                                 | Start production server (uses `.next/standalone`)           |
 | `pnpm run lint`                                                  | Run ESLint                                                  |
 | `pnpm run format`                                                | Run Prettier on all files                                   |
 | `pnpm run format-lint`                                           | Run Prettier then ESLint                                    |
@@ -23,7 +24,7 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 | `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
 | `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
 
-`.env.local` sets `PORT=5000` and is loaded automatically by `dotenv-cli` in the dev script.
+The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` environment variable is set. It will also load an optional `.env.local` file if present. CLI flags `--port`, `--tcp-port`, and `--serial-port` override both.
 
 ### Pre-commit Checks
 
@@ -56,19 +57,21 @@ Use `ModbusEngine.getInstance()` everywhere. `resetInstance()` exists **only for
 **TCP Server** (`src/lib/modbus/tcp-server.ts`):
 
 - Uses `modbus-serial`'s `ServerTCP` on a configurable port (default 502)
-- Port can be changed at runtime via settings
+- Configurable Modbus slave ID / unit ID (default 1, range 1–247)
+- Port and slave ID can be changed at runtime via settings
 
 **RTU Serial Server** (`src/lib/modbus/rtu-serial-server.ts`):
 
 - Uses the `serialport` library to open a real serial port (e.g., `COM1`, `/dev/ttyUSB0`)
 - Implements Modbus RTU frame parsing, CRC16 validation, and response generation for function codes 0x01-0x06
 - Frame detection uses silence timeout (~15ms at 9600 baud)
+- Respects the configurable Modbus slave ID (default 1); frames addressed to a different slave ID are ignored
 - Serial path is configurable at runtime via settings; if no path is set, the RTU server does not start
 
 **Server Manager** (`src/lib/modbus/index.ts`):
 
 - `ensureServersStarted()` — called at module level in API routes; starts TCP server and RTU serial server (if configured)
-- `getConfig()` / `setConfig()` — read/write `tcpPort`, `rtuSerialPath`, `rtuBaudRate`, `rtuParity`, `rtuDataBits`, `rtuStopBits`
+- `getConfig()` / `setConfig()` — read/write `tcpPort`, `slaveId`, `rtuSerialPath`, `rtuBaudRate`, `rtuParity`, `rtuDataBits`, `rtuStopBits`
 - `restartServers()` — stops and restarts both servers with current config
 - Uses `globalThis.__modbus_initialized__` to survive Next.js HMR / module reloads in dev mode
 
@@ -86,8 +89,8 @@ All routes live under `app/api/` and call `ensureServersStarted()` on import:
 - `POST /api/registers` — Write coil or holding register (body: `{ registerType, address, value }`)
 - `GET /api/logs` — All communication logs
 - `GET /api/status` — `{ tcp: boolean, rtu: boolean }`
-- `GET /api/config` — `{ tcpPort, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits }`
-- `POST /api/config` — Update config and restart servers (body: any subset of config fields)
+- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits }`
+- `POST /api/config` — Update config and restart servers (body: any subset of config fields; `slaveId` must be 1–247)
 - `GET /api/serial-ports` — List available serial ports from `SerialPort.list()`
 
 ### Frontend Layer
@@ -133,6 +136,6 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - The `modbus-serial` `ServerTCP` vector callbacks use Node-style `(err, value)` signatures
 - Out-of-range Modbus requests return proper Modbus exception codes via the library; errors are also logged in-engine via `addErrorLog()`
 - The old `src/lib/modbus/rtu-server.ts` (TCP bridge on port 5021) is no longer used; RTU is now handled by `rtu-serial-server.ts`
-- `next.config.ts` enables `reactCompiler: true`
+- `next.config.ts` enables `reactCompiler: true` and `output: 'standalone'`
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
 - ESLint uses flat config (`eslint.config.mjs`) with typescript-eslint, @eslint-react, eslint-plugin-react-hooks, and @next/eslint-plugin-next

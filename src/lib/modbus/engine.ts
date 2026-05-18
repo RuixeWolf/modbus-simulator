@@ -24,6 +24,13 @@ export interface ModbusState {
   inputRegisters: number[]
 }
 
+/** Log type filter configuration. */
+export interface LogFilterConfig {
+  read: boolean
+  write: boolean
+  error: boolean
+}
+
 /** Number of coils allocated in the engine. */
 const COIL_COUNT = 1000
 /** Number of discrete inputs allocated in the engine. */
@@ -54,6 +61,7 @@ export class ModbusEngine extends EventEmitter {
   private holdingRegisters: number[]
   private inputRegisters: number[]
   private logs: ModbusLogEntry[]
+  private logFilter: LogFilterConfig
 
   private constructor() {
     super()
@@ -62,6 +70,7 @@ export class ModbusEngine extends EventEmitter {
     this.holdingRegisters = new Array(HOLDING_REGISTER_COUNT).fill(0)
     this.inputRegisters = new Array(INPUT_REGISTER_COUNT).fill(0)
     this.logs = []
+    this.logFilter = { read: true, write: true, error: true }
   }
 
   /**
@@ -355,13 +364,32 @@ export class ModbusEngine extends EventEmitter {
 
   // Logs
 
-  /** Appends an entry and emits `'log'`. Drops oldest entry when capacity is exceeded. */
+  /** Appends an entry and emits `'log'`. Drops oldest entry when capacity is exceeded.
+   *  Respects the current {@link LogFilterConfig} — disabled types are silently ignored. */
   private addLog(entry: ModbusLogEntry): void {
+    if (!this.logFilter[entry.type]) return
     this.logs.push(entry)
     if (this.logs.length > MAX_LOGS) {
       this.logs.shift()
     }
     this.emit('log', entry)
+  }
+
+  /**
+   * @returns A copy of the current log filter configuration.
+   */
+  getLogFilter(): LogFilterConfig {
+    return { ...this.logFilter }
+  }
+
+  /**
+   * Updates which log types are recorded.
+   * @param filter – Partial or complete filter config.
+   */
+  setLogFilter(filter: Partial<LogFilterConfig>): void {
+    if (filter.read !== undefined) this.logFilter.read = filter.read
+    if (filter.write !== undefined) this.logFilter.write = filter.write
+    if (filter.error !== undefined) this.logFilter.error = filter.error
   }
 
   /**

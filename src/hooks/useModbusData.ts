@@ -44,6 +44,13 @@ export interface SerialPortInfo {
   serialNumber: string | null
 }
 
+/** Log type filter configuration. */
+export interface LogFilterConfig {
+  read: boolean
+  write: boolean
+  error: boolean
+}
+
 /** Polling interval in milliseconds for register / status / log updates. */
 const POLL_INTERVAL = 1000
 
@@ -72,6 +79,11 @@ export function useModbusData() {
     rtuStopBits: 1
   })
   const [serialPorts, setSerialPorts] = useState<SerialPortInfo[]>([])
+  const [logFilter, setLogFilter] = useState<LogFilterConfig>({
+    read: true,
+    write: true,
+    error: true
+  })
   const [error, setError] = useState<string | null>(null)
 
   const fetchState = useCallback(async () => {
@@ -132,6 +144,19 @@ export function useModbusData() {
     }
   }, [])
 
+  const fetchLogFilter = useCallback(async () => {
+    try {
+      const res = await fetch('/api/config')
+      if (!res.ok) throw new Error('Failed to fetch config')
+      const data = await res.json()
+      if (data.logFilter) {
+        setLogFilter(data.logFilter)
+      }
+    } catch {
+      // silently fail for log filter
+    }
+  }, [])
+
   /**
    * Writes a single coil or holding register via POST /api/registers,
    * then refreshes state and logs.
@@ -187,6 +212,30 @@ export function useModbusData() {
     [fetchConfig, fetchStatus]
   )
 
+  /**
+   * Updates the log filter via POST /api/config.
+   * @param newFilter – Partial or complete log filter config.
+   */
+  const updateLogFilter = useCallback(async (newFilter: Partial<LogFilterConfig>) => {
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logFilter: newFilter })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Log filter update failed')
+      }
+      const data = await res.json()
+      if (data.logFilter) {
+        setLogFilter(data.logFilter)
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [])
+
   useEffect(() => {
     const init = async () => {
       await fetchState()
@@ -194,6 +243,7 @@ export function useModbusData() {
       await fetchStatus()
       await fetchConfig()
       await fetchSerialPorts()
+      await fetchLogFilter()
     }
     void init()
 
@@ -206,7 +256,7 @@ export function useModbusData() {
     return () => {
       clearInterval(interval)
     }
-  }, [fetchState, fetchLogs, fetchStatus, fetchConfig, fetchSerialPorts])
+  }, [fetchState, fetchLogs, fetchStatus, fetchConfig, fetchSerialPorts, fetchLogFilter])
 
   return {
     state,
@@ -214,9 +264,11 @@ export function useModbusData() {
     status,
     config,
     serialPorts,
+    logFilter,
     error,
     writeRegister,
     updateConfig,
+    updateLogFilter,
     refresh: fetchState
   }
 }

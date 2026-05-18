@@ -54,7 +54,8 @@
     "noLogs": "暂无日志...",
     "read": "读取",
     "write": "写入",
-    "error": "错误"
+    "error": "错误",
+    "filter": "过滤"
   },
   "common": {
     "close": "关闭"

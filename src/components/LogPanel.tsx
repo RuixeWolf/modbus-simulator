@@ -1,13 +1,17 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
-import type { ModbusLogEntry } from '@/src/hooks/useModbusData'
-import { Button, Modal, ScrollShadow } from '@heroui/react'
+import type { LogFilterConfig, ModbusLogEntry } from '@/src/hooks/useModbusData'
+import { Button, Modal, ScrollShadow, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 
 /** Props for {@link LogPanel}. */
 interface LogPanelProps {
   /** Chronological log entries; rendered newest-first. */
   logs: ModbusLogEntry[]
+  /** Current log filter configuration. */
+  logFilter: LogFilterConfig
+  /** Called when the user toggles a log type. */
+  onFilterChange: (filter: Partial<LogFilterConfig>) => void
 }
 
 /**
@@ -15,8 +19,22 @@ interface LogPanelProps {
  *
  * @returns A trigger button that opens a modal dialog containing the log list.
  */
-export function LogPanel({ logs }: Readonly<LogPanelProps>) {
+export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelProps>) {
   const { t } = useTranslation()
+
+  const selectedKeys = new Set(
+    Object.entries(logFilter)
+      .filter(([, enabled]) => enabled)
+      .map(([type]) => type)
+  )
+
+  const handleSelectionChange = (keys: Set<string | number>) => {
+    onFilterChange({
+      read: keys.has('read'),
+      write: keys.has('write'),
+      error: keys.has('error')
+    })
+  }
 
   const getTypeBadge = (type: string) => {
     switch (type) {
@@ -66,6 +84,36 @@ export function LogPanel({ logs }: Readonly<LogPanelProps>) {
               </p>
             </Modal.Header>
             <Modal.Body className="px-0 py-0">
+              <div className="border-border flex items-center gap-3 border-b px-5 py-3">
+                <span className="text-text-muted text-xs font-medium">{t('logs.filter')}:</span>
+                <ToggleButtonGroup
+                  selectionMode="multiple"
+                  selectedKeys={selectedKeys}
+                  onSelectionChange={handleSelectionChange}
+                  className="bg-muted/50 inline-flex rounded-lg p-0.5 gap-1"
+                >
+                  <ToggleButton
+                    id="read"
+                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
+                  >
+                    {t('logs.read')}
+                  </ToggleButton>
+                  <ToggleButtonGroup.Separator className="bg-border my-auto h-4 w-px" />
+                  <ToggleButton
+                    id="write"
+                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
+                  >
+                    {t('logs.write')}
+                  </ToggleButton>
+                  <ToggleButtonGroup.Separator className="bg-border my-auto h-4 w-px" />
+                  <ToggleButton
+                    id="error"
+                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
+                  >
+                    {t('logs.error')}
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </div>
               <ScrollShadow className="max-h-[60vh] w-full">
                 <div className="font-mono text-sm" data-testid="log-panel">
                   {logs.length === 0 && (

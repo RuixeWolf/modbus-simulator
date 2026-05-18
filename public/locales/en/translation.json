@@ -54,7 +54,8 @@
     "noLogs": "No logs yet...",
     "read": "READ",
     "write": "WRITE",
-    "error": "ERROR"
+    "error": "ERROR",
+    "filter": "Filter"
   },
   "common": {
     "close": "Close"

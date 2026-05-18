@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureServersStarted, getConfig, restartServers, setConfig } from '@/src/lib/modbus'
+import { ModbusEngine } from '@/src/lib/modbus/engine'
 
 ensureServersStarted()
 
 export async function GET() {
   const config = getConfig()
-  return NextResponse.json(config)
+  const engine = ModbusEngine.getInstance()
+  return NextResponse.json({ ...config, logFilter: engine.getLogFilter() })
 }
 
 export async function POST(request: NextRequest) {
@@ -77,8 +79,18 @@ export async function POST(request: NextRequest) {
     updates.rtuStopBits = sb
   }
 
+  if (body.logFilter !== undefined && typeof body.logFilter === 'object') {
+    const engine = ModbusEngine.getInstance()
+    engine.setLogFilter({
+      read: body.logFilter.read,
+      write: body.logFilter.write,
+      error: body.logFilter.error
+    })
+  }
+
   setConfig(updates)
   restartServers()
 
-  return NextResponse.json({ success: true, config: getConfig() })
+  const engine = ModbusEngine.getInstance()
+  return NextResponse.json({ success: true, config: getConfig(), logFilter: engine.getLogFilter() })
 }

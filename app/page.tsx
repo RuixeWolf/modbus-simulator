@@ -22,8 +22,18 @@ function detectLanguage(): string {
 
 export default function Home() {
   const { t, i18n } = useTranslation()
-  const { state, logs, status, config, serialPorts, error, writeRegister, updateConfig } =
-    useModbusData()
+  const {
+    state,
+    logs,
+    status,
+    config,
+    serialPorts,
+    logFilter,
+    error,
+    writeRegister,
+    updateConfig,
+    updateLogFilter
+  } = useModbusData()
 
   useEffect(() => {
     const lng = detectLanguage()
@@ -47,7 +57,7 @@ export default function Home() {
             tcpPort={config.tcpPort}
             rtuPath={config.rtuSerialPath}
           />
-          <LogPanel logs={logs} />
+          <LogPanel logs={logs} logFilter={logFilter} onFilterChange={updateLogFilter} />
           <ThemeToggle />
           <LanguageSwitcher />
         </div>
