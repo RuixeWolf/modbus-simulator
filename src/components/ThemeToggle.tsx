@@ -12,10 +12,18 @@ import { addCollection, Icon } from '@iconify/react/offline'
  */
 addCollection(lucideIcons)
 
-const THEME_ICONS: Record<'light' | 'dark' | 'system', string> = {
-  light: 'lucide:sun',
-  dark: 'lucide:moon',
-  system: 'lucide:monitor'
+/** Resolve icon name from trusted theme literals without dynamic object lookup. */
+function getThemeIcon(themeKey: 'light' | 'dark' | 'system'): string {
+  switch (themeKey) {
+    case 'light':
+      return 'lucide:sun'
+    case 'dark':
+      return 'lucide:moon'
+    case 'system':
+      return 'lucide:monitor'
+    default:
+      return 'lucide:monitor'
+  }
 }
 
 /**
@@ -73,7 +81,7 @@ export function ThemeToggle() {
                 : 'text-text-muted hover:text-foreground'
             }`}
           >
-            <Icon icon={THEME_ICONS[key]} width={16} height={16} />
+            <Icon icon={getThemeIcon(key)} width={16} height={16} />
           </button>
         )
       })}

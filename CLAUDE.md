@@ -26,7 +26,7 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 
 The dev script (`scripts/dev.mjs`) behavior:
 
-- Defaults to port `5000` when `PORT` (Network Port environment variable) is unset.
+- Defaults to port `5000` when the `PORT` environment variable (network listening port) is unset.
 - Loads an optional `.env.local` file when present.
 - Allows CLI overrides via `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open`.
 
@@ -59,7 +59,7 @@ Use `ModbusEngine.getInstance()` everywhere.
 - `resetInstance()` exists **only for unit tests** to avoid singleton leakage between tests.
 - The engine instance is stored on `globalThis.__modbus_engine_instance__`.
 - The global storage approach keeps the instance alive across Next.js Hot Module Replacement (HMR) / module reloads in dev mode.
-- This mirrors the persistence behavior used by the server layer.
+- The singleton persistence strategy mirrors the behavior used by the server layer.
 
 ### Server Layer: TCP + Serial RTU
 
