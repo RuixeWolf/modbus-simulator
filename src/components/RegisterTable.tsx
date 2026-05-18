@@ -222,7 +222,9 @@ export function RegisterTable({
                           <Button
                             size="sm"
                             variant={value ? 'primary' : 'ghost'}
-                            onPress={() => handleCoilToggle(address, value as boolean)}
+                            onPress={() => {
+                              handleCoilToggle(address, value as boolean)
+                            }}
                             data-testid={`coil-switch-${address}`}
                           >
                             {value ? 'ON' : 'OFF'}
@@ -243,7 +245,9 @@ export function RegisterTable({
                             />
                             <Button
                               size="sm"
-                              onPress={() => handleRegisterSubmit(address)}
+                              onPress={() => {
+                                handleRegisterSubmit(address)
+                              }}
                               data-testid={`register-submit-${address}`}
                             >
                               {t('registerTable.set')}

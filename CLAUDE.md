@@ -24,7 +24,11 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 | `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
 | `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
 
-The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` (network port) environment variable is set. It also loads an optional `.env.local` file when present. CLI flags `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open` override both.
+The dev script (`scripts/dev.mjs`) behavior:
+
+- Defaults to port `5000` when `PORT` (Network Port environment variable) is unset.
+- Loads an optional `.env.local` file when present.
+- Allows CLI overrides via `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open`.
 
 ### Pre-commit Checks
 
@@ -50,7 +54,12 @@ The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` (network
 - 10,000 input registers (`number[]`, 16-bit values)
 - Up to 1,000 in-memory communication logs
 
-Use `ModbusEngine.getInstance()` everywhere. `resetInstance()` exists **only for unit tests** to avoid singleton leakage between tests. The engine instance is stored on `globalThis.__modbus_engine_instance__` so it survives Next.js Hot Module Replacement (HMR) / module reloads in dev mode, just like the server layer.
+Use `ModbusEngine.getInstance()` everywhere.
+
+- `resetInstance()` exists **only for unit tests** to avoid singleton leakage between tests.
+- The engine instance is stored on `globalThis.__modbus_engine_instance__`.
+- The global storage approach keeps the instance alive across Next.js Hot Module Replacement (HMR) / module reloads in dev mode.
+- This mirrors the persistence behavior used by the server layer.
 
 ### Server Layer: TCP + Serial RTU
 
@@ -112,7 +121,7 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - Use `@import "tailwindcss"` in `app/globals.css`.
 - This project does not use `tailwind.config.js`.
 - Theme customization is done with `@theme inline` in CSS.
-- CSS variables (`--background`, `--foreground`, `--surface`, etc.) drive both light and dark modes.
+- CSS variables `--background`, `--foreground`, `--accent`, `--accent-foreground`, `--surface`, `--surface-secondary`, `--muted`, `--default`, and `--border` drive both light and dark modes.
 - **Critical**: `@import "@heroui/styles"` is also required in `globals.css` so HeroUI v3 components render correctly.
 
 **Layout**:

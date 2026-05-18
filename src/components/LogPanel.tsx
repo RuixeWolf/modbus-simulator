@@ -89,9 +89,9 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
                   <ToggleButtonGroup
                     selectionMode="multiple"
                     selectedKeys={selectedKeys}
-                    onSelectionChange={(keys) =>
+                    onSelectionChange={(keys) => {
                       onFilterChange(toLogFilterConfig(keys as Set<string | number>))
-                    }
+                    }}
                   >
                     <ToggleButton id="read">{t('logs.read')}</ToggleButton>
                     <ToggleButtonGroup.Separator />

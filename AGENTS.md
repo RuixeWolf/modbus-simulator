@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Modbus Simulator — Agent Guidelines
 
-A Modbus Transmission Control Protocol (TCP) / RTU Serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
+A Modbus Transmission Control Protocol (TCP) / Remote Terminal Unit (RTU) serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
 
 For full project details see [CLAUDE.md](CLAUDE.md) and [README.md](README.md).
 
