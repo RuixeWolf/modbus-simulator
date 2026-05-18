@@ -24,7 +24,7 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 | `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
 | `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
 
-The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` environment variable is set. It will also load an optional `.env.local` file if present. CLI flags `--port`, `--tcp-port`, and `--serial-port` override both.
+The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` environment variable is set. It will also load an optional `.env.local` file if present. CLI flags `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open` override both.
 
 ### Pre-commit Checks
 
@@ -50,7 +50,7 @@ The dev script (`scripts/dev.mjs`) defaults to port `5000` if no `PORT` environm
 - 10,000 input registers (`number[]`, 16-bit values)
 - Up to 1,000 in-memory communication logs
 
-Use `ModbusEngine.getInstance()` everywhere. `resetInstance()` exists **only for unit tests** to avoid singleton leakage between tests.
+Use `ModbusEngine.getInstance()` everywhere. `resetInstance()` exists **only for unit tests** to avoid singleton leakage between tests. The engine instance is stored on `globalThis.__modbus_engine_instance__` so it survives Next.js HMR / module reloads in dev mode, just like the server layer.
 
 ### Server Layer: TCP + Serial RTU
 
@@ -89,9 +89,11 @@ All routes live under `app/api/` and call `ensureServersStarted()` on import:
 - `POST /api/registers` — Write coil or holding register (body: `{ registerType, address, value }`)
 - `GET /api/logs` — All communication logs
 - `GET /api/status` — `{ tcp: boolean, rtu: boolean }`
-- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits }`
-- `POST /api/config` — Update config and restart servers (body: any subset of config fields; `slaveId` must be 1–247)
+- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter }`
+- `POST /api/config` — Update config and restart servers (body: any subset of config fields; `slaveId` must be 1–247; `logFilter` controls which log types are recorded)
 - `GET /api/serial-ports` — List available serial ports from `SerialPort.list()`
+
+All API routes export `dynamic = 'force-dynamic'` to prevent Next.js from attempting static optimization.
 
 ### Frontend Layer
 
@@ -99,15 +101,15 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 
 **HeroUI v3 specifics** (not NextUI v2):
 
-- Compound components: `Card.Header`, `Card.Content` — no `CardBody`/`CardHeader`
+- Compound components: `Card.Header`, `Card.Content` — no `CardBody`/`CardHeader`; `Tabs.ListContainer`, `Tabs.List`, `Tabs.Tab`, `Tabs.Indicator`, `Tabs.Panel` for tabs
 - No global Provider needed
 - Native HTML `<table>` is used instead of HeroUI `Table` because HeroUI Table requires a react-aria collection context that breaks outside specific setups
 - Native HTML `<select>` is used for dropdowns instead of HeroUI `Select` (which uses react-aria-components compound pattern)
 - Coil toggles use HeroUI `Button` with ON/OFF text, not `Switch` (Switch required children for visibility in test snapshots)
 
-**Tailwind CSS v4**: Uses `@import "tailwindcss"` in `app/globals.css`. No `tailwind.config.js` — theme customization is done via `@theme inline` in CSS. Custom CSS variables (`--background`, `--foreground`, `--surface`, etc.) drive both light and dark modes.
+**Tailwind CSS v4**: Uses `@import "tailwindcss"` in `app/globals.css`. No `tailwind.config.js` — theme customization is done via `@theme inline` in CSS. Custom CSS variables (`--background`, `--foreground`, `--surface`, etc.) drive both light and dark modes. **Critical**: `@import "@heroui/styles"` is also required in `globals.css` for HeroUI v3 components to render correctly.
 
-**Layout**: `app/layout.tsx` uses `flex flex-col items-stretch` on `body` to ensure children span the full viewport width. `app/page.tsx` uses `min-h-screen w-full` for the root container. A theme script in `<head>` reads `localStorage` and applies the `.dark` class before React hydrates to prevent flash.
+**Layout**: `app/layout.tsx` uses `flex flex-col items-stretch` on `body` to ensure children span the full viewport width. `app/page.tsx` uses `min-h-screen w-full` for the root container. The `<html>` tag has `suppressHydrationWarning` because of the theme script. A theme script in `<head>` reads `localStorage` and sets both the `data-theme` attribute (drives HeroUI styles) and the `.dark` class (drives Tailwind's `@custom-variant dark`) before React hydrates to prevent flash.
 
 **i18n**: Translations are bundled at build time in `src/i18n/index.ts` (English and Chinese). No HTTP backend — JSON files from `public/locales/` are imported directly. `app/page.tsx` imports `@/src/i18n` to initialize before rendering.
 
@@ -139,3 +141,4 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - `next.config.ts` enables `reactCompiler: true` and `output: 'standalone'`
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
 - ESLint uses flat config (`eslint.config.mjs`) with typescript-eslint, @eslint-react, eslint-plugin-react-hooks, and @next/eslint-plugin-next
+- `pnpm run build:standalone` creates a distributable in `dist/{name}_{version}/` with `cli.mjs` as the entry point; it fixes PNPM symlinks and strips devDependencies so the output runs without `npm install`

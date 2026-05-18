@@ -58,7 +58,7 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
         )
       default:
         return (
-          <span className="bg-muted text-text-muted inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
+          <span className="bg-default text-text-muted inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
             {type.toUpperCase()}
           </span>
         )
@@ -69,7 +69,7 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
     <Modal>
       <Button variant="secondary">
         {t('logs.title')}
-        <span className="text-text-muted bg-muted ml-2 rounded-full px-2 py-0.5 font-mono text-xs">
+        <span className="text-text-muted bg-default ml-2 rounded-full px-2 py-0.5 font-mono text-xs">
           {logs.length}
         </span>
       </Button>
@@ -77,43 +77,29 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
         <Modal.Container size="lg" scroll="inside">
           <Modal.Dialog className="sm:max-w-3xl">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="border-b">
               <Modal.Heading>{t('logs.title')}</Modal.Heading>
-              <p className="text-muted text-sm leading-5">
-                {t('logs.entries', { count: logs.length })}
-              </p>
-            </Modal.Header>
-            <Modal.Body className="px-0 py-0">
-              <div className="border-border flex items-center gap-3 border-b px-5 py-3">
-                <span className="text-text-muted text-xs font-medium">{t('logs.filter')}:</span>
-                <ToggleButtonGroup
-                  selectionMode="multiple"
-                  selectedKeys={selectedKeys}
-                  onSelectionChange={handleSelectionChange}
-                  className="bg-muted/50 inline-flex rounded-lg p-0.5 gap-1"
-                >
-                  <ToggleButton
-                    id="read"
-                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
+              <div className="flex flex-col gap-2 px-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 py-3">
+                  <span className="text-text-muted text-xs font-medium">{t('logs.filter')}:</span>
+                  <ToggleButtonGroup
+                    selectionMode="multiple"
+                    selectedKeys={selectedKeys}
+                    onSelectionChange={handleSelectionChange}
                   >
-                    {t('logs.read')}
-                  </ToggleButton>
-                  <ToggleButtonGroup.Separator className="bg-border my-auto h-4 w-px" />
-                  <ToggleButton
-                    id="write"
-                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
-                  >
-                    {t('logs.write')}
-                  </ToggleButton>
-                  <ToggleButtonGroup.Separator className="bg-border my-auto h-4 w-px" />
-                  <ToggleButton
-                    id="error"
-                    className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground rounded-md px-3 py-1 text-xs font-medium transition-all"
-                  >
-                    {t('logs.error')}
-                  </ToggleButton>
-                </ToggleButtonGroup>
+                    <ToggleButton id="read">{t('logs.read')}</ToggleButton>
+                    <ToggleButtonGroup.Separator />
+                    <ToggleButton id="write">{t('logs.write')}</ToggleButton>
+                    <ToggleButtonGroup.Separator />
+                    <ToggleButton id="error">{t('logs.error')}</ToggleButton>
+                  </ToggleButtonGroup>
+                </div>
+                <div className="text-muted pb-2 text-sm leading-5 sm:pb-0">
+                  {t('logs.entries', { count: logs.length })}
+                </div>
               </div>
+            </Modal.Header>
+            <Modal.Body className="p-0 ">
               <ScrollShadow className="max-h-[60vh] w-full">
                 <div className="font-mono text-sm" data-testid="log-panel">
                   {logs.length === 0 && (
@@ -125,7 +111,7 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
                     <div
                       key={`${log.timestamp}-${i}`}
                       className={`flex items-center gap-3 px-5 py-1.5 ${
-                        i % 2 === 0 ? 'bg-muted/20' : ''
+                        i % 2 === 0 ? 'bg-default/20' : ''
                       }`}
                     >
                       <span className="text-text-muted w-16 shrink-0 font-mono text-[11px]">

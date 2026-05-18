@@ -32,7 +32,7 @@ export function ThemeToggle() {
   // Stable placeholder during SSR / before hydration
   if (!mounted) {
     return (
-      <div className="bg-muted/50 flex items-center gap-1 rounded-full p-1">
+      <div className="bg-default/50 flex items-center gap-1 rounded-full p-1">
         <div className="bg-surface flex h-8 w-8 items-center justify-center rounded-full shadow-sm">
           <Icon icon="lucide:sun" width={16} height={16} className="text-foreground" />
         </div>
@@ -46,9 +46,15 @@ export function ThemeToggle() {
     )
   }
 
+  const getThemeIcon = (key: 'light' | 'dark' | 'system') => {
+    if (key === 'light') return 'lucide:sun'
+    if (key === 'dark') return 'lucide:moon'
+    return 'lucide:monitor'
+  }
+
   return (
     <div
-      className="bg-muted/50 flex flex-row gap-1 rounded-full p-1"
+      className="bg-default/50 flex flex-row gap-1 rounded-full p-1"
       role="radiogroup"
       aria-label="Theme"
     >
@@ -67,13 +73,7 @@ export function ThemeToggle() {
                 : 'text-text-muted hover:text-foreground'
             }`}
           >
-            <Icon
-              icon={
-                key === 'light' ? 'lucide:sun' : key === 'dark' ? 'lucide:moon' : 'lucide:monitor'
-              }
-              width={16}
-              height={16}
-            />
+            <Icon icon={getThemeIcon(key)} width={16} height={16} />
           </button>
         )
       })}

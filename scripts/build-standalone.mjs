@@ -4,7 +4,7 @@
  * Build script that produces a standalone distributable output.
  *
  * 1. Runs `next build` with standalone output enabled.
- * 2. Copies `scripts/start.mjs` into `.next/standalone/` as the user entry point.
+ * 2. Copies `scripts/cli.mjs` into `.next/standalone/` as the user entry point.
  * 3. Copies public and static assets.
  * 4. Fixes PNPM symlink structures in `.next/standalone/node_modules` so the
  *    output works without reinstalling dependencies.
@@ -27,8 +27,8 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = dirname(__dirname)
 const standaloneDir = join(projectRoot, '.next', 'standalone')
-const startSource = join(projectRoot, 'scripts', 'start.mjs')
-const startTarget = join(standaloneDir, 'start.mjs')
+const startSource = join(projectRoot, 'scripts', 'cli.mjs')
+const startTarget = join(standaloneDir, 'cli.mjs')
 
 const pkg = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'))
 const distName = `${pkg.name}_${pkg.version}`
@@ -56,7 +56,7 @@ if (!existsSync(startSource)) {
 
 copyFileSync(startSource, startTarget)
 
-// Copy scripts/lib helpers that start.mjs depends on
+// Copy scripts/lib helpers that cli.mjs depends on
 const libSource = join(projectRoot, 'scripts', 'lib')
 const libTarget = join(standaloneDir, 'lib')
 if (existsSync(libSource)) {
@@ -107,11 +107,13 @@ console.log('\n✅ Standalone build complete!\n')
 console.log(`Output directory: ${distDir}\n`)
 console.log('To run the simulator:')
 console.log(`  cd ${distDir}`)
-console.log('  node start.mjs [options]\n')
+console.log('  node cli.mjs [options]\n')
 console.log('Options:')
 console.log('  -p, --port {number}        HTTP server port (default: 5000)')
 console.log('  -t, --tcp-port {number}    Modbus TCP listening port (default: 502)')
 console.log('  -s, --serial-port {path}   Modbus RTU serial port (e.g., COM1, /dev/ttyUSB0)')
+console.log('  -i, --slave-id {number}    Modbus device slave ID (default: 1, range: 1-247)')
+console.log('  -o, --open                 Open browser automatically after startup')
 console.log('  -h, --help                 Show help message\n')
 
 // ---------------------------------------------------------------------------

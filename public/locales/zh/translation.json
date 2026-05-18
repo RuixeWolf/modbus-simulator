@@ -46,7 +46,9 @@
     "false": "假",
     "on": "开",
     "off": "关",
-    "set": "设置"
+    "set": "设置",
+    "gotoAddress": "跳转到地址",
+    "goto": "跳转"
   },
   "logs": {
     "title": "通信日志",

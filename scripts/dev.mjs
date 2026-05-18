@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { existsSync, readFileSync } from './lib/fs-helpers.mjs'
+import { openBrowser } from './lib/open-browser.mjs'
 import { HELP_TEXT, parseArgs } from './lib/parse-args.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -47,14 +48,22 @@ if (args.port) process.env.PORT = String(args.port)
 else if (!process.env.PORT) process.env.PORT = '5000'
 if (args.tcpPort) process.env.MODBUS_TCP_PORT = String(args.tcpPort)
 if (args.serialPort) process.env.MODBUS_RTU_SERIAL_PATH = args.serialPort
+if (args.slaveId) process.env.MODBUS_SLAVE_ID = String(args.slaveId)
 
 const nextBin = join(projectRoot, 'node_modules', 'next', 'dist', 'bin', 'next')
+
+// Explicitly copy env to avoid any proxy/serialization issues with process.env
+const env = { ...process.env }
 
 const proc = spawn(process.execPath, [nextBin, 'dev'], {
   stdio: 'inherit',
   cwd: projectRoot,
-  env: process.env
+  env
 })
+
+if (args.open) {
+  openBrowser(`http://localhost:${process.env.PORT || '5000'}`)
+}
 
 proc.on('exit', (code) => {
   process.exit(code ?? 0)

@@ -137,6 +137,10 @@ test.describe('Modbus Simulator E2E', () => {
     // Wait for log to appear via polling
     await page.waitForTimeout(2000)
 
+    // Open the communication logs modal
+    await page.getByRole('button', { name: /Communication Logs/i }).click()
+    await page.waitForTimeout(300)
+
     // Check that the log panel shows an error
     const logPanel = page.getByTestId('log-panel')
     await expect(logPanel).toContainText('ERROR', { timeout: 10000 })

@@ -9,8 +9,6 @@ const g = globalThis as typeof globalThis & {
 
 /** Active TCP server instance, or null when stopped. */
 let server: ServerTCP | null = g.__modbus_tcp_server__ ?? null
-/** Whether the server is currently accepting connections. */
-let isRunning: boolean = g.__modbus_tcp_running__ ?? false
 /** Port the server was most recently started on. */
 let currentPort: number = g.__modbus_tcp_port__ ?? 502
 
@@ -154,7 +152,7 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
   }
 
   server = new ServerTCP(vector, { host: '0.0.0.0', port: currentPort, debug: false, unitID })
-  isRunning = true
+  g.__modbus_tcp_running__ = true
   g.__modbus_tcp_server__ = server
   g.__modbus_tcp_running__ = true
   g.__modbus_tcp_port__ = currentPort
@@ -170,7 +168,7 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
 /** Stops and clears the active TCP server, if any. */
 export function stopTCPServer(): void {
   if (server) {
-    isRunning = false
+    g.__modbus_tcp_running__ = false
     g.__modbus_tcp_running__ = false
     server.close()
     server = null
@@ -181,10 +179,10 @@ export function stopTCPServer(): void {
 
 /** @returns Whether the TCP server is currently running. */
 export function isTCPServerRunning(): boolean {
-  return isRunning
+  return g.__modbus_tcp_running__ ?? false
 }
 
 /** @returns The port the TCP server was most recently started on. */
 export function getTCPPort(): number {
-  return currentPort
+  return g.__modbus_tcp_port__ ?? 502
 }

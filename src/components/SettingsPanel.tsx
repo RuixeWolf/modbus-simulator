@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, Input, Label, ListBox, Select } from '@heroui/react'
 import type { Key } from '@heroui/react'
+import { Icon } from '@iconify/react'
 
 /** Metadata for an available serial port. */
 interface SerialPortInfo {
@@ -12,13 +13,16 @@ interface SerialPortInfo {
   serialNumber: string | null
 }
 
+/** Serial port RTU Parity options. */
+type RtuParity = 'none' | 'even' | 'odd'
+
 /** Mutable server configuration. */
 interface ServerConfig {
   tcpPort: number
   slaveId: number
   rtuSerialPath: string | null
   rtuBaudRate: number
-  rtuParity: 'none' | 'even' | 'odd'
+  rtuParity: RtuParity
   rtuDataBits: number
   rtuStopBits: number
 }
@@ -37,7 +41,7 @@ interface SettingsPanelProps {
 const BAUD_RATES = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]
 
 /** Available parity options. */
-const PARITY_OPTIONS: { value: 'none' | 'even' | 'odd'; labelKey: string }[] = [
+const PARITY_OPTIONS: { value: RtuParity; labelKey: string }[] = [
   { value: 'none', labelKey: 'settings.parityNone' },
   { value: 'even', labelKey: 'settings.parityEven' },
   { value: 'odd', labelKey: 'settings.parityOdd' }
@@ -90,17 +94,17 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
   }
 
   return (
-    <Card className="bg-surface border-border/40 w-full rounded-2xl border shadow-lg shadow-black/5">
-      <Card.Header className="px-5 py-4">
+    <Card className="w-full bg-default/50 shadow-none">
+      <Card.Header>
         <div className="flex items-center gap-3">
-          <div className="bg-muted text-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
-            ⚙
+          <div className="bg-default text-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
+            <Icon icon="lucide:settings" className="h-4 w-4" />
           </div>
           <h2 className="text-base font-semibold">{t('settings.title')}</h2>
         </div>
       </Card.Header>
-      <Card.Content className="px-5 py-5">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <Card.Content>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 px-2">
           {/* TCP Port */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -191,7 +195,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
             </Select>
 
             {/* Serial Parameters */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
               {/* Baud Rate */}
               <Select
                 value={rtuBaudRate}
@@ -199,9 +203,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-baud-rate"
                 className="w-full"
               >
-                <Label className="text-text-muted text-xs font-medium">
-                  {t('settings.baudRate')}
-                </Label>
+                <Label>{t('settings.baudRate')}</Label>
                 <Select.Trigger>
                   <Select.Value />
                   <Select.Indicator />
@@ -227,9 +229,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-parity"
                 className="w-full"
               >
-                <Label className="text-text-muted text-xs font-medium">
-                  {t('settings.parity')}
-                </Label>
+                <Label>{t('settings.parity')}</Label>
                 <Select.Trigger>
                   <Select.Value />
                   <Select.Indicator />
@@ -253,9 +253,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-data-bits"
                 className="w-full"
               >
-                <Label className="text-text-muted text-xs font-medium">
-                  {t('settings.dataBits')}
-                </Label>
+                <Label>{t('settings.dataBits')}</Label>
                 <Select.Trigger>
                   <Select.Value />
                   <Select.Indicator />
@@ -279,9 +277,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 data-testid="rtu-stop-bits"
                 className="w-full"
               >
-                <Label className="text-text-muted text-xs font-medium">
-                  {t('settings.stopBits')}
-                </Label>
+                <Label>{t('settings.stopBits')}</Label>
                 <Select.Trigger>
                   <Select.Value />
                   <Select.Indicator />
@@ -304,12 +300,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
         </div>
 
         <div className="border-border mt-5 flex justify-end border-t pt-4">
-          <Button
-            variant="primary"
-            onPress={handleApply}
-            data-testid="apply-settings"
-            className="rounded-full px-6"
-          >
+          <Button variant="primary" onPress={handleApply} data-testid="apply-settings">
             {t('settings.apply')}
           </Button>
         </div>

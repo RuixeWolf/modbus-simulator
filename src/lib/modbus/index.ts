@@ -29,7 +29,7 @@ const g = globalThis as typeof globalThis & { __modbus_initialized__?: boolean }
 /** In-memory configuration store. */
 const config: ServerConfig = {
   tcpPort: Number(process.env.MODBUS_TCP_PORT) || 502,
-  slaveId: 1,
+  slaveId: Number(process.env.MODBUS_SLAVE_ID) || 1,
   rtuSerialPath: process.env.MODBUS_RTU_SERIAL_PATH || null,
   rtuBaudRate: 9600,
   rtuParity: 'none',

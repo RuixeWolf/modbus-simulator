@@ -28,7 +28,7 @@ export function StatusIndicator({
   const { t } = useTranslation()
 
   return (
-    <div className="bg-surface flex items-center gap-4 rounded-full px-4 py-2 shadow-sm">
+    <div className="bg-surface flex items-center gap-3 rounded-full px-3 py-1.5 shadow-sm sm:gap-4 sm:px-4 sm:py-2">
       <div className="flex items-center gap-2" data-testid="tcp-status">
         <span className="relative flex size-2">
           <span
@@ -67,7 +67,7 @@ export function StatusIndicator({
         </span>
         <div className="flex flex-col">
           <span className="text-foreground text-[11px] font-semibold">{t('header.rtu')}</span>
-          <span className="text-text-muted max-w-[80px] truncate font-mono text-[10px]">
+          <span className="text-text-muted max-w-15 truncate font-mono text-[10px] sm:max-w-20">
             {rtuPath || t('header.notSet')}
           </span>
         </div>

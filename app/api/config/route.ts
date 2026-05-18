@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ensureServersStarted, getConfig, restartServers, setConfig } from '@/src/lib/modbus'
 import { ModbusEngine } from '@/src/lib/modbus/engine'
 
+export const dynamic = 'force-dynamic'
+
 ensureServersStarted()
 
 export async function GET() {
