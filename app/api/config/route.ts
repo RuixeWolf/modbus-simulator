@@ -81,7 +81,19 @@ export async function POST(request: NextRequest) {
     updates.rtuStopBits = sb
   }
 
-  if (body.logFilter !== undefined && typeof body.logFilter === 'object') {
+  if (body.logFilter !== undefined) {
+    if (
+      body.logFilter === null ||
+      typeof body.logFilter !== 'object' ||
+      typeof body.logFilter.read !== 'boolean' ||
+      typeof body.logFilter.write !== 'boolean' ||
+      typeof body.logFilter.error !== 'boolean'
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid logFilter (must be object with boolean read/write/error fields)' },
+        { status: 400 }
+      )
+    }
     const engine = ModbusEngine.getInstance()
     engine.setLogFilter({
       read: body.logFilter.read,
