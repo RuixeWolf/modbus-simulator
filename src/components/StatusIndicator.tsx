@@ -67,7 +67,7 @@ export function StatusIndicator({
         </span>
         <div className="flex flex-col">
           <span className="text-foreground text-[11px] font-semibold">{t('header.rtu')}</span>
-          <span className="text-text-muted max-w-15 truncate font-mono text-[10px] sm:max-w-20">
+          <span className="text-text-muted max-w-[3.75rem] truncate font-mono text-[10px] sm:max-w-[5rem]">
             {rtuPath || t('header.notSet')}
           </span>
         </div>
