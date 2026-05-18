@@ -13,7 +13,7 @@ import { useModbusData } from '@/src/hooks/useModbusData'
 import { Tabs } from '@heroui/react'
 
 function detectLanguage(): string {
-  if (globalThis.window === undefined) return 'en'
+  if (!('window' in globalThis)) return 'en'
   const stored = localStorage.getItem('i18nextLng')
   if (stored === 'zh' || stored === 'en') return stored
   const nav = navigator.language

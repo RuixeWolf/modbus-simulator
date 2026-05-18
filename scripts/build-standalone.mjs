@@ -11,16 +11,19 @@
  * 5. Copies the fixed standalone output to `dist/`.
  */
 import { execSync } from 'node:child_process'
-import { copyFile, lstat, mkdir, readdir, readlink, rm, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   copyFileSync,
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  readlinkSync,
   rmSync,
+  unlinkSync,
   writeFileSync
 } from './lib/fs-helpers.mjs'
 
@@ -84,7 +87,7 @@ if (existsSync(staticSource)) {
 const nodeModulesDir = join(standaloneDir, 'node_modules')
 if (existsSync(nodeModulesDir)) {
   console.log('\nFixing PNPM symlinks in standalone/node_modules...')
-  await fixPnpmSymlinks(nodeModulesDir)
+  fixPnpmSymlinks(nodeModulesDir)
 }
 
 // Strip devDependencies and scripts from the standalone package.json
@@ -123,14 +126,14 @@ console.log('  -h, --help                 Show help message\n')
 /**
  * Remove all symlinks from the top-level node_modules directory.
  */
-async function removeTopLevelSymlinks(nodeModulesDir) {
-  const items = await readdir(nodeModulesDir)
+function removeTopLevelSymlinks(nodeModulesDir) {
+  const items = readdirSync(nodeModulesDir)
   for (const item of items) {
     if (item === '.pnpm') continue
     const itemPath = join(nodeModulesDir, item)
-    const stats = await lstat(itemPath)
+    const stats = lstatSync(itemPath)
     if (stats.isSymbolicLink()) {
-      await unlink(itemPath)
+      unlinkSync(itemPath)
     }
   }
 }
@@ -138,16 +141,16 @@ async function removeTopLevelSymlinks(nodeModulesDir) {
 /**
  * Hoist a scoped package directory (e.g. @next/env) into the top-level node_modules.
  */
-async function hoistScopedPackage(srcPath, destPath) {
+function hoistScopedPackage(srcPath, destPath) {
   if (!existsSync(destPath)) {
-    await mkdir(destPath, { recursive: true })
+    mkdirSync(destPath, { recursive: true })
   }
-  const scopedItems = await readdir(srcPath)
+  const scopedItems = readdirSync(srcPath)
   for (const scopedItem of scopedItems) {
     const scopedSrc = join(srcPath, scopedItem)
     const scopedDest = join(destPath, scopedItem)
     if (!existsSync(scopedDest)) {
-      await copyDirectory(scopedSrc, scopedDest)
+      copyDirectory(scopedSrc, scopedDest)
     }
   }
 }
@@ -155,19 +158,19 @@ async function hoistScopedPackage(srcPath, destPath) {
 /**
  * Hoist a single package directory from the .pnpm tree into the top-level node_modules.
  */
-async function hoistPackageDir(innerNodeModules, innerItem, nodeModulesDir) {
+function hoistPackageDir(innerNodeModules, innerItem, nodeModulesDir) {
   const srcPath = join(innerNodeModules, innerItem)
   const destPath = join(nodeModulesDir, innerItem)
 
-  const stats = await lstat(srcPath)
+  const stats = lstatSync(srcPath)
 
   // Only hoist directories, skip symlinks inside .pnpm
   if (!stats.isDirectory()) return
 
   if (innerItem.startsWith('@')) {
-    await hoistScopedPackage(srcPath, destPath)
+    hoistScopedPackage(srcPath, destPath)
   } else if (!existsSync(destPath)) {
-    await copyDirectory(srcPath, destPath)
+    copyDirectory(srcPath, destPath)
   }
 }
 
@@ -176,56 +179,56 @@ async function hoistPackageDir(innerNodeModules, innerItem, nodeModulesDir) {
  * Replaces the .pnpm strict structure with a hoisted node_modules structure
  * by copying real files/directories and removing symlinks.
  */
-async function fixPnpmSymlinks(nodeModulesDir) {
+function fixPnpmSymlinks(nodeModulesDir) {
   const pnpmDir = join(nodeModulesDir, '.pnpm')
   if (!existsSync(pnpmDir)) return
 
   // 1. Remove all symlinks in the top level node_modules
-  await removeTopLevelSymlinks(nodeModulesDir)
+  removeTopLevelSymlinks(nodeModulesDir)
 
   // 2. Hoist every package from .pnpm/**/node_modules/* into node_modules/
-  const pnpmPackages = await readdir(pnpmDir)
+  const pnpmPackages = readdirSync(pnpmDir)
   for (const pkg of pnpmPackages) {
     const innerNodeModules = join(pnpmDir, pkg, 'node_modules')
     if (existsSync(innerNodeModules)) {
-      const innerItems = await readdir(innerNodeModules)
+      const innerItems = readdirSync(innerNodeModules)
       for (const innerItem of innerItems) {
-        await hoistPackageDir(innerNodeModules, innerItem, nodeModulesDir)
+        hoistPackageDir(innerNodeModules, innerItem, nodeModulesDir)
       }
     }
   }
 
   // 3. Clean up .pnpm folder
-  await rm(pnpmDir, { recursive: true, force: true })
+  rmSync(pnpmDir, { recursive: true, force: true })
 }
 
 /**
  * Recursively copy a directory, resolving symlinks to real files/directories.
  */
-async function copyDirectory(src, dest) {
-  await mkdir(dest, { recursive: true })
-  const items = await readdir(src)
+function copyDirectory(src, dest) {
+  mkdirSync(dest, { recursive: true })
+  const items = readdirSync(src)
 
   for (const item of items) {
     const srcPath = join(src, item)
     const destPath = join(dest, item)
-    const stats = await lstat(srcPath)
+    const stats = lstatSync(srcPath)
 
     if (stats.isDirectory()) {
-      await copyDirectory(srcPath, destPath)
+      copyDirectory(srcPath, destPath)
     } else if (stats.isSymbolicLink()) {
-      const target = await readlink(srcPath)
+      const target = readlinkSync(srcPath)
       const targetPath = join(dirname(srcPath), target)
       if (!existsSync(targetPath)) continue
 
-      const targetStats = await lstat(targetPath)
+      const targetStats = lstatSync(targetPath)
       if (targetStats.isDirectory()) {
-        await copyDirectory(targetPath, destPath)
+        copyDirectory(targetPath, destPath)
       } else {
-        await copyFile(targetPath, destPath)
+        copyFileSync(targetPath, destPath)
       }
     } else {
-      await copyFile(srcPath, destPath)
+      copyFileSync(srcPath, destPath)
     }
   }
 }

@@ -52,6 +52,18 @@ function getPageNumbers(page: number, totalPages: number): (number | 'ellipsis')
   return pages
 }
 
+function resolveTargetPage(
+  rawAddress: string,
+  totalPages: number,
+  dataLength: number
+): number | null {
+  const addr = Number.parseInt(rawAddress, 10)
+  if (Number.isNaN(addr) || addr < 0 || addr >= dataLength) return null
+
+  const targetPage = Math.floor(addr / PAGE_SIZE) + 1
+  return Math.min(totalPages, targetPage)
+}
+
 /**
  * Paginated table for displaying and optionally editing Modbus registers.
  *
@@ -91,20 +103,31 @@ export function RegisterTable({
     setEditValue((prev) => ({ ...prev, [address]: '' }))
   }
 
-  const handleGoto = () => {
-    const addr = Number.parseInt(gotoAddr, 10)
-    if (!Number.isNaN(addr) && addr >= 0 && addr < data.length) {
-      const targetPage = Math.floor(addr / PAGE_SIZE) + 1
-      setPage(Math.min(totalPages, targetPage))
-    }
-    setGotoAddr('')
-  }
-
   const columns = [
     { id: 'address', name: t('registerTable.address') },
     { id: 'value', name: t('registerTable.value') },
     ...(writable ? [{ id: 'action', name: t('registerTable.action') }] : [])
   ]
+
+  let ellipsisCount = 0
+  const paginationItems = pageNumbers.map((p) =>
+    p === 'ellipsis' ? (
+      <Pagination.Item key={`ellipsis-${++ellipsisCount}`}>
+        <Pagination.Ellipsis />
+      </Pagination.Item>
+    ) : (
+      <Pagination.Item key={p}>
+        <Pagination.Link
+          isActive={p === page}
+          onPress={() => {
+            setPage(p)
+          }}
+        >
+          {p}
+        </Pagination.Link>
+      </Pagination.Item>
+    )
+  )
 
   return (
     <div className="w-full overflow-x-auto">
@@ -116,13 +139,30 @@ export function RegisterTable({
               type="number"
               placeholder={t('registerTable.gotoAddress')}
               value={gotoAddr}
-              onChange={(e) => setGotoAddr(e.target.value)}
+              onChange={(e) => {
+                setGotoAddr(e.target.value)
+              }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleGoto()
+                if (e.key === 'Enter') {
+                  const targetPage = resolveTargetPage(gotoAddr, totalPages, data.length)
+                  if (targetPage !== null) {
+                    setPage(targetPage)
+                  }
+                  setGotoAddr('')
+                }
               }}
               className="w-32"
             />
-            <Button size="sm" onPress={handleGoto}>
+            <Button
+              size="sm"
+              onPress={() => {
+                const targetPage = resolveTargetPage(gotoAddr, totalPages, data.length)
+                if (targetPage !== null) {
+                  setPage(targetPage)
+                }
+                setGotoAddr('')
+              }}
+            >
               {t('registerTable.goto')}
             </Button>
           </div>
@@ -227,29 +267,21 @@ export function RegisterTable({
               <Pagination.Item>
                 <Pagination.Previous
                   isDisabled={page === 1}
-                  onPress={() => setPage((p) => Math.max(1, p - 1))}
+                  onPress={() => {
+                    setPage((p) => Math.max(1, p - 1))
+                  }}
                 >
                   <Pagination.PreviousIcon />
                   {t('registerTable.prev')}
                 </Pagination.Previous>
               </Pagination.Item>
-              {pageNumbers.map((p, i) =>
-                p === 'ellipsis' ? (
-                  <Pagination.Item key={`ellipsis-${i}`}>
-                    <Pagination.Ellipsis />
-                  </Pagination.Item>
-                ) : (
-                  <Pagination.Item key={p}>
-                    <Pagination.Link isActive={p === page} onPress={() => setPage(p)}>
-                      {p}
-                    </Pagination.Link>
-                  </Pagination.Item>
-                )
-              )}
+              {paginationItems}
               <Pagination.Item>
                 <Pagination.Next
                   isDisabled={page === totalPages}
-                  onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onPress={() => {
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }}
                 >
                   {t('registerTable.next')}
                   <Pagination.NextIcon />

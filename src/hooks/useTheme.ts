@@ -6,11 +6,16 @@ type Theme = 'light' | 'dark' | 'system'
 /** localStorage key used to persist the user's theme choice. */
 const STORAGE_KEY = 'theme-preference'
 
+function getSystemMediaQuery(): MediaQueryList | null {
+  if (typeof globalThis.matchMedia !== 'function') return null
+  return globalThis.matchMedia('(prefers-color-scheme: dark)')
+}
+
 /**
  * @returns The current OS-level color scheme preference.
  */
 function getSystemTheme(): 'light' | 'dark' {
-  return globalThis.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return getSystemMediaQuery()?.matches ? 'dark' : 'light'
 }
 
 /**
@@ -36,7 +41,8 @@ function applyTheme(theme: Theme) {
  * @returns Cleanup function that removes the listener.
  */
 function subscribeSystem(callback: () => void) {
-  const media = globalThis.matchMedia('(prefers-color-scheme: dark)')
+  const media = getSystemMediaQuery()
+  if (!media) return () => {}
   media.addEventListener('change', callback)
   return () => media.removeEventListener('change', callback)
 }
@@ -51,7 +57,7 @@ export function useTheme() {
   const systemTheme = useSyncExternalStore(subscribeSystem, getSystemTheme, () => 'light' as const)
 
   const [themeState, setThemeState] = useState<Theme>(() => {
-    if (globalThis.window === undefined) return 'system'
+    if (!('window' in globalThis)) return 'system'
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
       if (stored === 'light' || stored === 'dark' || stored === 'system') return stored

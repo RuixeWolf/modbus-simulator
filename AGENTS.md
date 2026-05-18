@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Modbus Simulator — Agent Guidelines
 
-A Modbus TCP / RTU Serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
+A Modbus Transmission Control Protocol (TCP) / RTU Serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
 
 For full project details see [CLAUDE.md](CLAUDE.md) and [README.md](README.md).
 
@@ -27,9 +27,9 @@ Pre-commit hooks run `lint-staged` automatically.
 
 ## Architecture
 
-- **Singleton state**: `src/lib/modbus/engine.ts` is the single source of truth. Use `ModbusEngine.getInstance()`. It survives Next.js HMR via `globalThis.__modbus_engine_instance__`.
+- **Singleton state**: `src/lib/modbus/engine.ts` is the single source of truth. Use `ModbusEngine.getInstance()`. It survives Next.js Hot Module Replacement (HMR) via `globalThis.__modbus_engine_instance__`.
 - **Server lifecycle**: `src/lib/modbus/index.ts` manages TCP and RTU serial servers. API routes import `ensureServersStarted()` at the **module level** (not inside handlers).
-- **No WebSocket / SSE**: The frontend polls REST APIs every 1 second via `useModbusData()`.
+- **No WebSocket / Server-Sent Events (SSE)**: The frontend polls REST APIs every 1 second via `useModbusData()`.
 
 ## Critical Conventions
 
@@ -39,7 +39,7 @@ Pre-commit hooks run `lint-staged` automatically.
 - **Tailwind v4**: `@import "tailwindcss"` in `globals.css`. No `tailwind.config.js` — theme customization via `@theme inline` in CSS.
 - Use **native HTML `<table>`** instead of HeroUI `Table` (react-aria collection context issues).
 - Use **native HTML `<select>`** instead of HeroUI `Select`.
-- Coil toggles use HeroUI `Button` with ON/OFF text, not `Switch`.
+- Coil toggles use HeroUI `Button` with on/off text, not `Switch`.
 
 ### Modbus Engine
 
@@ -65,4 +65,4 @@ Pre-commit hooks run `lint-staged` automatically.
 
 ## Temporary Files
 
-When using Playwright MCP tools (screenshots, snapshots, console logs), **always write temp files to `.temp/`** — never the project root. The `.temp/` directory is gitignored except for `.gitkeep`.
+When using Playwright Model Context Protocol (MCP) tools (screenshots, snapshots, console logs), **always write temp files to `.temp/`** — never the project root. The `.temp/` directory is gitignored except for `.gitkeep`.

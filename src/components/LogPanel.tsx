@@ -14,6 +14,22 @@ interface LogPanelProps {
   onFilterChange: (filter: Partial<LogFilterConfig>) => void
 }
 
+function toSelectedKeys(logFilter: LogFilterConfig): Set<string> {
+  return new Set(
+    Object.entries(logFilter)
+      .filter(([, enabled]) => enabled)
+      .map(([type]) => type)
+  )
+}
+
+function toLogFilterConfig(keys: Set<string | number>): Partial<LogFilterConfig> {
+  return {
+    read: keys.has('read'),
+    write: keys.has('write'),
+    error: keys.has('error')
+  }
+}
+
 /**
  * Communication logs displayed in a Modal dialog.
  *
@@ -22,19 +38,7 @@ interface LogPanelProps {
 export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelProps>) {
   const { t } = useTranslation()
 
-  const selectedKeys = new Set(
-    Object.entries(logFilter)
-      .filter(([, enabled]) => enabled)
-      .map(([type]) => type)
-  )
-
-  const handleSelectionChange = (keys: Set<string | number>) => {
-    onFilterChange({
-      read: keys.has('read'),
-      write: keys.has('write'),
-      error: keys.has('error')
-    })
-  }
+  const selectedKeys = toSelectedKeys(logFilter)
 
   const getTypeBadge = (type: string) => {
     switch (type) {
@@ -85,7 +89,9 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
                   <ToggleButtonGroup
                     selectionMode="multiple"
                     selectedKeys={selectedKeys}
-                    onSelectionChange={handleSelectionChange}
+                    onSelectionChange={(keys) =>
+                      onFilterChange(toLogFilterConfig(keys as Set<string | number>))
+                    }
                   >
                     <ToggleButton id="read">{t('logs.read')}</ToggleButton>
                     <ToggleButtonGroup.Separator />

@@ -12,6 +12,12 @@ import { addCollection, Icon } from '@iconify/react/offline'
  */
 addCollection(lucideIcons)
 
+const THEME_ICONS: Record<'light' | 'dark' | 'system', string> = {
+  light: 'lucide:sun',
+  dark: 'lucide:moon',
+  system: 'lucide:monitor'
+}
+
 /**
  * Returns false during SSR and true on the client.
  * Used to avoid hydration mismatches in theme-dependent renders.
@@ -46,12 +52,6 @@ export function ThemeToggle() {
     )
   }
 
-  const getThemeIcon = (key: 'light' | 'dark' | 'system') => {
-    if (key === 'light') return 'lucide:sun'
-    if (key === 'dark') return 'lucide:moon'
-    return 'lucide:monitor'
-  }
-
   return (
     <div
       className="bg-default/50 flex flex-row gap-1 rounded-full p-1"
@@ -73,7 +73,7 @@ export function ThemeToggle() {
                 : 'text-text-muted hover:text-foreground'
             }`}
           >
-            <Icon icon={getThemeIcon(key)} width={16} height={16} />
+            <Icon icon={THEME_ICONS[key]} width={16} height={16} />
           </button>
         )
       })}
