@@ -26,7 +26,7 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 
 The dev script (`scripts/dev.mjs`) behavior:
 
-- Defaults to port `5000` when the `PORT` environment variable (network listening port) is unset.
+- Defaults to port `5000` when the network listening port (`PORT` environment variable) is unset.
 - Loads an optional `.env.local` file when present.
 - Allows CLI overrides via `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open`.
 
