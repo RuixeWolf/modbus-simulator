@@ -15,6 +15,15 @@ export interface SerialConfig {
   slaveId?: number
 }
 
+/** globalThis keys used to survive Next.js HMR / module reloads. */
+const g = globalThis as typeof globalThis & {
+  __modbus_rtu_serial_port__?: SerialPort | null
+  __modbus_rtu_running__?: boolean
+  __modbus_rtu_path__?: string
+  __modbus_rtu_buffer__?: Buffer
+  __modbus_rtu_timer__?: NodeJS.Timeout | null
+}
+
 /** CRC16-IBM checksum used by Modbus RTU frames. */
 function crc16(buffer: Buffer): number {
   let crc = 0xffff
@@ -52,15 +61,11 @@ function appendCRC(data: Buffer): Buffer {
 }
 
 /** Active SerialPort instance, or null when stopped. */
-let serialPort: SerialPort | null = null
-/** Whether the serial server is currently open and listening. */
-let isRunning = false
-/** Path of the serial port the server was most recently started on. */
-let currentPath = ''
+let serialPort: SerialPort | null = g.__modbus_rtu_serial_port__ ?? null
 /** Accumulated raw bytes between frame timeouts. */
-let buffer = Buffer.alloc(0)
+let buffer: Buffer = g.__modbus_rtu_buffer__ ?? Buffer.alloc(0)
 /** Active silence-timeout timer used for frame delimiting. */
-let timer: NodeJS.Timeout | null = null
+let timer: NodeJS.Timeout | null = g.__modbus_rtu_timer__ ?? null
 
 /**
  * Computes the inter-frame silence timeout based on baud rate.
@@ -264,7 +269,7 @@ export function startRTUSerialServer(
   }
 
   const engine = ModbusEngine.getInstance()
-  currentPath = serialPath
+  g.__modbus_rtu_path__ = serialPath
   const slaveId = serialConfig.slaveId ?? 1
   const frameTimeoutMs = computeFrameTimeout(serialConfig.baudRate)
 
@@ -276,40 +281,46 @@ export function startRTUSerialServer(
       dataBits: serialConfig.dataBits,
       stopBits: serialConfig.stopBits
     })
-    isRunning = true
+    g.__modbus_rtu_serial_port__ = serialPort
 
     serialPort.on('data', (data: Buffer) => {
       buffer = Buffer.concat([buffer, data])
+      g.__modbus_rtu_buffer__ = buffer
       if (timer) clearTimeout(timer)
       timer = setTimeout(() => {
         if (buffer.length < 4) {
           buffer = Buffer.alloc(0)
+          g.__modbus_rtu_buffer__ = buffer
           return
         }
 
         if (!verifyCRC(buffer)) {
           console.warn('RTU Serial: Invalid CRC, discarding frame')
           buffer = Buffer.alloc(0)
+          g.__modbus_rtu_buffer__ = buffer
           return
         }
 
         const response = processFrame(buffer, engine, slaveId)
         buffer = Buffer.alloc(0)
+        g.__modbus_rtu_buffer__ = buffer
 
         if (response && serialPort) {
           serialPort.write(response)
         }
       }, frameTimeoutMs)
+      g.__modbus_rtu_timer__ = timer
     })
 
     serialPort.on('error', (err: Error) => {
       console.error('Modbus RTU Serial Server error:', err.message)
       engine.addErrorLog('rtu', 0, err.message)
-      isRunning = false
-      serialPort = null
+      // Do NOT set running=false here — error does not imply closed.
+      // Only clear references when the port actually closes.
     })
 
     serialPort.on('open', () => {
+      g.__modbus_rtu_running__ = true
       console.log(
         `Modbus RTU Serial Server started on ${serialPath} ` +
           `(${serialConfig.baudRate}/${serialConfig.dataBits}-${serialConfig.parity.charAt(0).toUpperCase()}-${serialConfig.stopBits}, slave ID ${slaveId})`
@@ -318,38 +329,45 @@ export function startRTUSerialServer(
 
     serialPort.on('close', () => {
       console.log(`Modbus RTU Serial Server closed on ${serialPath}`)
-      isRunning = false
+      g.__modbus_rtu_running__ = false
       serialPort = null
+      g.__modbus_rtu_serial_port__ = null
     })
   } catch (e) {
     console.error('Failed to start Modbus RTU Serial Server:', (e as Error).message)
     engine.addErrorLog('rtu', 0, (e as Error).message)
-    isRunning = false
+    g.__modbus_rtu_running__ = false
     serialPort = null
+    g.__modbus_rtu_serial_port__ = null
   }
 }
 
 /** Closes the serial port and clears frame buffers. */
 export function stopRTUSerialServer(): void {
   if (serialPort) {
-    isRunning = false
+    g.__modbus_rtu_running__ = false
+    serialPort.removeAllListeners()
     serialPort.close()
     serialPort = null
+    g.__modbus_rtu_serial_port__ = null
     if (timer) {
       clearTimeout(timer)
       timer = null
+      g.__modbus_rtu_timer__ = null
     }
     buffer = Buffer.alloc(0)
+    g.__modbus_rtu_buffer__ = Buffer.alloc(0)
     console.log('Modbus RTU Serial Server stopped')
   }
 }
 
 /** @returns Whether the RTU serial server is currently running. */
 export function isRTUSerialServerRunning(): boolean {
-  return isRunning
+  // Prefer the live isOpen property; fall back to the event-driven flag.
+  return g.__modbus_rtu_serial_port__?.isOpen ?? g.__modbus_rtu_running__ ?? false
 }
 
 /** @returns The serial port path the RTU server was most recently started on. */
 export function getRTUSerialPath(): string {
-  return currentPath
+  return g.__modbus_rtu_path__ ?? ''
 }

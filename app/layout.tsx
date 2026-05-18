@@ -29,6 +29,7 @@ const themeScript = `
       var resolved = theme === 'system'
         ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
         : theme;
+      document.documentElement.setAttribute('data-theme', resolved);
       if (resolved === 'dark') {
         document.documentElement.classList.add('dark');
       }
@@ -51,7 +52,7 @@ export default function RootLayout({
         {/* eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="flex min-h-full w-full flex-col items-stretch bg-zinc-50 transition-colors duration-300 dark:bg-[#08080c]">
+      <body className="flex min-h-full w-full flex-col items-stretch">
         {children}
       </body>
     </html>

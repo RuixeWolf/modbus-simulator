@@ -6,7 +6,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "next build",
     "build:standalone": "node scripts/build-standalone.mjs",
-    "start": "node .next/standalone/start.mjs",
+    "start": "node .next/standalone/cli.mjs",
     "format": "prettier --write .",
     "lint": "eslint",
     "format-lint": "npm run format && npm run lint",

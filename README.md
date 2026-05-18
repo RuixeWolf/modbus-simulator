@@ -92,7 +92,7 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 20 or later
+- [Node.js](https://nodejs.org/) 24 or later
 - [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
 
 ### Installation

@@ -13,7 +13,7 @@ import { useModbusData } from '@/src/hooks/useModbusData'
 import { Tabs } from '@heroui/react'
 
 function detectLanguage(): string {
-  if (typeof window === 'undefined') return 'en'
+  if (!('window' in globalThis)) return 'en'
   const stored = localStorage.getItem('i18nextLng')
   if (stored === 'zh' || stored === 'en') return stored
   const nav = navigator.language
@@ -22,8 +22,18 @@ function detectLanguage(): string {
 
 export default function Home() {
   const { t, i18n } = useTranslation()
-  const { state, logs, status, config, serialPorts, error, writeRegister, updateConfig } =
-    useModbusData()
+  const {
+    state,
+    logs,
+    status,
+    config,
+    serialPorts,
+    logFilter,
+    error,
+    writeRegister,
+    updateConfig,
+    updateLogFilter
+  } = useModbusData()
 
   useEffect(() => {
     const lng = detectLanguage()
@@ -33,21 +43,21 @@ export default function Home() {
   }, [i18n])
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-1 flex-col gap-6 p-5 sm:p-8">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-1 flex-col gap-6 p-5 sm:p-8 lg:px-12 xl:max-w-360">
       {/* Header */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('app.title')}</h1>
           <p className="text-text-muted mt-1 text-sm">{t('app.subtitle')}</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-start gap-3 sm:justify-end">
           <StatusIndicator
             tcp={status.tcp}
             rtu={status.rtu}
             tcpPort={config.tcpPort}
             rtuPath={config.rtuSerialPath}
           />
-          <LogPanel logs={logs} />
+          <LogPanel logs={logs} logFilter={logFilter} onFilterChange={updateLogFilter} />
           <ThemeToggle />
           <LanguageSwitcher />
         </div>
@@ -60,46 +70,36 @@ export default function Home() {
         </div>
       )}
 
-      <SettingsPanel config={config} serialPorts={serialPorts} onApply={updateConfig} />
+      <SettingsPanel
+        key={`${config.tcpPort}-${config.slaveId}-${config.rtuSerialPath || ''}-${config.rtuBaudRate}-${config.rtuParity}-${config.rtuDataBits}-${config.rtuStopBits}`}
+        config={config}
+        serialPorts={serialPorts}
+        onApply={updateConfig}
+      />
 
       {/* Register Tables */}
       <Tabs defaultSelectedKey="coils" className="w-full">
         <Tabs.ListContainer>
-          <Tabs.List
-            aria-label="Register tables"
-            className="bg-muted/50 flex w-full flex-row gap-1 rounded-full p-1"
-          >
-            <Tabs.Tab
-              id="coils"
-              className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground flex-1 justify-center rounded-full px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-all data-[selected=true]:shadow-sm sm:text-sm"
-            >
+          <Tabs.List aria-label="Register tables" className="flex w-full overflow-x-auto">
+            <Tabs.Tab id="coils">
               {t('tabs.coils')}
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab
-              id="discrete"
-              className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground flex-1 justify-center rounded-full px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-all data-[selected=true]:shadow-sm sm:text-sm"
-            >
+            <Tabs.Tab id="discrete">
               {t('tabs.discreteInputs')}
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab
-              id="holding"
-              className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground flex-1 justify-center rounded-full px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-all data-[selected=true]:shadow-sm sm:text-sm"
-            >
+            <Tabs.Tab id="holding">
               {t('tabs.holdingRegisters')}
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab
-              id="input"
-              className="text-text-muted data-[selected=true]:bg-surface data-[selected=true]:text-foreground flex-1 justify-center rounded-full px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-all data-[selected=true]:shadow-sm sm:text-sm"
-            >
+            <Tabs.Tab id="input">
               {t('tabs.inputRegisters')}
               <Tabs.Indicator />
             </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
-        <Tabs.Panel id="coils" className="animate-fade-in">
+        <Tabs.Panel id="coils" className="animate-fade-in px-0">
           <RegisterTable
             title={t('tabs.coils')}
             type="coil"
@@ -108,7 +108,7 @@ export default function Home() {
             onWrite={(addr, val) => writeRegister('coil', addr, val)}
           />
         </Tabs.Panel>
-        <Tabs.Panel id="discrete" className="animate-fade-in">
+        <Tabs.Panel id="discrete" className="animate-fade-in px-0">
           <RegisterTable
             title={t('tabs.discreteInputs')}
             type="discreteInput"
@@ -117,7 +117,7 @@ export default function Home() {
             onWrite={(addr, val) => writeRegister('discreteInput', addr, val)}
           />
         </Tabs.Panel>
-        <Tabs.Panel id="holding" className="animate-fade-in">
+        <Tabs.Panel id="holding" className="animate-fade-in px-0">
           <RegisterTable
             title={t('tabs.holdingRegisters')}
             type="holdingRegister"
@@ -126,7 +126,7 @@ export default function Home() {
             onWrite={(addr, val) => writeRegister('holdingRegister', addr, val)}
           />
         </Tabs.Panel>
-        <Tabs.Panel id="input" className="animate-fade-in">
+        <Tabs.Panel id="input" className="animate-fade-in px-0">
           <RegisterTable
             title={t('tabs.inputRegisters')}
             type="inputRegister"

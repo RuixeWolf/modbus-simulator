@@ -26,10 +26,26 @@ export interface ServerConfig {
 
 /** Set to true after the first call to prevent duplicate server startups. Uses globalThis to survive Next.js module reloads. */
 const g = globalThis as typeof globalThis & { __modbus_initialized__?: boolean }
+
+/**
+ * Parses and validates a Modbus slave ID from environment variable.
+ * @param envValue - Raw environment variable value
+ * @returns Valid slave ID (1-247) or default (1)
+ */
+function parseSlaveId(envValue: string | undefined): number {
+  if (!envValue) return 1
+  const parsed = Number(envValue)
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 247) {
+    console.warn(`Invalid MODBUS_SLAVE_ID="${envValue}" (must be integer 1-247), using default: 1`)
+    return 1
+  }
+  return parsed
+}
+
 /** In-memory configuration store. */
 const config: ServerConfig = {
   tcpPort: Number(process.env.MODBUS_TCP_PORT) || 502,
-  slaveId: 1,
+  slaveId: parseSlaveId(process.env.MODBUS_SLAVE_ID),
   rtuSerialPath: process.env.MODBUS_RTU_SERIAL_PATH || null,
   rtuBaudRate: 9600,
   rtuParity: 'none',

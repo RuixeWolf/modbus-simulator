@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { SerialPort } from 'serialport'
 import { ensureServersStarted } from '@/src/lib/modbus'
 
+export const dynamic = 'force-dynamic'
+
 ensureServersStarted()
 
 export async function GET() {

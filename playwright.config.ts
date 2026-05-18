@@ -29,7 +29,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {
-      MODBUS_TCP_PORT: '11502'
+      MODBUS_TCP_PORT: '11502',
+      MODBUS_RTU_SERIAL_PATH: 'COM3'
     }
   }
 })

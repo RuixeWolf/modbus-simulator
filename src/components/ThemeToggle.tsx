@@ -12,6 +12,20 @@ import { addCollection, Icon } from '@iconify/react/offline'
  */
 addCollection(lucideIcons)
 
+/** Resolve icon name from trusted theme literals without dynamic object lookup. */
+function getThemeIcon(themeKey: 'light' | 'dark' | 'system'): string {
+  switch (themeKey) {
+    case 'light':
+      return 'lucide:sun'
+    case 'dark':
+      return 'lucide:moon'
+    case 'system':
+      return 'lucide:monitor'
+    default:
+      return 'lucide:monitor'
+  }
+}
+
 /**
  * Returns false during SSR and true on the client.
  * Used to avoid hydration mismatches in theme-dependent renders.
@@ -32,7 +46,7 @@ export function ThemeToggle() {
   // Stable placeholder during SSR / before hydration
   if (!mounted) {
     return (
-      <div className="bg-muted/50 flex items-center gap-1 rounded-full p-1">
+      <div className="bg-default/50 flex items-center gap-1 rounded-full p-1">
         <div className="bg-surface flex h-8 w-8 items-center justify-center rounded-full shadow-sm">
           <Icon icon="lucide:sun" width={16} height={16} className="text-foreground" />
         </div>
@@ -48,7 +62,7 @@ export function ThemeToggle() {
 
   return (
     <div
-      className="bg-muted/50 flex flex-row gap-1 rounded-full p-1"
+      className="bg-default/50 flex flex-row gap-1 rounded-full p-1"
       role="radiogroup"
       aria-label="Theme"
     >
@@ -67,13 +81,7 @@ export function ThemeToggle() {
                 : 'text-text-muted hover:text-foreground'
             }`}
           >
-            <Icon
-              icon={
-                key === 'light' ? 'lucide:sun' : key === 'dark' ? 'lucide:moon' : 'lucide:monitor'
-              }
-              width={16}
-              height={16}
-            />
+            <Icon icon={getThemeIcon(key)} width={16} height={16} />
           </button>
         )
       })}

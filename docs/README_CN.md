@@ -92,7 +92,7 @@
 
 ### 环境要求
 
-- [Node.js](https://nodejs.org/) 20 或更高版本
+- [Node.js](https://nodejs.org/) 24 或更高版本
 - [npm](https://www.npmjs.com/) 或 [pnpm](https://pnpm.io/)
 
 ### 安装

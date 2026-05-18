@@ -52,3 +52,8 @@ next-env.d.ts
 *.temp
 *.log
 .firecrawl
+
+# Playwright MCP temp files — always use .temp/ directory, never root
+/.temp/*
+!/.temp/.gitkeep
+page-snapshot.yml

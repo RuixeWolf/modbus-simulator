@@ -6,7 +6,7 @@
  * This script is copied into .next/standalone/ during the build-standalone
  * step. Users can run the simulator directly with:
  *
- *   node start.mjs [options]
+ *   node cli.mjs [options]
  *
  * No npm install is required because Next.js standalone output bundles the
  * necessary dependencies.
@@ -14,6 +14,7 @@
 import { spawn } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { openBrowser } from './lib/open-browser.mjs'
 import { HELP_TEXT, parseArgs } from './lib/parse-args.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -27,16 +28,25 @@ if (args.help) {
 
 // Apply CLI arguments as environment variables before spawning the server
 if (args.port) process.env.PORT = String(args.port)
+else if (!process.env.PORT) process.env.PORT = '5000'
 if (args.tcpPort) process.env.MODBUS_TCP_PORT = String(args.tcpPort)
 if (args.serialPort) process.env.MODBUS_RTU_SERIAL_PATH = args.serialPort
+if (args.slaveId) process.env.MODBUS_SLAVE_ID = String(args.slaveId)
 
 const serverPath = join(__dirname, 'server.js')
+
+// Explicitly copy env to avoid any proxy/serialization issues with process.env
+const env = { ...process.env }
 
 const proc = spawn(process.execPath, [serverPath], {
   stdio: 'inherit',
   cwd: __dirname,
-  env: process.env
+  env
 })
+
+if (args.open) {
+  openBrowser(`http://localhost:${process.env.PORT}`)
+}
 
 // Forward termination signals to child process for graceful shutdown
 process.on('SIGTERM', () => {

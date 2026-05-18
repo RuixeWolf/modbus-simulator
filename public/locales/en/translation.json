@@ -46,7 +46,9 @@
     "false": "FALSE",
     "on": "ON",
     "off": "OFF",
-    "set": "Set"
+    "set": "Set",
+    "gotoAddress": "Go to address",
+    "goto": "Go"
   },
   "logs": {
     "title": "Communication Logs",
@@ -54,7 +56,8 @@
     "noLogs": "No logs yet...",
     "read": "READ",
     "write": "WRITE",
-    "error": "ERROR"
+    "error": "ERROR",
+    "filter": "Filter"
   },
   "common": {
     "close": "Close"

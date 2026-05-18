@@ -5,6 +5,8 @@ import {
   isTCPServerRunning
 } from '@/src/lib/modbus'
 
+export const dynamic = 'force-dynamic'
+
 ensureServersStarted()
 
 export async function GET() {
