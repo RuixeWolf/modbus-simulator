@@ -100,7 +100,7 @@ Custom type declarations live in `src/types/modbus-serial.d.ts` since the librar
 
 **Instrumentation Hook** (`instrumentation.ts`):
 
-Next.js 16 calls `register()` in `instrumentation.ts` once when the server process starts. It eagerly starts the Modbus servers via `ensureServersStarted()`. This avoids waiting for the first HTTP API request. It is an additional startup path alongside the module-level API route imports.
+Next.js 16 calls `register()` in `instrumentation.ts` once when the server starts. This eagerly starts the Modbus servers via `ensureServersStarted()`. It avoids waiting for the first HTTP API request. It is an additional startup path alongside the module-level API route imports.
 
 ### API Layer
 
