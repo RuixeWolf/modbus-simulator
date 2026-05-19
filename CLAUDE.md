@@ -21,6 +21,8 @@ A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. I
 | `pnpm run test:unit`                                             | Run Vitest unit tests                                       |
 | `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)           |
 | `pnpm run test`                                                  | Run unit tests then E2E tests                               |
+| `pnpm run publish:npm`                                           | Build and publish to NPM                                    |
+| `pnpm run publish:npm:dry-run`                                   | Build and verify publish package without uploading          |
 | `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
 | `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
 
@@ -41,6 +43,10 @@ The dev script (`scripts/dev.mjs`) behavior:
 | `*.{json,md,css,yml,yaml,html}` | `prettier --write`                                                                |
 
 `tsc` uses a function signature `() => 'tsc --noEmit'` because lint-staged appends staged file paths to string commands by default, which causes TypeScript to ignore `tsconfig.json`.
+
+### Native Module Builds
+
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM (Performant npm) may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
@@ -86,9 +92,15 @@ Use `ModbusEngine.getInstance()` everywhere.
 
 **Critical**: API routes import `ensureServersStarted()` at the module level (not inside handlers). This causes Next.js to start the Modbus servers when the first API request is handled. The servers persist for the process lifetime.
 
+Additionally, `instrumentation.ts` implements Next.js's `register()` hook, which also calls `ensureServersStarted()`. This eagerly starts the servers when the Next.js process boots, complementing the lazy startup via API route imports.
+
 `modbus-serial` and `serialport` are both marked as `serverExternalPackages` in `next.config.ts` because Turbopack cannot bundle their CJS-native code.
 
 Custom type declarations live in `src/types/modbus-serial.d.ts` since the library has no bundled types.
+
+**Instrumentation Hook** (`instrumentation.ts`):
+
+Next.js 16 calls `register()` in `instrumentation.ts` once when the server starts. This eagerly starts the Modbus servers via `ensureServersStarted()`. It avoids waiting for the first HTTP API request. It is an additional startup path alongside the module-level API route imports.
 
 ### API Layer
 
@@ -129,7 +141,7 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - `app/layout.tsx` uses `flex flex-col items-stretch` on `body` so children span the full viewport width.
 - `app/page.tsx` uses `min-h-screen w-full` for the root container.
 - The `<html>` tag has `suppressHydrationWarning` because of the theme bootstrap script.
-- The `<head>` script reads `localStorage` and sets both `data-theme` (HeroUI styles) and `.dark` (Tailwind `@custom-variant dark`) before React hydration, which avoids theme flash.
+- The `<head>` script reads `localStorage.getItem('theme-preference')` and sets both `data-theme` (HeroUI styles) and `.dark` (Tailwind `@custom-variant dark`) before React hydration, which avoids theme flash.
 
 **i18n**: Translations are bundled at build time in `src/i18n/index.ts` (English and Chinese). No HTTP backend — JSON files from `public/locales/` are imported directly. `app/page.tsx` imports `@/src/i18n` to initialize before rendering.
 
@@ -146,7 +158,7 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 **E2E tests** (`playwright.config.ts`):
 
 - `webServer` auto-starts `pnpm run dev` before tests
-- Environment variable `MODBUS_TCP_PORT=11502` is set for E2E tests to avoid port conflicts
+- Environment variables `MODBUS_TCP_PORT=11502` and `MODBUS_RTU_SERIAL_PATH='COM3'` are set for the E2E test webServer to avoid port conflicts and provide a mock RTU path
 - Tests run serially (`workers: 1` in CI, `fullyParallel: true` locally) because they share the singleton ModbusEngine state
 - `MockModbusClient` in `src/lib/modbus/mock-client.ts` connects via `modbus-serial`'s `ModbusRTU` **default export** (not named import)
 - Tests verify UI→Protocol, Protocol→UI, coil toggles, and error logging
@@ -155,6 +167,7 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 
 - Register values are clamped to 16-bit (`value & 0xffff`) on write
 - Log entries are stored chronologically; UI renders them reversed (newest first)
+- The engine respects a `LogFilterConfig` (read/write/error booleans). Disabled types are silently dropped before storage and can be toggled at runtime via `POST /api/config`
 - The `modbus-serial` `ServerTCP` vector callbacks use Node-style `(err, value)` signatures
 - Out-of-range Modbus requests return proper Modbus exception codes via the library; errors are also logged in-engine via `addErrorLog()`
 - The old `src/lib/modbus/rtu-server.ts` (TCP bridge on port 5021) is no longer used; RTU is now handled by `rtu-serial-server.ts`
@@ -162,3 +175,4 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
 - ESLint uses flat config (`eslint.config.mjs`) with typescript-eslint, @eslint-react, eslint-plugin-react-hooks, and @next/eslint-plugin-next
 - `pnpm run build:standalone` creates a distributable in `dist/{name}_{version}/` with `cli.mjs` as the entry point; it fixes PNPM (Performant npm) symlinks and strips devDependencies so the output runs without `npm install`
+- For Next.js 16-specific agent rules and breaking changes, see `AGENTS.md`

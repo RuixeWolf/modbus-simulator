@@ -12,12 +12,17 @@ import { ThemeToggle } from '@/src/components/ThemeToggle'
 import { useModbusData } from '@/src/hooks/useModbusData'
 import { Tabs } from '@heroui/react'
 
+const SUPPORTED_LANGUAGES = ['en', 'zh', 'fr', 'ja'] as const
+
 function detectLanguage(): string {
   if (!('window' in globalThis)) return 'en'
   const stored = localStorage.getItem('i18nextLng')
-  if (stored === 'zh' || stored === 'en') return stored
+  if (stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored)) return stored
   const nav = navigator.language
-  return nav.startsWith('zh') ? 'zh' : 'en'
+  if (nav.startsWith('zh')) return 'zh'
+  if (nav.startsWith('fr')) return 'fr'
+  if (nav.startsWith('ja')) return 'ja'
+  return 'en'
 }
 
 export default function Home() {
@@ -32,7 +37,8 @@ export default function Home() {
     error,
     writeRegister,
     updateConfig,
-    updateLogFilter
+    updateLogFilter,
+    clearLogs
   } = useModbusData()
 
   useEffect(() => {
@@ -57,7 +63,12 @@ export default function Home() {
             tcpPort={config.tcpPort}
             rtuPath={config.rtuSerialPath}
           />
-          <LogPanel logs={logs} logFilter={logFilter} onFilterChange={updateLogFilter} />
+          <LogPanel
+            logs={logs}
+            logFilter={logFilter}
+            onFilterChange={updateLogFilter}
+            onClearLogs={clearLogs}
+          />
           <ThemeToggle />
           <LanguageSwitcher />
         </div>

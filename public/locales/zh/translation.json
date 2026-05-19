@@ -18,6 +18,9 @@
     "noSerialPorts": "未检测到串口",
     "serialPortHint": "选择 RTU 模式的 COM 端口",
     "apply": "应用并重启服务器",
+    "applying": "重启中...",
+    "tcpEnabled": "启用 TCP",
+    "rtuEnabled": "启用 RTU",
     "slaveId": "设备地址",
     "slaveIdHint": "范围: 1–247",
     "baudRate": "波特率",
@@ -57,13 +60,16 @@
     "read": "读取",
     "write": "写入",
     "error": "错误",
-    "filter": "过滤"
+    "filter": "过滤",
+    "clear": "清空"
   },
   "common": {
     "close": "关闭"
   },
   "language": {
     "en": "English",
-    "zh": "中文"
+    "zh": "中文",
+    "fr": "Français",
+    "ja": "日本語"
   }
 }

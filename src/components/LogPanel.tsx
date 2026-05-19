@@ -12,6 +12,8 @@ interface LogPanelProps {
   logFilter: LogFilterConfig
   /** Called when the user toggles a log type. */
   onFilterChange: (filter: Partial<LogFilterConfig>) => void
+  /** Called when the user clicks the clear-logs button. */
+  onClearLogs: () => void
 }
 
 function toSelectedKeys(logFilter: LogFilterConfig): Set<string> {
@@ -35,7 +37,12 @@ function toLogFilterConfig(keys: Set<string | number>): Partial<LogFilterConfig>
  *
  * @returns A trigger button that opens a modal dialog containing the log list.
  */
-export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelProps>) {
+export function LogPanel({
+  logs,
+  logFilter,
+  onFilterChange,
+  onClearLogs
+}: Readonly<LogPanelProps>) {
   const { t } = useTranslation()
 
   const selectedKeys = toSelectedKeys(logFilter)
@@ -140,8 +147,16 @@ export function LogPanel({ logs, logFilter, onFilterChange }: Readonly<LogPanelP
                 </div>
               </ScrollShadow>
             </Modal.Body>
-            <Modal.Footer>
-              <Button slot="close" variant="secondary" className="w-full">
+            <Modal.Footer className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onPress={onClearLogs}
+                isDisabled={logs.length === 0}
+              >
+                {t('logs.clear')}
+              </Button>
+              <Button slot="close" variant="secondary" className="flex-1">
                 {t('common.close')}
               </Button>
             </Modal.Footer>

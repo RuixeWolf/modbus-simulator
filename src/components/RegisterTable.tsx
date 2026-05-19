@@ -151,7 +151,7 @@ export function RegisterTable({
                   setGotoAddr('')
                 }
               }}
-              className="w-32"
+              className="w-40"
             />
             <Button
               size="sm"

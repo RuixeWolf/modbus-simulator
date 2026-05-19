@@ -165,16 +165,40 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
   return server
 }
 
-/** Stops and clears the active TCP server, if any. */
-export function stopTCPServer(): void {
-  if (server) {
+/** Stops and clears the active TCP server, if any. Returns a Promise that resolves once the server is closed. */
+export function stopTCPServer(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!server) {
+      resolve()
+      return
+    }
+
     g.__modbus_tcp_running__ = false
-    g.__modbus_tcp_running__ = false
-    server.close()
+    const s = server
     server = null
     g.__modbus_tcp_server__ = null
-    console.log('Modbus TCP Server stopped')
-  }
+
+    let resolved = false
+
+    const timeout = setTimeout(() => {
+      if (resolved) return
+      resolved = true
+      s.removeListener('close', onClose)
+      resolve()
+    }, 5000)
+    timeout.unref()
+
+    function onClose() {
+      if (resolved) return
+      resolved = true
+      clearTimeout(timeout)
+      console.log('Modbus TCP Server stopped')
+      resolve()
+    }
+
+    s.once('close', onClose)
+    s.close()
+  })
 }
 
 /** @returns Whether the TCP server is currently running. */

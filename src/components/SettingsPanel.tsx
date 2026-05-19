@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Card, Input, Label, ListBox, Select } from '@heroui/react'
+import { Button, Card, Input, Label, ListBox, Select, Switch } from '@heroui/react'
 import type { Key } from '@heroui/react'
 import { Icon } from '@iconify/react'
 
@@ -18,8 +18,10 @@ type RtuParity = 'none' | 'even' | 'odd'
 
 /** Mutable server configuration. */
 interface ServerConfig {
+  tcpEnabled: boolean
   tcpPort: number
   slaveId: number
+  rtuEnabled: boolean
   rtuSerialPath: string | null
   rtuBaudRate: number
   rtuParity: RtuParity
@@ -34,7 +36,7 @@ interface SettingsPanelProps {
   /** Available serial ports discovered by the backend. */
   serialPorts: SerialPortInfo[]
   /** Called when the user presses "Apply". */
-  onApply: (config: ServerConfig) => void
+  onApply: (config: ServerConfig) => void | Promise<void>
 }
 
 /** Available baud rates for RTU serial communication. */
@@ -60,15 +62,18 @@ const STOP_BITS = [1, 2]
  */
 export function SettingsPanel({ config, serialPorts, onApply }: Readonly<SettingsPanelProps>) {
   const { t } = useTranslation()
+  const [tcpEnabled, setTcpEnabled] = useState(config.tcpEnabled)
   const [tcpPort, setTcpPort] = useState(String(config.tcpPort))
   const [slaveId, setSlaveId] = useState(String(config.slaveId))
+  const [rtuEnabled, setRtuEnabled] = useState(config.rtuEnabled)
   const [rtuPath, setRtuPath] = useState(config.rtuSerialPath || '')
   const [rtuBaudRate, setRtuBaudRate] = useState(String(config.rtuBaudRate))
   const [rtuParity, setRtuParity] = useState(config.rtuParity)
   const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits))
   const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits))
+  const [isApplying, setIsApplying] = useState(false)
 
-  const handleApply = () => {
+  async function handleApply() {
     const port = Number.parseInt(tcpPort, 10)
     if (Number.isNaN(port) || port < 1 || port > 65535) return
     // Validate slave ID: must be a valid integer string (digits only, no decimals/scientific notation/whitespace)
@@ -82,15 +87,23 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
     if (Number.isNaN(dataBits)) return
     const stopBits = Number.parseInt(rtuStopBits, 10)
     if (Number.isNaN(stopBits)) return
-    onApply({
-      tcpPort: port,
-      slaveId: sid,
-      rtuSerialPath: rtuPath || null,
-      rtuBaudRate: baudRate,
-      rtuParity,
-      rtuDataBits: dataBits,
-      rtuStopBits: stopBits
-    })
+
+    setIsApplying(true)
+    try {
+      await onApply({
+        tcpEnabled,
+        tcpPort: port,
+        slaveId: sid,
+        rtuEnabled,
+        rtuSerialPath: rtuPath || null,
+        rtuBaudRate: baudRate,
+        rtuParity,
+        rtuDataBits: dataBits,
+        rtuStopBits: stopBits
+      })
+    } finally {
+      setIsApplying(false)
+    }
   }
 
   return (
@@ -105,59 +118,21 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
       </Card.Header>
       <Card.Content>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 px-2">
-          {/* TCP Port */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="text-foreground text-sm font-semibold">{t('settings.tcpPort')}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                value={tcpPort}
-                onChange={(e) => setTcpPort(e.target.value)}
-                min={1}
-                max={65535}
-                className="w-32"
-                data-testid="tcp-port-input"
-              />
-              <span className="text-text-muted text-xs">
-                {t('settings.default', { port: 502 })}
-              </span>
-            </div>
-
-            {/* Slave ID */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-amber-500" />
-                <span className="text-foreground text-sm font-semibold">
-                  {t('settings.slaveId')}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <Input
-                  type="number"
-                  value={slaveId}
-                  onChange={(e) => {
-                    setSlaveId(e.target.value)
-                  }}
-                  min={1}
-                  max={247}
-                  className="w-32"
-                  data-testid="slave-id-input"
-                />
-                <span className="text-text-muted text-xs">{t('settings.slaveIdHint')}</span>
-              </div>
-            </div>
-          </div>
-
           {/* RTU Serial Port */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-foreground text-sm font-semibold">
-                {t('settings.rtuSerialPort')}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-foreground text-sm font-semibold">
+                  {t('settings.rtuSerialPort')}
+                </span>
+              </div>
+              <Switch isSelected={rtuEnabled} onChange={setRtuEnabled} size="sm">
+                <span className="text-sm">{t('settings.rtuEnabled')}</span>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
 
             <Select
@@ -166,6 +141,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
               onChange={(value: Key | null) => setRtuPath(String(value ?? ''))}
               data-testid="rtu-serial-select"
               className="w-full"
+              isDisabled={!rtuEnabled}
             >
               <Label className="sr-only">{t('settings.rtuSerialPort')}</Label>
               <Select.Trigger>
@@ -202,6 +178,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 onChange={(value: Key | null) => setRtuBaudRate(String(value ?? ''))}
                 data-testid="rtu-baud-rate"
                 className="w-full"
+                isDisabled={!rtuEnabled}
               >
                 <Label>{t('settings.baudRate')}</Label>
                 <Select.Trigger>
@@ -228,6 +205,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 }
                 data-testid="rtu-parity"
                 className="w-full"
+                isDisabled={!rtuEnabled}
               >
                 <Label>{t('settings.parity')}</Label>
                 <Select.Trigger>
@@ -252,6 +230,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 onChange={(value: Key | null) => setRtuDataBits(String(value ?? ''))}
                 data-testid="rtu-data-bits"
                 className="w-full"
+                isDisabled={!rtuEnabled}
               >
                 <Label>{t('settings.dataBits')}</Label>
                 <Select.Trigger>
@@ -276,6 +255,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 onChange={(value: Key | null) => setRtuStopBits(String(value ?? ''))}
                 data-testid="rtu-stop-bits"
                 className="w-full"
+                isDisabled={!rtuEnabled}
               >
                 <Label>{t('settings.stopBits')}</Label>
                 <Select.Trigger>
@@ -297,11 +277,80 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
 
             <p className="text-text-muted text-xs">{t('settings.serialPortHint')}</p>
           </div>
+
+          {/* TCP Port + Slave ID */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-foreground text-sm font-semibold">
+                  {t('settings.tcpPort')}
+                </span>
+              </div>
+              <Switch isSelected={tcpEnabled} onChange={setTcpEnabled} size="sm">
+                <span className="text-sm">{t('settings.tcpEnabled')}</span>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                value={tcpPort}
+                onChange={(e) => setTcpPort(e.target.value)}
+                min={1}
+                max={65535}
+                className="w-32"
+                data-testid="tcp-port-input"
+                disabled={!tcpEnabled}
+              />
+              <span className="text-text-muted text-xs">
+                {t('settings.default', { port: 502 })}
+              </span>
+            </div>
+
+            {/* Slave ID */}
+            <div className="pt-2">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="text-foreground text-sm font-semibold">
+                  {t('settings.slaveId')}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <Input
+                  type="number"
+                  value={slaveId}
+                  onChange={(e) => {
+                    setSlaveId(e.target.value)
+                  }}
+                  min={1}
+                  max={247}
+                  className="w-32"
+                  data-testid="slave-id-input"
+                />
+                <span className="text-text-muted text-xs">{t('settings.slaveIdHint')}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="border-border mt-5 flex justify-end border-t pt-4">
-          <Button variant="primary" onPress={handleApply} data-testid="apply-settings">
-            {t('settings.apply')}
+          <Button
+            variant="primary"
+            onPress={handleApply}
+            isDisabled={isApplying}
+            data-testid="apply-settings"
+          >
+            {isApplying ? (
+              <span className="flex items-center gap-2">
+                <Icon icon="lucide:loader-2" className="h-4 w-4 animate-spin" />
+                {t('settings.applying')}
+              </span>
+            ) : (
+              t('settings.apply')
+            )}
           </Button>
         </div>
       </Card.Content>

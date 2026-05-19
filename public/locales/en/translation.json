@@ -18,6 +18,9 @@
     "noSerialPorts": "No serial ports detected",
     "serialPortHint": "Select a COM port for RTU mode",
     "apply": "Apply & Restart Servers",
+    "applying": "Restarting...",
+    "tcpEnabled": "Enable TCP",
+    "rtuEnabled": "Enable RTU",
     "slaveId": "Device Address",
     "slaveIdHint": "Range: 1–247",
     "baudRate": "Baud Rate",
@@ -57,13 +60,16 @@
     "read": "READ",
     "write": "WRITE",
     "error": "ERROR",
-    "filter": "Filter"
+    "filter": "Filter",
+    "clear": "Clear"
   },
   "common": {
     "close": "Close"
   },
   "language": {
     "en": "English",
-    "zh": "中文"
+    "zh": "中文",
+    "fr": "Français",
+    "ja": "日本語"
   }
 }
