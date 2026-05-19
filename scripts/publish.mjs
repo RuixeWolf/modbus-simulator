@@ -186,7 +186,7 @@ npmPublish.on('exit', (code) => {
   if (code === 0) {
     console.log(`\n✅ Published ${pkg.name}@${pkg.version} successfully!`)
     console.log(`\nUsers can now run:`)
-    console.log(`  npx ${pkg.name} --help`)
+    console.log(`  npx ${pkg.name}@latest --help`)
   } else {
     console.error(`\n❌ Publish failed with exit code ${code}.`)
   }

@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "test": "vitest run && playwright test",
     "prepare": "husky",
-    "publish:npm": "node scripts/publish.mjs"
+    "publish:npm": "node scripts/publish.mjs",
+    "publish:npm:dry-run": "node scripts/publish.mjs --dry-run"
   },
   "keywords": [
     "modbus",
