@@ -17,7 +17,7 @@
 import { execSync, spawn } from 'node:child_process'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { basename, dirname, isAbsolute, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   copyFileSync,
@@ -121,6 +121,13 @@ if (existsSync(publicSource)) {
   cpSync(publicSource, publicTarget, { recursive: true, force: true })
 }
 
+// Copy README.md
+const readmeSource = join(projectRoot, 'README.md')
+const readmeTarget = join(publishDir, 'README.md')
+if (existsSync(readmeSource)) {
+  copyFileSync(readmeSource, readmeTarget)
+}
+
 // ---------------------------------------------------------------------------
 // Step 3: Generate clean package.json for publishing
 // ---------------------------------------------------------------------------
@@ -130,7 +137,7 @@ const publishPkg = {
   version: pkg.version,
   description: pkg.description,
   bin: pkg.bin,
-  files: ['scripts', '.next', 'public'],
+  files: ['scripts', '.next', 'public', 'README.md'],
   dependencies: pkg.dependencies,
   engines: pkg.engines,
   publishConfig: pkg.publishConfig,
@@ -213,19 +220,26 @@ function copyDirExcept(src, dest, exclude) {
     if (stats.isDirectory()) {
       copyDirExcept(srcPath, destPath, exclude)
     } else if (stats.isSymbolicLink()) {
-      const target = readlinkSync(srcPath)
-      const targetPath = isAbsolute(target) ? target : join(dirname(srcPath), target)
-      if (!existsSync(targetPath)) continue
-
-      const targetStats = lstatSync(targetPath)
-      if (targetStats.isDirectory()) {
-        copyDirExcept(targetPath, destPath, exclude)
-      } else {
-        copyFileSync(targetPath, destPath)
-      }
+      handleSymbolicLink(srcPath, destPath, exclude)
     } else {
       copyFileSync(srcPath, destPath)
     }
+  }
+}
+
+/**
+ * Handle copying a symbolic link, resolving it and copying the target.
+ */
+function handleSymbolicLink(srcPath, destPath, exclude) {
+  const target = readlinkSync(srcPath)
+  const targetPath = isAbsolute(target) ? target : join(dirname(srcPath), target)
+  if (!existsSync(targetPath)) return
+
+  const targetStats = lstatSync(targetPath)
+  if (targetStats.isDirectory()) {
+    copyDirExcept(targetPath, destPath, exclude)
+  } else {
+    copyFileSync(targetPath, destPath)
   }
 }
 

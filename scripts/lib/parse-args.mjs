@@ -31,7 +31,7 @@ export function parseArgs(argv) {
 }
 
 export const HELP_TEXT = `
-Usage: node <script> [options]
+Usage: npx @ruixe/modbus-simulator [options]
 
 Options:
   -p, --port <number>        HTTP server port (default: 5000)
@@ -42,7 +42,7 @@ Options:
   -h, --help                 Show this help message
 
 Examples:
-  node cli.mjs
-  node cli.mjs -p 8080 -t 5020 -s COM3 -i 10
-  node dev.mjs --port=8080 --tcp-port=5020 --open
+  npx @ruixe/modbus-simulator@latest
+  npx @ruixe/modbus-simulator@latest -p 8080 -t 5020 -s COM3 -i 10
+  npx @ruixe/modbus-simulator@latest --port=8080 --tcp-port=5020 --open
 `.trim()

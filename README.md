@@ -51,6 +51,10 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 - **REST API**
   - Full HTTP API for external integration and automation
 
+### Web Dashboard
+
+![Web Dashboard](docs/screenshots/web-dashboard.png)
+
 ## Tech Stack
 
 | Layer      | Technology                                                            |
@@ -66,36 +70,34 @@ Whether you are developing Modbus client applications, testing PLC integrations,
 | Icons      | [Iconify](https://iconify.design/) (Lucide)                           |
 | Animation  | [Framer Motion](https://www.framer.com/motion/)                       |
 
-## Screenshots
-
-### Dashboard Overview
-
-![Dashboard — Coils](docs/screenshots/dashboard-coils.png)
-
-### Holding Registers
-
-![Dashboard — Holding Registers](docs/screenshots/dashboard-holding-registers.png)
-
-### Communication Logs
-
-![Communication Logs](docs/screenshots/communication-logs.png)
-
-### Server Configuration
-
-![Server Settings](docs/screenshots/server-settings.png)
-
-### Dark Mode
-
-![Dashboard — Dark Mode](docs/screenshots/dashboard-dark.png)
-
 ## Quick Start
+
+### Run with NPX (No Installation)
+
+The fastest way to get started — no cloning or installation required:
+
+```bash
+npx @ruixe/modbus-simulator@latest
+```
+
+With options:
+
+```bash
+npx @ruixe/modbus-simulator@latest -p 8080 -t 5020 -o
+```
+
+See all available options:
+
+```bash
+npx @ruixe/modbus-simulator@latest --help
+```
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 24 or later
 - [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
 
-### Installation
+### Installation (Development)
 
 ```bash
 # Clone the repository
