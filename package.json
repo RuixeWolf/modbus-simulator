@@ -1,7 +1,10 @@
 {
-  "name": "modbus-simulator",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@ruixe/modbus-simulator",
+  "version": "1.0.2",
+  "description": "A Modbus Device Simulator built with Next.js. Provides a real-time dashboard with paginated register tables, communication logs, and configurable TCP/RTU server settings.",
+  "bin": {
+    "modbus-simulator": "scripts/cli.mjs"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "next build",
@@ -14,7 +17,35 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test": "vitest run && playwright test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "publish:npm": "node scripts/publish.mjs",
+    "publish:npm:dry-run": "node scripts/publish.mjs --dry-run"
+  },
+  "keywords": [
+    "modbus",
+    "modbus-tcp",
+    "modbus-rtu",
+    "simulator",
+    "plc",
+    "industrial",
+    "automation",
+    "nextjs"
+  ],
+  "author": "Ruixe Wolf <ruixewolf@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RuixeWolf/modbus-simulator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RuixeWolf/modbus-simulator/issues"
+  },
+  "homepage": "https://github.com/RuixeWolf/modbus-simulator#readme",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@heroui/react": "^3.0.4",

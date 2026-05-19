@@ -51,6 +51,10 @@
 - **REST API**
   - 完整的 HTTP API，便于外部集成和自动化
 
+### Web 仪表板
+
+![Web 仪表板](./screenshots/web-dashboard.png)
+
 ## 技术栈
 
 | 层级       | 技术                                                                  |
@@ -65,28 +69,6 @@
 | 测试       | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) |
 | 图标       | [Iconify](https://iconify.design/)（Lucide）                          |
 | 动画       | [Framer Motion](https://www.framer.com/motion/)                       |
-
-## 截图预览
-
-### 仪表板总览
-
-![仪表板 — 线圈](docs/screenshots/dashboard-coils.png)
-
-### 保持寄存器
-
-![仪表板 — 保持寄存器](docs/screenshots/dashboard-holding-registers.png)
-
-### 通信日志
-
-![通信日志](docs/screenshots/communication-logs.png)
-
-### 服务器配置
-
-![服务器设置](docs/screenshots/server-settings.png)
-
-### 暗色模式
-
-![仪表板 — 暗色模式](docs/screenshots/dashboard-dark.png)
 
 ## 快速开始
 
