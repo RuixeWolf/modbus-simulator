@@ -14,9 +14,11 @@ function createMockServer() {
       listeners[event].push(cb)
     }),
     close: vi.fn(() => {
-      const cbs = listeners['close'] || []
-      listeners['close'] = []
-      cbs.forEach((cb) => cb())
+      const cbs = listeners.close || []
+      listeners.close = []
+      cbs.forEach((cb) => {
+        cb()
+      })
     }),
     removeListener: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
       if (listeners[event]) {
@@ -29,7 +31,7 @@ function createMockServer() {
 let mockServer = createMockServer()
 
 vi.mock('modbus-serial', () => ({
-  ServerTCP: vi.fn(function () {
+  ServerTCP: vi.fn(function ServerTCP() {
     return mockServer
   })
 }))

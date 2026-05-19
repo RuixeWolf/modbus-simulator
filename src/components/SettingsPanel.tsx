@@ -73,7 +73,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
   const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits))
   const [isApplying, setIsApplying] = useState(false)
 
-  const handleApply = async () => {
+  async function handleApply() {
     const port = Number.parseInt(tcpPort, 10)
     if (Number.isNaN(port) || port < 1 || port > 65535) return
     // Validate slave ID: must be a valid integer string (digits only, no decimals/scientific notation/whitespace)

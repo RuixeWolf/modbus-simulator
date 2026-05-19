@@ -178,7 +178,7 @@ export function stopTCPServer(): Promise<void> {
     server = null
     g.__modbus_tcp_server__ = null
 
-    const onClose = () => {
+    function onClose() {
       console.log('Modbus TCP Server stopped')
       resolve()
     }

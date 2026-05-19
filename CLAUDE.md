@@ -46,7 +46,7 @@ The dev script (`scripts/dev.mjs`) behavior:
 
 ### Native Module Builds
 
-`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM (Performant npm) may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
@@ -100,7 +100,7 @@ Custom type declarations live in `src/types/modbus-serial.d.ts` since the librar
 
 **Instrumentation Hook** (`instrumentation.ts`):
 
-Next.js 16 calls `register()` in `instrumentation.ts` once when the server process starts. This eagerly starts the Modbus servers via `ensureServersStarted()` instead of waiting for the first HTTP API request. This is an additional startup path alongside the module-level API route imports.
+Next.js 16 calls `register()` in `instrumentation.ts` once when the server process starts. It eagerly starts the Modbus servers via `ensureServersStarted()`. This avoids waiting for the first HTTP API request. It is an additional startup path alongside the module-level API route imports.
 
 ### API Layer
 

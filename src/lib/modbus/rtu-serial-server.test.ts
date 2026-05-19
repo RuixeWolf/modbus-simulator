@@ -37,7 +37,7 @@ function createMockSerialPort() {
 let mockPort = createMockSerialPort()
 
 vi.mock('serialport', () => ({
-  SerialPort: vi.fn(function () {
+  SerialPort: vi.fn(function SerialPort() {
     mockPort = createMockSerialPort()
     mockOpen = true
     setTimeout(() => {

@@ -13,7 +13,7 @@ const LANGUAGES = ['en', 'zh', 'fr', 'ja'] as const
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation()
 
-  const handleChange = (value: Key | null) => {
+  function handleChange(value: Key | null) {
     const next = String(value ?? 'en')
     localStorage.setItem('i18nextLng', next)
     void i18n.changeLanguage(next)
