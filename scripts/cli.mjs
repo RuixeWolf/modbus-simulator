@@ -12,6 +12,7 @@
  * necessary dependencies.
  */
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openBrowser } from './lib/open-browser.mjs'
@@ -33,14 +34,32 @@ if (args.tcpPort) process.env.MODBUS_TCP_PORT = String(args.tcpPort)
 if (args.serialPort) process.env.MODBUS_RTU_SERIAL_PATH = args.serialPort
 if (args.slaveId) process.env.MODBUS_SLAVE_ID = String(args.slaveId)
 
-const serverPath = join(__dirname, 'server.js')
+// Support both standalone distribution (server.js in same dir)
+// and npm-installed package (server.js in .next/standalone/)
+const serverPath = (() => {
+  const standalonePath = join(__dirname, 'server.js')
+  if (existsSync(standalonePath)) {
+    return standalonePath
+  }
+  const npmPath = join(__dirname, '..', '.next', 'standalone', 'server.js')
+  if (existsSync(npmPath)) {
+    return npmPath
+  }
+  console.error('Error: Could not find server.js')
+  console.error('Searched:')
+  console.error(`  - ${standalonePath}`)
+  console.error(`  - ${npmPath}`)
+  process.exit(1)
+})()
+
+const serverCwd = dirname(serverPath)
 
 // Explicitly copy env to avoid any proxy/serialization issues with process.env
 const env = { ...process.env }
 
 const proc = spawn(process.execPath, [serverPath], {
   stdio: 'inherit',
-  cwd: __dirname,
+  cwd: serverCwd,
   env
 })
 
