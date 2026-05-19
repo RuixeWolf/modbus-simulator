@@ -173,11 +173,14 @@ if (isDryRun) {
 
 console.log('\n📦 Publishing to NPM...\n')
 
-const npmPublish = spawn('npm', ['publish', '--access=public'], {
-  stdio: 'inherit',
-  cwd: publishDir,
-  shell: true
-})
+const npmPublish = spawn(
+  process.platform === 'win32' ? 'npm.cmd' : 'npm',
+  ['publish', '--access=public'],
+  {
+    stdio: 'inherit',
+    cwd: publishDir
+  }
+)
 
 npmPublish.on('exit', (code) => {
   if (code === 0) {
@@ -273,7 +276,7 @@ function fixExternalModuleStubs(nodeModulesDir) {
     // Create stub package
     writeFileSync(
       join(itemPath, 'package.json'),
-      JSON.stringify({ name: item, version: '1.0.0', main: 'index.js' }, null, 2) + '\n'
+      `${JSON.stringify({ name: item, version: '1.0.0', main: 'index.js' }, null, 2)}\n`
     )
     writeFileSync(join(itemPath, 'index.js'), `module.exports = require('${packageName}')\n`)
   }
