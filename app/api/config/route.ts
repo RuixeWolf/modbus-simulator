@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  const currentConfig = getConfig()
   setConfig(updates)
 
   // Only restart servers when server-relevant config fields actually changed
@@ -139,7 +140,9 @@ export async function POST(request: NextRequest) {
     'rtuDataBits',
     'rtuStopBits'
   ]
-  const shouldRestart = serverFields.some((field) => field in updates)
+  const shouldRestart = serverFields.some(
+    (field) => field in updates && updates[field] !== currentConfig[field]
+  )
   if (shouldRestart) {
     await restartServers()
 

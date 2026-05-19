@@ -178,18 +178,26 @@ export function stopTCPServer(): Promise<void> {
     server = null
     g.__modbus_tcp_server__ = null
 
+    let resolved = false
+
+    const timeout = setTimeout(() => {
+      if (resolved) return
+      resolved = true
+      s.removeListener('close', onClose)
+      resolve()
+    }, 5000)
+    timeout.unref()
+
     function onClose() {
+      if (resolved) return
+      resolved = true
+      clearTimeout(timeout)
       console.log('Modbus TCP Server stopped')
       resolve()
     }
 
     s.once('close', onClose)
     s.close()
-
-    setTimeout(() => {
-      s.removeListener('close', onClose)
-      resolve()
-    }, 5000)
   })
 }
 
