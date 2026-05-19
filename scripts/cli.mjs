@@ -53,16 +53,21 @@ const serverStrategy = (() => {
   }
 
   // Option 3: NPM package with regular build — use next start
-  const nextBin = join(__dirname, '..', 'node_modules', 'next', 'dist', 'bin', 'next')
-  if (existsSync(nextBin)) {
-    return { type: 'next', path: nextBin, cwd: dirname(__dirname) }
+  // Use import.meta.resolve to find next via Node.js module resolution,
+  // which handles npm's dependency hoisting correctly.
+  try {
+    const nextUrl = import.meta.resolve('next/dist/bin/next')
+    const nextPath = fileURLToPath(nextUrl)
+    return { type: 'next', path: nextPath, cwd: dirname(__dirname) }
+  } catch {
+    // next not found
   }
 
   console.error('Error: Could not find a way to start the server.')
   console.error('Searched:')
   console.error(`  - ${standalonePath}`)
   console.error(`  - ${npmStandalonePath}`)
-  console.error(`  - ${nextBin}`)
+  console.error(`  - next (via Node.js module resolution)`)
   process.exit(1)
 })()
 
