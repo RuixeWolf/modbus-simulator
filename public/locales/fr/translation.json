@@ -1,0 +1,75 @@
+{
+  "app": {
+    "title": "Simulateur de Dispositif Modbus",
+    "subtitle": "Surveillance et contrôle en temps réel des registres Modbus TCP/RTU"
+  },
+  "header": {
+    "tcp": "TCP",
+    "rtu": "RTU",
+    "port": "Port",
+    "notSet": "Non défini"
+  },
+  "settings": {
+    "title": "Paramètres du Serveur",
+    "tcpPort": "Port TCP",
+    "rtuSerialPort": "Port Série RTU",
+    "default": "Défaut : {{port}}",
+    "selectSerialPort": "-- Sélectionner un port série --",
+    "noSerialPorts": "Aucun port série détecté",
+    "serialPortHint": "Sélectionner un port COM pour le mode RTU",
+    "apply": "Appliquer et redémarrer les serveurs",
+    "applying": "Redémarrage...",
+    "tcpEnabled": "Activer TCP",
+    "rtuEnabled": "Activer RTU",
+    "slaveId": "Adresse de l'appareil",
+    "slaveIdHint": "Plage : 1–247",
+    "baudRate": "Débit en bauds",
+    "parity": "Parité",
+    "parityNone": "Aucune",
+    "parityEven": "Paire",
+    "parityOdd": "Impaire",
+    "dataBits": "Bits de données",
+    "stopBits": "Bits d'arrêt"
+  },
+  "tabs": {
+    "coils": "Bobines",
+    "discreteInputs": "Entrées discrètes",
+    "holdingRegisters": "Registres de maintien",
+    "inputRegisters": "Registres d'entrée"
+  },
+  "registerTable": {
+    "address": "Adresse",
+    "value": "Valeur",
+    "action": "Action",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "range": "{{start}} - {{end}}",
+    "noData": "Aucune donnée disponible",
+    "true": "VRAI",
+    "false": "FAUX",
+    "on": "ACTIF",
+    "off": "INACTIF",
+    "set": "Définir",
+    "gotoAddress": "Aller à l'adresse",
+    "goto": "Aller"
+  },
+  "logs": {
+    "title": "Journaux de communication",
+    "entries": "{{count}} entrées",
+    "noLogs": "Aucun journal pour l'instant...",
+    "read": "LECTURE",
+    "write": "ÉCRITURE",
+    "error": "ERREUR",
+    "filter": "Filtrer",
+    "clear": "Effacer"
+  },
+  "common": {
+    "close": "Fermer"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "fr": "Français",
+    "ja": "日本語"
+  }
+}

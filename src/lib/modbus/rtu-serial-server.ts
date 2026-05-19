@@ -342,14 +342,16 @@ export function startRTUSerialServer(
   }
 }
 
-/** Closes the serial port and clears frame buffers. */
-export function stopRTUSerialServer(): void {
-  if (serialPort) {
+/** Closes the serial port and clears frame buffers. Returns a Promise that resolves once the port is fully closed. */
+export function stopRTUSerialServer(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!serialPort) {
+      resolve()
+      return
+    }
+
     g.__modbus_rtu_running__ = false
-    serialPort.removeAllListeners()
-    serialPort.close()
-    serialPort = null
-    g.__modbus_rtu_serial_port__ = null
+
     if (timer) {
       clearTimeout(timer)
       timer = null
@@ -357,8 +359,27 @@ export function stopRTUSerialServer(): void {
     }
     buffer = Buffer.alloc(0)
     g.__modbus_rtu_buffer__ = Buffer.alloc(0)
-    console.log('Modbus RTU Serial Server stopped')
-  }
+
+    const port = serialPort
+    serialPort = null
+    g.__modbus_rtu_serial_port__ = null
+
+    if (!port.isOpen) {
+      port.removeAllListeners()
+      console.log('Modbus RTU Serial Server stopped')
+      resolve()
+      return
+    }
+
+    port.close((err) => {
+      if (err) {
+        console.warn('Error closing serial port:', err.message)
+      }
+      port.removeAllListeners()
+      console.log('Modbus RTU Serial Server stopped')
+      resolve()
+    })
+  })
 }
 
 /** @returns Whether the RTU serial server is currently running. */

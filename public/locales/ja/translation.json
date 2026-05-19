@@ -1,0 +1,75 @@
+{
+  "app": {
+    "title": "Modbus デバイスシミュレータ",
+    "subtitle": "Modbus TCP/RTU レジスタのリアルタイム監視と制御"
+  },
+  "header": {
+    "tcp": "TCP",
+    "rtu": "RTU",
+    "port": "ポート",
+    "notSet": "未設定"
+  },
+  "settings": {
+    "title": "サーバー設定",
+    "tcpPort": "TCP ポート",
+    "rtuSerialPort": "RTU シリアルポート",
+    "default": "デフォルト: {{port}}",
+    "selectSerialPort": "-- シリアルポートを選択 --",
+    "noSerialPorts": "シリアルポートが検出されません",
+    "serialPortHint": "RTU モードの COM ポートを選択",
+    "apply": "適用してサーバーを再起動",
+    "applying": "再起動中...",
+    "tcpEnabled": "TCP を有効化",
+    "rtuEnabled": "RTU を有効化",
+    "slaveId": "デバイスアドレス",
+    "slaveIdHint": "範囲: 1–247",
+    "baudRate": "ボーレート",
+    "parity": "パリティ",
+    "parityNone": "なし",
+    "parityEven": "偶数",
+    "parityOdd": "奇数",
+    "dataBits": "データビット",
+    "stopBits": "ストップビット"
+  },
+  "tabs": {
+    "coils": "コイル",
+    "discreteInputs": "ディスクリート入力",
+    "holdingRegisters": "ホールディングレジスタ",
+    "inputRegisters": "入力レジスタ"
+  },
+  "registerTable": {
+    "address": "アドレス",
+    "value": "値",
+    "action": "操作",
+    "prev": "前へ",
+    "next": "次へ",
+    "range": "{{start}} - {{end}}",
+    "noData": "データがありません",
+    "true": "真",
+    "false": "偽",
+    "on": "ON",
+    "off": "OFF",
+    "set": "設定",
+    "gotoAddress": "アドレスへ移動",
+    "goto": "移動"
+  },
+  "logs": {
+    "title": "通信ログ",
+    "entries": "{{count}} 件",
+    "noLogs": "ログはまだありません...",
+    "read": "読み取り",
+    "write": "書き込み",
+    "error": "エラー",
+    "filter": "フィルタ",
+    "clear": "クリア"
+  },
+  "common": {
+    "close": "閉じる"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "fr": "Français",
+    "ja": "日本語"
+  }
+}

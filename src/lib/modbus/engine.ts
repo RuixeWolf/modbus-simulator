@@ -399,6 +399,12 @@ export class ModbusEngine extends EventEmitter {
     return [...this.logs]
   }
 
+  /** Clears all stored log entries. */
+  clearLogs(): void {
+    this.logs = []
+    this.emit('log')
+  }
+
   /**
    * Convenience helper for logging out-of-range or protocol errors.
    * @param registerType – Category that triggered the error.

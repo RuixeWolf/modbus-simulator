@@ -10,3 +10,9 @@ export async function GET() {
   const engine = ModbusEngine.getInstance()
   return NextResponse.json(engine.getLogs())
 }
+
+export async function DELETE() {
+  const engine = ModbusEngine.getInstance()
+  engine.clearLogs()
+  return NextResponse.json({ success: true })
+}

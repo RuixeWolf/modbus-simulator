@@ -52,9 +52,7 @@ export default function RootLayout({
         {/* eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="flex min-h-full w-full flex-col items-stretch">
-        {children}
-      </body>
+      <body className="flex min-h-full w-full flex-col items-stretch">{children}</body>
     </html>
   )
 }

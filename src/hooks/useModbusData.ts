@@ -28,8 +28,10 @@ export interface ServerStatus {
 
 /** Active server configuration returned by the REST API. */
 export interface ServerConfig {
+  tcpEnabled: boolean
   tcpPort: number
   slaveId: number
+  rtuEnabled: boolean
   rtuSerialPath: string | null
   rtuBaudRate: number
   rtuParity: 'none' | 'even' | 'odd'
@@ -70,8 +72,10 @@ export function useModbusData() {
   const [logs, setLogs] = useState<ModbusLogEntry[]>([])
   const [status, setStatus] = useState<ServerStatus>({ tcp: false, rtu: false })
   const [config, setConfig] = useState<ServerConfig>({
+    tcpEnabled: true,
     tcpPort: 502,
     slaveId: 1,
+    rtuEnabled: true,
     rtuSerialPath: null,
     rtuBaudRate: 9600,
     rtuParity: 'none',
@@ -236,6 +240,19 @@ export function useModbusData() {
     }
   }, [])
 
+  /**
+   * Clears all communication logs via DELETE /api/logs.
+   */
+  const clearLogs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/logs', { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to clear logs')
+      setLogs([])
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [])
+
   useEffect(() => {
     const init = async () => {
       await fetchState()
@@ -269,6 +286,7 @@ export function useModbusData() {
     writeRegister,
     updateConfig,
     updateLogFilter,
+    clearLogs,
     refresh: fetchState
   }
 }

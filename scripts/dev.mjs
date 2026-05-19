@@ -53,7 +53,9 @@ if (args.slaveId) process.env.MODBUS_SLAVE_ID = String(args.slaveId)
 const nextBin = join(projectRoot, 'node_modules', 'next', 'dist', 'bin', 'next')
 
 // Explicitly copy env to avoid any proxy/serialization issues with process.env
-const env = { ...process.env }
+// Force Webpack instead of Turbopack — Next.js 16's Turbopack has a broken
+// internal font module (@vercel/turbopack-next) on this platform.
+const env = { ...process.env, NEXT_PRIVATE_LOCAL_WEBPACK: 'true' }
 
 const proc = spawn(process.execPath, [nextBin, 'dev'], {
   stdio: 'inherit',
