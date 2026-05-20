@@ -16,25 +16,24 @@ jobs:
       version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 2
 
-      - name: Check if version changed
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check if version is unpublished
         id: check
         run: |
-          if git rev-parse ${{ github.event.before }} >/dev/null 2>&1; then
-            OLD_VERSION=$(git show ${{ github.event.before }}:package.json | jq -r .version)
-          else
-            OLD_VERSION="0.0.0"
-          fi
-          NEW_VERSION=$(jq -r .version package.json)
-          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+          NPM_VERSION=$(npm view @ruixe/modbus-simulator version 2>/dev/null || echo "0.0.0")
+          LOCAL_VERSION=$(jq -r .version package.json)
+          if [ "$NPM_VERSION" != "$LOCAL_VERSION" ]; then
             echo "bumped=true" >> $GITHUB_OUTPUT
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-            echo "Version changed: $OLD_VERSION -> $NEW_VERSION"
+            echo "version=$LOCAL_VERSION" >> $GITHUB_OUTPUT
+            echo "Version not yet on NPM: $NPM_VERSION -> $LOCAL_VERSION"
           else
             echo "bumped=false" >> $GITHUB_OUTPUT
-            echo "Version unchanged: $NEW_VERSION"
+            echo "Version already published: $LOCAL_VERSION"
           fi
 
   publish:
