@@ -8,27 +8,32 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Modbus Simulator — Agent Guidelines
 
-A Modbus Transmission Control Protocol (TCP) / Remote Terminal Unit (RTU) serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
+A Modbus TCP / RTU serial device simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4.
 
 For full project details see [CLAUDE.md](CLAUDE.md) and [README.md](README.md).
 
 ## Build & Test
 
-| Command                | Purpose                                         |
-| ---------------------- | ----------------------------------------------- |
-| `pnpm run dev`         | Start dev server (Turbopack, default port 5000) |
-| `pnpm run test:unit`   | Vitest unit tests                               |
-| `pnpm run test:e2e`    | Playwright E2E tests                            |
-| `pnpm run test`        | Unit + E2E                                      |
-| `pnpm run type-check`  | `tsc --noEmit`                                  |
-| `pnpm run format-lint` | Prettier + ESLint                               |
+| Command                | Purpose                              |
+| ---------------------- | ------------------------------------ |
+| `pnpm run dev`         | Start dev server (default port 5000) |
+| `pnpm run test:unit`   | Vitest unit tests                    |
+| `pnpm run test:e2e`    | Playwright E2E tests                 |
+| `pnpm run test`        | Unit + E2E                           |
+| `pnpm run type-check`  | `tsc --noEmit`                       |
+| `pnpm run format-lint` | Prettier + ESLint                    |
 
 Pre-commit hooks run `lint-staged` automatically.
+
+### Dev server quirks
+
+- `pnpm run dev` forces **Webpack** (not Turbopack) via `NEXT_PRIVATE_LOCAL_WEBPACK=true` because Next.js 16's Turbopack has a broken internal font module on this platform.
+- The dev script reads `.env.local` and accepts CLI overrides: `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, `--open`.
 
 ## Architecture
 
 - **Singleton state**: `src/lib/modbus/engine.ts` is the single source of truth. Use `ModbusEngine.getInstance()`. It survives Next.js Hot Module Replacement (HMR) via `globalThis.__modbus_engine_instance__`.
-- **Server lifecycle**: `src/lib/modbus/index.ts` manages TCP and RTU serial servers. API routes import `ensureServersStarted()` at the **module level** (not inside handlers).
+- **Server lifecycle**: `src/lib/modbus/index.ts` manages TCP and RTU serial servers. API routes import `ensureServersStarted()` at the **module level** (not inside handlers). `instrumentation.ts` also calls it eagerly on server boot.
 - **No WebSocket / Server-Sent Events (SSE)**: The frontend polls REST APIs every 1 second via `useModbusData()`.
 
 ## Critical Conventions
