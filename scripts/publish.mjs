@@ -165,8 +165,8 @@ console.log(isDryRun ? '\n🔍 Publishing to NPM (dry run)...\n' : '\n📦 Publi
 
 const publishArgs = ['publish', '--access=public']
 
-// Enable provenance attestation in CI (GitHub Actions OIDC)
-if (process.env.CI === 'true') {
+// Enable provenance attestation in GitHub Actions (OIDC)
+if (process.env.GITHUB_ACTIONS === 'true') {
   publishArgs.push('--provenance')
 }
 
