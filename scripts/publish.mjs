@@ -164,6 +164,12 @@ console.log(`  Deps:     ${Object.keys(pkg.dependencies).length} production depe
 console.log(isDryRun ? '\n🔍 Publishing to NPM (dry run)...\n' : '\n📦 Publishing to NPM...\n')
 
 const publishArgs = ['publish', '--access=public']
+
+// Enable provenance attestation in GitHub Actions (OIDC)
+if (process.env.GITHUB_ACTIONS === 'true') {
+  publishArgs.push('--provenance')
+}
+
 if (isDryRun) {
   publishArgs.push('--dry-run')
 }
