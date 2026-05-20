@@ -27,6 +27,7 @@ interface ServerConfig {
   rtuParity: RtuParity
   rtuDataBits: number
   rtuStopBits: number
+  logMaxCount: number
 }
 
 /** Props for {@link SettingsPanel}. */
@@ -71,6 +72,7 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
   const [rtuParity, setRtuParity] = useState(config.rtuParity)
   const [rtuDataBits, setRtuDataBits] = useState(String(config.rtuDataBits))
   const [rtuStopBits, setRtuStopBits] = useState(String(config.rtuStopBits))
+  const [logMaxCount, setLogMaxCount] = useState(String(config.logMaxCount))
   const [isApplying, setIsApplying] = useState(false)
 
   async function handleApply() {
@@ -87,6 +89,8 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
     if (Number.isNaN(dataBits)) return
     const stopBits = Number.parseInt(rtuStopBits, 10)
     if (Number.isNaN(stopBits)) return
+    const maxCount = Number.parseInt(logMaxCount, 10)
+    if (Number.isNaN(maxCount) || maxCount < 100 || maxCount > 10000) return
 
     setIsApplying(true)
     try {
@@ -99,7 +103,8 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
         rtuBaudRate: baudRate,
         rtuParity,
         rtuDataBits: dataBits,
-        rtuStopBits: stopBits
+        rtuStopBits: stopBits,
+        logMaxCount: maxCount
       })
     } finally {
       setIsApplying(false)
@@ -333,6 +338,28 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
                 <span className="text-text-muted text-xs">{t('settings.slaveIdHint')}</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Log Settings */}
+        <div className="border-border mt-5 border-t pt-4 px-2">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-purple-500" />
+            <span className="text-foreground text-sm font-semibold">
+              {t('settings.logMaxCount')}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center gap-3">
+            <Input
+              type="number"
+              value={logMaxCount}
+              onChange={(e) => setLogMaxCount(e.target.value)}
+              min={100}
+              max={10000}
+              className="w-32"
+              data-testid="log-max-count-input"
+            />
+            <span className="text-text-muted text-xs">{t('settings.logMaxCountHint')}</span>
           </div>
         </div>
 

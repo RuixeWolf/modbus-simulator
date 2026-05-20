@@ -10,6 +10,12 @@ export interface ModbusState {
   inputRegisters: number[]
 }
 
+/** Origin of a communication log entry. */
+export interface LogSource {
+  type: 'tcp' | 'serial' | 'web'
+  detail: string
+}
+
 /** Single log entry returned by the REST API. */
 export interface ModbusLogEntry {
   timestamp: string
@@ -18,6 +24,7 @@ export interface ModbusLogEntry {
   address: number
   value?: number | boolean
   message?: string
+  source?: LogSource
 }
 
 /** TCP and RTU server online status. */
@@ -37,6 +44,7 @@ export interface ServerConfig {
   rtuParity: 'none' | 'even' | 'odd'
   rtuDataBits: number
   rtuStopBits: number
+  logMaxCount: number
 }
 
 /** Metadata for an available serial port. */
@@ -80,7 +88,8 @@ export function useModbusData() {
     rtuBaudRate: 9600,
     rtuParity: 'none',
     rtuDataBits: 8,
-    rtuStopBits: 1
+    rtuStopBits: 1,
+    logMaxCount: 1000
   })
   const [serialPorts, setSerialPorts] = useState<SerialPortInfo[]>([])
   const [logFilter, setLogFilter] = useState<LogFilterConfig>({

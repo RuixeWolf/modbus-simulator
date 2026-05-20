@@ -1,3 +1,4 @@
+import { ModbusEngine } from './engine'
 import {
   getRTUSerialPath,
   isRTUSerialServerRunning,
@@ -26,6 +27,8 @@ export interface ServerConfig {
   rtuDataBits: number
   /** Serial stop bits for RTU: 1 | 2 (default 1). */
   rtuStopBits: number
+  /** Maximum in-memory communication log entries (default 1000, range 100-10000). */
+  logMaxCount: number
 }
 
 /** Set to true after the first call to prevent duplicate server startups. Uses globalThis to survive Next.js module reloads. */
@@ -60,6 +63,23 @@ function parseBool(envValue: string | undefined, defaultValue: boolean): boolean
   return defaultValue
 }
 
+/**
+ * Parses and validates the log max count from environment variable.
+ * @param envValue - Raw environment variable value
+ * @returns Valid log max count (100-10000) or default (1000)
+ */
+function parseLogMaxCount(envValue: string | undefined): number {
+  if (!envValue) return 1000
+  const parsed = Number(envValue)
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 100 || parsed > 10000) {
+    console.warn(
+      `Invalid MODBUS_LOG_MAX_COUNT="${envValue}" (must be integer 100-10000), using default: 1000`
+    )
+    return 1000
+  }
+  return parsed
+}
+
 /** In-memory configuration store. */
 const config: ServerConfig = {
   tcpEnabled: parseBool(process.env.MODBUS_TCP_ENABLED, true),
@@ -70,7 +90,8 @@ const config: ServerConfig = {
   rtuBaudRate: 9600,
   rtuParity: 'none',
   rtuDataBits: 8,
-  rtuStopBits: 1
+  rtuStopBits: 1,
+  logMaxCount: parseLogMaxCount(process.env.MODBUS_LOG_MAX_COUNT)
 }
 
 /**
@@ -112,6 +133,10 @@ export function setConfig(newConfig: Partial<ServerConfig>): void {
   if (newConfig.rtuStopBits !== undefined) {
     config.rtuStopBits = newConfig.rtuStopBits
   }
+  if (newConfig.logMaxCount !== undefined) {
+    config.logMaxCount = newConfig.logMaxCount
+    ModbusEngine.getInstance().setLogMaxCount(config.logMaxCount)
+  }
 }
 
 /**
@@ -121,6 +146,9 @@ export function setConfig(newConfig: Partial<ServerConfig>): void {
 export function ensureServersStarted(): void {
   if (g.__modbus_initialized__) return
   g.__modbus_initialized__ = true
+
+  // Sync engine log limit with config so GET /api/config is consistent
+  ModbusEngine.getInstance().setLogMaxCount(config.logMaxCount)
 
   startServers()
 }

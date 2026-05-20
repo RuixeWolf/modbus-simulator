@@ -175,13 +175,23 @@ if (isDryRun) {
 }
 
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
-const npmExecutable = process.platform === 'win32' ? 'cmd.exe' : isGitHubActions ? 'npx' : 'npm'
-const npmCliArgs =
-  process.platform === 'win32'
-    ? ['/c', 'npm', ...publishArgs]
-    : isGitHubActions
-      ? ['npm@latest', ...publishArgs]
-      : publishArgs
+const isWindows = process.platform === 'win32'
+let npmExecutable
+if (isWindows) {
+  npmExecutable = 'cmd.exe'
+} else if (isGitHubActions) {
+  npmExecutable = 'npx'
+} else {
+  npmExecutable = 'npm'
+}
+let npmCliArgs
+if (isWindows) {
+  npmCliArgs = ['/c', 'npm', ...publishArgs]
+} else if (isGitHubActions) {
+  npmCliArgs = ['npm@latest', ...publishArgs]
+} else {
+  npmCliArgs = publishArgs
+}
 
 const npmPublish = spawn(npmExecutable, npmCliArgs, {
   stdio: 'inherit',

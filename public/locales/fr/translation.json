@@ -29,7 +29,9 @@
     "parityEven": "Paire",
     "parityOdd": "Impaire",
     "dataBits": "Bits de données",
-    "stopBits": "Bits d'arrêt"
+    "stopBits": "Bits d'arrêt",
+    "logMaxCount": "Limite de journaux",
+    "logMaxCountHint": "Plage : 100–10 000"
   },
   "tabs": {
     "coils": "Bobines",
@@ -61,7 +63,12 @@
     "write": "ÉCRITURE",
     "error": "ERREUR",
     "filter": "Filtrer",
-    "clear": "Effacer"
+    "clear": "Effacer",
+    "source": {
+      "tcp": "TCP",
+      "serial": "Série",
+      "web": "Console Web"
+    }
   },
   "common": {
     "close": "Fermer"

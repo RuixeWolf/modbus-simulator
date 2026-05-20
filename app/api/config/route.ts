@@ -16,7 +16,11 @@ ensureServersStarted()
 export async function GET() {
   const config = getConfig()
   const engine = ModbusEngine.getInstance()
-  return NextResponse.json({ ...config, logFilter: engine.getLogFilter() })
+  return NextResponse.json({
+    ...config,
+    logFilter: engine.getLogFilter(),
+    logMaxCount: engine.getLogMaxCount()
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -32,6 +36,7 @@ export async function POST(request: NextRequest) {
     rtuParity?: 'none' | 'even' | 'odd'
     rtuDataBits?: number
     rtuStopBits?: number
+    logMaxCount?: number
   } = {}
 
   if (body.tcpEnabled !== undefined) {
@@ -102,6 +107,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid stop bits' }, { status: 400 })
     }
     updates.rtuStopBits = sb
+  }
+
+  if (body.logMaxCount !== undefined) {
+    const count = Number(body.logMaxCount)
+    if (!Number.isInteger(count) || count < 100 || count > 10000) {
+      return NextResponse.json(
+        { error: 'Invalid logMaxCount (must be an integer 100–10000)' },
+        { status: 400 }
+      )
+    }
+    updates.logMaxCount = count
+    const engine = ModbusEngine.getInstance()
+    engine.setLogMaxCount(count)
   }
 
   if (body.logFilter !== undefined) {

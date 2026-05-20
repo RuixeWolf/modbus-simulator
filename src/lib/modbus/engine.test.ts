@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ModbusEngine } from './engine'
+import { logSourceStore } from './log-context'
 
 describe('ModbusEngine', () => {
   beforeEach(() => {
@@ -75,5 +76,61 @@ describe('ModbusEngine', () => {
     engine.writeHoldingRegister(2, 30)
     const result = engine.readHoldingRegisters(0, 3)
     expect(result).toEqual([10, 20, 30])
+  })
+
+  it('should respect logMaxCount and drop oldest logs', () => {
+    const engine = ModbusEngine.getInstance()
+    engine.setLogMaxCount(100)
+    for (let i = 0; i < 150; i++) {
+      engine.writeHoldingRegister(i, i)
+    }
+    const logs = engine.getLogs()
+    expect(logs.length).toBe(100)
+    expect(logs[0].address).toBe(50)
+    expect(logs[99].address).toBe(149)
+  })
+
+  it('should trim existing logs when logMaxCount is reduced', () => {
+    const engine = ModbusEngine.getInstance()
+    for (let i = 0; i < 150; i++) {
+      engine.writeHoldingRegister(i, i)
+    }
+    engine.setLogMaxCount(100)
+    const logs = engine.getLogs()
+    expect(logs.length).toBe(100)
+    expect(logs[0].address).toBe(50)
+    expect(logs[99].address).toBe(149)
+  })
+
+  it('should clamp logMaxCount to valid range', () => {
+    const engine = ModbusEngine.getInstance()
+    engine.setLogMaxCount(50)
+    expect(engine.getLogMaxCount()).toBe(100)
+    engine.setLogMaxCount(50000)
+    expect(engine.getLogMaxCount()).toBe(10000)
+  })
+
+  it('should track log source from AsyncLocalStorage', () => {
+    const engine = ModbusEngine.getInstance()
+    const source = { type: 'web' as const, detail: 'Web Console' }
+    logSourceStore.run(source, () => {
+      engine.writeHoldingRegister(0, 42)
+    })
+    const logs = engine.getLogs()
+    expect(logs.length).toBeGreaterThan(0)
+    const log = logs[logs.length - 1]
+    expect(log.source).toEqual(source)
+  })
+
+  it('should track error log source from AsyncLocalStorage', () => {
+    const engine = ModbusEngine.getInstance()
+    const source = { type: 'tcp' as const, detail: '192.168.1.1:502' }
+    logSourceStore.run(source, () => {
+      engine.addErrorLog('holdingRegister', 0, 'Test error')
+    })
+    const logs = engine.getLogs()
+    const log = logs[logs.length - 1]
+    expect(log.type).toBe('error')
+    expect(log.source).toEqual(source)
   })
 })
