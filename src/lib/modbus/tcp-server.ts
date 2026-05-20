@@ -1,4 +1,4 @@
-import type { Socket } from 'net'
+import type { Socket } from 'node:net'
 import { ServerTCP } from 'modbus-serial'
 import { ModbusEngine } from './engine'
 import { logSourceStore } from './log-context'
@@ -169,12 +169,12 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
         detail: `${sock.remoteAddress ?? 'unknown'}:${sock.remotePort ?? 0}`
       }
       const originalEmit = sock.emit.bind(sock)
-      sock.emit = function (event: string | symbol, ...args: unknown[]) {
+      sock.emit = ((event: string | symbol, ...args: unknown[]) => {
         if (event === 'data') {
           return logSourceStore.run(source, () => originalEmit(event, ...args))
         }
         return originalEmit(event, ...args)
-      } as typeof sock.emit
+      }) as typeof sock.emit
     })
   }
 

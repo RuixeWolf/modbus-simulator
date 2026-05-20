@@ -32,6 +32,58 @@ function toLogFilterConfig(keys: Set<string | number>): Partial<LogFilterConfig>
   }
 }
 
+function getTypeBadge(type: string, t: (key: string) => string) {
+  switch (type) {
+    case 'read':
+      return (
+        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+          {t('logs.read')}
+        </span>
+      )
+    case 'write':
+      return (
+        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+          {t('logs.write')}
+        </span>
+      )
+    case 'error':
+      return (
+        <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
+          {t('logs.error')}
+        </span>
+      )
+    default:
+      return (
+        <span className="bg-default text-text-muted inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
+          {type.toUpperCase()}
+        </span>
+      )
+  }
+}
+
+function getSourceBadge(source: LogSource, t: (key: string) => string) {
+  switch (source.type) {
+    case 'tcp':
+      return (
+        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+          {t('logs.source.tcp')} {source.detail}
+        </span>
+      )
+    case 'serial':
+      return (
+        <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+          {t('logs.source.serial')} {source.detail}
+        </span>
+      )
+    case 'web':
+      return (
+        <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+          {t('logs.source.web')}
+        </span>
+      )
+  }
+}
+
 /**
  * Communication logs displayed in a Modal dialog.
  *
@@ -46,58 +98,6 @@ export function LogPanel({
   const { t } = useTranslation()
 
   const selectedKeys = toSelectedKeys(logFilter)
-
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'read':
-        return (
-          <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-            {t('logs.read')}
-          </span>
-        )
-      case 'write':
-        return (
-          <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-            {t('logs.write')}
-          </span>
-        )
-      case 'error':
-        return (
-          <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
-            {t('logs.error')}
-          </span>
-        )
-      default:
-        return (
-          <span className="bg-default text-text-muted inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
-            {type.toUpperCase()}
-          </span>
-        )
-    }
-  }
-
-  const getSourceBadge = (source: LogSource) => {
-    switch (source.type) {
-      case 'tcp':
-        return (
-          <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-            {t('logs.source.tcp')} {source.detail}
-          </span>
-        )
-      case 'serial':
-        return (
-          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-            {t('logs.source.serial')} {source.detail}
-          </span>
-        )
-      case 'web':
-        return (
-          <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
-            {t('logs.source.web')}
-          </span>
-        )
-    }
-  }
 
   return (
     <Modal>
@@ -153,8 +153,8 @@ export function LogPanel({
                       <span className="text-text-muted w-16 shrink-0 font-mono text-[11px]">
                         {new Date(log.timestamp).toLocaleTimeString()}
                       </span>
-                      {getTypeBadge(log.type)}
-                      {log.source && getSourceBadge(log.source)}
+                      {getTypeBadge(log.type, t)}
+                      {log.source && getSourceBadge(log.source, t)}
                       <span className="text-text-muted font-mono text-xs">
                         {log.registerType}@{log.address}
                       </span>
