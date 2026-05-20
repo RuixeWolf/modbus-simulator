@@ -170,8 +170,7 @@ if (isDryRun) {
 
 const npmPublish = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', publishArgs, {
   stdio: 'inherit',
-  cwd: publishDir,
-  shell: process.platform === 'win32'
+  cwd: publishDir
 })
 
 npmPublish.on('exit', (code) => {
@@ -205,6 +204,10 @@ npmPublish.on('exit', (code) => {
 /**
  * Recursively copy a directory, only including entries whose basename is in the
  * `include` array. For included directories, copies their entire contents recursively.
+ *
+ * @param {string} src - Source directory path.
+ * @param {string} dest - Destination directory path.
+ * @param {string[]} include - Array of basenames to include.
  */
 function copyDirInclude(src, dest, include) {
   mkdirSync(dest, { recursive: true })
@@ -228,7 +231,10 @@ function copyDirInclude(src, dest, include) {
 }
 
 /**
- * Recursively copy a directory entirely (no filtering).
+ * Recursively copy a directory entirely, resolving symlinks to real files/directories.
+ *
+ * @param {string} src - Source directory path.
+ * @param {string} dest - Destination directory path.
  */
 function copyDirectory(src, dest) {
   mkdirSync(dest, { recursive: true })
@@ -250,7 +256,10 @@ function copyDirectory(src, dest) {
 }
 
 /**
- * Handle copying a symbolic link, resolving it and copying the target.
+ * Copy a symbolic link by resolving its target and copying the target content.
+ *
+ * @param {string} srcPath - Path to the symbolic link.
+ * @param {string} destPath - Destination path for the copied content.
  */
 function handleSymbolicLink(srcPath, destPath) {
   const target = readlinkSync(srcPath)
@@ -271,6 +280,8 @@ function handleSymbolicLink(srcPath, destPath) {
  * (e.g. 'serialport-c62565d3a24d4c05'). We create stub packages that re-export
  * the actual installed package, so npm install compiles native bindings for the
  * user's platform and the bundled code resolves them correctly.
+ *
+ * @param {string} nodeModulesDir - Path to the .next/node_modules directory.
  */
 function fixExternalModuleStubs(nodeModulesDir) {
   const items = readdirSync(nodeModulesDir)
