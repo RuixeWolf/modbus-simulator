@@ -404,9 +404,14 @@ export class ModbusEngine extends EventEmitter {
    * @param count – Desired limit, clamped to [100, 10000].
    */
   setLogMaxCount(count: number): void {
-    this.logMaxCount = Math.max(MIN_LOGS, Math.min(MAX_LOGS_LIMIT, count))
-    while (this.logs.length > this.logMaxCount) {
-      this.logs.shift()
+    if (!Number.isFinite(count) || Number.isNaN(count)) {
+      this.logMaxCount = DEFAULT_MAX_LOGS
+    } else {
+      this.logMaxCount = Math.max(MIN_LOGS, Math.min(MAX_LOGS_LIMIT, count))
+    }
+    const excess = this.logs.length - this.logMaxCount
+    if (excess > 0) {
+      this.logs.splice(0, excess)
     }
   }
 

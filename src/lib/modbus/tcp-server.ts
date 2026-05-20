@@ -161,7 +161,7 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
 
   // Patch socket.emit so that 'data' events carry AsyncLocalStorage context
   // through modbus-serial's setTimeout → vector callbacks → engine.addLog.
-  const netServer = (server as unknown as { _server?: import('net').Server })._server
+  const netServer = (server as unknown as { _server?: import('node:net').Server })._server
   if (netServer) {
     netServer.on('connection', (sock: Socket) => {
       const source = {
@@ -176,6 +176,11 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
         return originalEmit(event, ...args)
       }) as typeof sock.emit
     })
+  } else {
+    console.warn(
+      'Modbus TCP: Unable to access internal net.Server for socket patching. ' +
+        'Log source tracking for TCP requests will be unavailable.'
+    )
   }
 
   server.on('serverError', (err: Error) => {
