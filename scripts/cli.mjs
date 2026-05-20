@@ -8,7 +8,7 @@
  *   npx @ruixe/modbus-simulator [options]
  */
 import { spawn } from 'node:child_process'
-import { dirname, join } from 'node:path'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openBrowser } from './lib/open-browser.mjs'
 import { HELP_TEXT, parseArgs } from './lib/parse-args.mjs'
