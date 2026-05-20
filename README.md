@@ -6,7 +6,7 @@
   <a href="docs/README_CN.md">中文</a>
 </p>
 
-A professional Modbus TCP / RTU Serial device simulator with a real-time web dashboard.
+A free Modbus TCP / RTU Serial device simulator with a real-time web dashboard.
 
 > **Vibe Coding** — This project is built primarily through AI-assisted rapid development.
 
