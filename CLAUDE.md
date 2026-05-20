@@ -6,31 +6,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Modbus Device Simulator built with Next.js 16 + HeroUI v3 + Tailwind CSS v4. It runs a Modbus TCP server and an RTU serial server backed by a singleton state engine, exposes REST APIs for frontend polling, and renders a real-time dashboard with paginated register tables, communication logs, and server settings.
 
+Published as `@ruixe/modbus-simulator` on npm; runnable via `npx @ruixe/modbus-simulator@latest`.
+
 ## Common Commands
 
-| Command                                                          | Purpose                                                     |
-| ---------------------------------------------------------------- | ----------------------------------------------------------- |
-| `pnpm run dev`                                                   | Start Next.js dev server with Turbopack (default port 5000) |
-| `pnpm run build`                                                 | Production build                                            |
-| `pnpm run build:standalone`                                      | Build standalone distributable into `dist/`                 |
-| `pnpm run start`                                                 | Start production server (uses `.next/standalone`)           |
-| `pnpm run lint`                                                  | Run ESLint                                                  |
-| `pnpm run format`                                                | Run Prettier on all files                                   |
-| `pnpm run format-lint`                                           | Run Prettier then ESLint                                    |
-| `pnpm run type-check`                                            | Run TypeScript compiler (no emit)                           |
-| `pnpm run test:unit`                                             | Run Vitest unit tests                                       |
-| `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)           |
-| `pnpm run test`                                                  | Run unit tests then E2E tests                               |
-| `pnpm run publish:npm`                                           | Build and publish to NPM                                    |
-| `pnpm run publish:npm:dry-run`                                   | Build and verify publish package without uploading          |
-| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                                 |
-| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                               |
+| Command                                                          | Purpose                                                   |
+| ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `pnpm run dev`                                                   | Start Next.js dev server with Webpack (default port 5000) |
+| `pnpm run build`                                                 | Production build                                          |
+| `pnpm run start`                                                 | Start production server (via `next start`)                |
+| `pnpm run lint`                                                  | Run ESLint                                                |
+| `pnpm run format`                                                | Run Prettier on all files                                 |
+| `pnpm run format-lint`                                           | Run Prettier then ESLint                                  |
+| `pnpm run type-check`                                            | Run TypeScript compiler (no emit)                         |
+| `pnpm run test:unit`                                             | Run Vitest unit tests                                     |
+| `pnpm run test:e2e`                                              | Run Playwright E2E tests (auto-starts dev server)         |
+| `pnpm run test`                                                  | Run unit tests then E2E tests                             |
+| `pnpm run publish:npm`                                           | Build and publish to NPM                                  |
+| `pnpm run publish:npm:dry-run`                                   | Build and verify publish package without uploading        |
+| `npx vitest run src/lib/modbus/engine.test.ts`                   | Run a single unit test file                               |
+| `npx playwright test e2e/modbus.spec.ts --grep "UI to Protocol"` | Run a single E2E test by name                             |
 
 The dev script (`scripts/dev.mjs`) behavior:
 
 - Defaults to port `5000` when the network listening port (`PORT` environment variable) is unset.
 - Loads an optional `.env.local` file when present.
 - Allows CLI overrides via `--port`, `--tcp-port`, `--serial-port`, `--slave-id`, and `--open`.
+- **Forces Webpack** (`NEXT_PRIVATE_LOCAL_WEBPACK=true`) because Next.js 16's Turbopack has a broken internal font module on this platform.
 
 ### Pre-commit Checks
 
@@ -44,9 +46,11 @@ The dev script (`scripts/dev.mjs`) behavior:
 
 `tsc` uses a function signature `() => 'tsc --noEmit'` because lint-staged appends staged file paths to string commands by default, which causes TypeScript to ignore `tsconfig.json`.
 
+ESLint uses flat config (`eslint.config.mjs`) with: `typescript-eslint`, `@eslint-react`, `eslint-plugin-react-hooks`, `@next/eslint-plugin-next`, `eslint-config-prettier`.
+
 ### Native Module Builds
 
-`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM (Performant npm) may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
@@ -97,10 +101,6 @@ Additionally, `instrumentation.ts` implements Next.js's `register()` hook, which
 `modbus-serial` and `serialport` are both marked as `serverExternalPackages` in `next.config.ts` because Turbopack cannot bundle their CJS-native code.
 
 Custom type declarations live in `src/types/modbus-serial.d.ts` since the library has no bundled types.
-
-**Instrumentation Hook** (`instrumentation.ts`):
-
-Next.js 16 calls `register()` in `instrumentation.ts` once when the server starts. This eagerly starts the Modbus servers via `ensureServersStarted()`. It avoids waiting for the first HTTP API request. It is an additional startup path alongside the module-level API route imports.
 
 ### API Layer
 
@@ -171,8 +171,8 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - The `modbus-serial` `ServerTCP` vector callbacks use Node-style `(err, value)` signatures
 - Out-of-range Modbus requests return proper Modbus exception codes via the library; errors are also logged in-engine via `addErrorLog()`
 - The old `src/lib/modbus/rtu-server.ts` (TCP bridge on port 5021) is no longer used; RTU is now handled by `rtu-serial-server.ts`
-- `next.config.ts` enables `reactCompiler: true` and `output: 'standalone'`
+- `next.config.ts` enables `reactCompiler: true`
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
-- ESLint uses flat config (`eslint.config.mjs`) with typescript-eslint, @eslint-react, eslint-plugin-react-hooks, and @next/eslint-plugin-next
-- `pnpm run build:standalone` creates a distributable in `dist/{name}_{version}/` with `cli.mjs` as the entry point; it fixes PNPM (Performant npm) symlinks and strips devDependencies so the output runs without `npm install`
+- Published to npm as `@ruixe/modbus-simulator`; runnable via `npx @ruixe/modbus-simulator@latest`
+- When using Playwright MCP tools (screenshots, snapshots, console logs), write temp files to `.temp/` — never the project root. `.temp/` is gitignored except for `.gitkeep`.
 - For Next.js 16-specific agent rules and breaking changes, see `AGENTS.md`
