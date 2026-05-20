@@ -174,14 +174,19 @@ if (isDryRun) {
   publishArgs.push('--dry-run')
 }
 
-const npmPublish = spawn(
-  process.platform === 'win32' ? 'cmd.exe' : 'npm',
-  process.platform === 'win32' ? ['/c', 'npm', ...publishArgs] : publishArgs,
-  {
-    stdio: 'inherit',
-    cwd: publishDir
-  }
-)
+const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
+const npmExecutable = process.platform === 'win32' ? 'cmd.exe' : isGitHubActions ? 'npx' : 'npm'
+const npmCliArgs =
+  process.platform === 'win32'
+    ? ['/c', 'npm', ...publishArgs]
+    : isGitHubActions
+      ? ['npm@latest', ...publishArgs]
+      : publishArgs
+
+const npmPublish = spawn(npmExecutable, npmCliArgs, {
+  stdio: 'inherit',
+  cwd: publishDir
+})
 
 npmPublish.on('error', (err) => {
   console.error(`\n❌ Failed to spawn npm publish: ${err.message}`)

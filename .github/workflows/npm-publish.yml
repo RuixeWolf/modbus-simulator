@@ -53,7 +53,6 @@ jobs:
           node-version: '22'
 
       - run: npm config set registry https://registry.npmjs.org/
-      - run: npm install -g npm@latest
       - run: corepack enable && corepack prepare pnpm@latest --activate
       - run: pnpm install --frozen-lockfile
       - run: node scripts/publish.mjs
