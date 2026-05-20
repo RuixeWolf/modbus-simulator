@@ -39,7 +39,6 @@ const isDryRun = process.argv.includes('--dry-run')
 
 const pkg = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'))
 const nextDir = join(projectRoot, '.next')
-const standaloneDir = join(nextDir, 'standalone')
 
 // ---------------------------------------------------------------------------
 // Step 1: Build
@@ -51,12 +50,6 @@ try {
   execSync('npx next build', { cwd: projectRoot, stdio: 'inherit' })
 } catch {
   console.error('\nBuild failed. See output above for details.')
-  process.exit(1)
-}
-
-if (!existsSync(standaloneDir)) {
-  console.error(`\nStandalone output directory not found: ${standaloneDir}`)
-  console.error('Make sure next.config.ts has output: "standalone" set.')
   process.exit(1)
 }
 
@@ -88,18 +81,24 @@ if (existsSync(libSource)) {
   cpSync(libSource, libTarget, { recursive: true, force: true })
 }
 
-// Copy .next/ (regular build output) excluding large/unneeded directories
+// Copy .next/ (regular build output) including only necessary files.
+// Derive the required file list from Next.js's own required-server-files.json
+// so the copy set stays correct across Next.js versions.
+const requiredFilesPath = join(nextDir, 'required-server-files.json')
+let requiredBasenames = []
+if (existsSync(requiredFilesPath)) {
+  const requiredData = JSON.parse(readFileSync(requiredFilesPath, 'utf-8'))
+  requiredBasenames = requiredData.files.map((f) => f.replace(/^\.next[/\\]/, ''))
+}
+
 const nextTarget = join(publishDir, '.next')
 mkdirSync(nextTarget, { recursive: true })
-copyDirExcept(nextDir, nextTarget, [
-  'cache',
-  'dev',
-  'diagnostics',
-  'standalone',
-  'trace',
-  'trace-build',
-  'turbopack',
-  'types'
+copyDirInclude(nextDir, nextTarget, [
+  'BUILD_ID',
+  'server',
+  'static',
+  'node_modules',
+  ...requiredBasenames
 ])
 
 // Fix Next.js Turbopack external module symlinks.
@@ -162,31 +161,42 @@ console.log(`  Package:  ${pkg.name}@${pkg.version}`)
 console.log(`  Files:    scripts/, .next/ (regular build), public/`)
 console.log(`  Deps:     ${Object.keys(pkg.dependencies).length} production dependencies`)
 
+console.log(isDryRun ? '\n🔍 Publishing to NPM (dry run)...\n' : '\n📦 Publishing to NPM...\n')
+
+const publishArgs = ['publish', '--access=public']
 if (isDryRun) {
-  console.log('\n🔍 Dry run mode — skipping npm publish.')
-  console.log('   To publish for real, run without --dry-run.')
-  console.log(`\n   You can inspect the package with:`)
-  console.log(`   cd ${publishDir}`)
-  console.log(`   npm pack --dry-run`)
-  process.exit(0)
+  publishArgs.push('--dry-run')
 }
 
-console.log('\n📦 Publishing to NPM...\n')
-
 const npmPublish = spawn(
-  process.platform === 'win32' ? 'npm.cmd' : 'npm',
-  ['publish', '--access=public'],
+  process.platform === 'win32' ? 'cmd.exe' : 'npm',
+  process.platform === 'win32' ? ['/c', 'npm', ...publishArgs] : publishArgs,
   {
     stdio: 'inherit',
     cwd: publishDir
   }
 )
 
+npmPublish.on('error', (err) => {
+  console.error(`\n❌ Failed to spawn npm publish: ${err.message}`)
+  try {
+    rmSync(publishDir, { recursive: true, force: true })
+  } catch {
+    // ignore cleanup errors
+  }
+  process.exit(1)
+})
+
 npmPublish.on('exit', (code) => {
   if (code === 0) {
-    console.log(`\n✅ Published ${pkg.name}@${pkg.version} successfully!`)
-    console.log(`\nUsers can now run:`)
-    console.log(`  npx ${pkg.name}@latest --help`)
+    if (isDryRun) {
+      console.log(`\n✅ Dry run successful for ${pkg.name}@${pkg.version}.`)
+      console.log('   To publish for real, run without --dry-run.')
+    } else {
+      console.log(`\n✅ Published ${pkg.name}@${pkg.version} successfully!`)
+      console.log(`\nUsers can now run:`)
+      console.log(`  npx ${pkg.name}@latest --help`)
+    }
   } else {
     console.error(`\n❌ Publish failed with exit code ${code}.`)
   }
@@ -206,24 +216,28 @@ npmPublish.on('exit', (code) => {
 // ---------------------------------------------------------------------------
 
 /**
- * Recursively copy a directory, skipping entries whose basename is in the
- * `exclude` array.
+ * Recursively copy a directory, only including entries whose basename is in the
+ * `include` array. For included directories, copies their entire contents recursively.
+ *
+ * @param {string} src - Source directory path.
+ * @param {string} dest - Destination directory path.
+ * @param {string[]} include - Array of basenames to include.
  */
-function copyDirExcept(src, dest, exclude) {
+function copyDirInclude(src, dest, include) {
   mkdirSync(dest, { recursive: true })
   const items = readdirSync(src)
 
   for (const item of items) {
-    if (exclude.includes(item)) continue
+    if (!include.includes(item)) continue
 
     const srcPath = join(src, item)
     const destPath = join(dest, item)
     const stats = lstatSync(srcPath)
 
     if (stats.isDirectory()) {
-      copyDirExcept(srcPath, destPath, exclude)
+      copyDirectory(srcPath, destPath)
     } else if (stats.isSymbolicLink()) {
-      handleSymbolicLink(srcPath, destPath, exclude)
+      handleSymbolicLink(srcPath, destPath)
     } else {
       copyFileSync(srcPath, destPath)
     }
@@ -231,16 +245,44 @@ function copyDirExcept(src, dest, exclude) {
 }
 
 /**
- * Handle copying a symbolic link, resolving it and copying the target.
+ * Recursively copy a directory entirely, resolving symlinks to real files/directories.
+ *
+ * @param {string} src - Source directory path.
+ * @param {string} dest - Destination directory path.
  */
-function handleSymbolicLink(srcPath, destPath, exclude) {
+function copyDirectory(src, dest) {
+  mkdirSync(dest, { recursive: true })
+  const items = readdirSync(src)
+
+  for (const item of items) {
+    const srcPath = join(src, item)
+    const destPath = join(dest, item)
+    const stats = lstatSync(srcPath)
+
+    if (stats.isDirectory()) {
+      copyDirectory(srcPath, destPath)
+    } else if (stats.isSymbolicLink()) {
+      handleSymbolicLink(srcPath, destPath)
+    } else {
+      copyFileSync(srcPath, destPath)
+    }
+  }
+}
+
+/**
+ * Copy a symbolic link by resolving its target and copying the target content.
+ *
+ * @param {string} srcPath - Path to the symbolic link.
+ * @param {string} destPath - Destination path for the copied content.
+ */
+function handleSymbolicLink(srcPath, destPath) {
   const target = readlinkSync(srcPath)
   const targetPath = isAbsolute(target) ? target : join(dirname(srcPath), target)
   if (!existsSync(targetPath)) return
 
   const targetStats = lstatSync(targetPath)
   if (targetStats.isDirectory()) {
-    copyDirExcept(targetPath, destPath, exclude)
+    copyDirectory(targetPath, destPath)
   } else {
     copyFileSync(targetPath, destPath)
   }
@@ -252,6 +294,8 @@ function handleSymbolicLink(srcPath, destPath, exclude) {
  * (e.g. 'serialport-c62565d3a24d4c05'). We create stub packages that re-export
  * the actual installed package, so npm install compiles native bindings for the
  * user's platform and the bundled code resolves them correctly.
+ *
+ * @param {string} nodeModulesDir - Path to the .next/node_modules directory.
  */
 function fixExternalModuleStubs(nodeModulesDir) {
   const items = readdirSync(nodeModulesDir)

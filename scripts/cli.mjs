@@ -3,18 +3,12 @@
 /**
  * Production entry point for Modbus Simulator.
  *
- * Supports three execution contexts:
- * 1. Standalone distribution: server.js in same directory
- * 2. NPM package (standalone): .next/standalone/server.js
- * 3. NPM package (regular build): next start from package root
- *
  * Usage:
  *   node cli.mjs [options]
  *   npx @ruixe/modbus-simulator [options]
  */
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openBrowser } from './lib/open-browser.mjs'
 import { HELP_TEXT, parseArgs } from './lib/parse-args.mjs'
@@ -38,54 +32,25 @@ if (args.slaveId) process.env.MODBUS_SLAVE_ID = String(args.slaveId)
 // Explicitly copy env to avoid any proxy/serialization issues with process.env
 const env = { ...process.env }
 
-// Determine how to start the server based on available files
-const serverStrategy = (() => {
-  // Option 1: Standalone distribution (server.js in same dir)
-  const standalonePath = join(__dirname, 'server.js')
-  if (existsSync(standalonePath)) {
-    return { type: 'server.js', path: standalonePath, cwd: dirname(standalonePath) }
-  }
-
-  // Option 2: NPM package with standalone build
-  const npmStandalonePath = join(__dirname, '..', '.next', 'standalone', 'server.js')
-  if (existsSync(npmStandalonePath)) {
-    return { type: 'server.js', path: npmStandalonePath, cwd: dirname(npmStandalonePath) }
-  }
-
-  // Option 3: NPM package with regular build — use next start
-  // Use import.meta.resolve to find next via Node.js module resolution,
-  // which handles npm's dependency hoisting correctly.
-  try {
-    const nextUrl = import.meta.resolve('next/dist/bin/next')
-    const nextPath = fileURLToPath(nextUrl)
-    return { type: 'next', path: nextPath, cwd: dirname(__dirname) }
-  } catch {
-    // next not found
-  }
-
-  console.error('Error: Could not find a way to start the server.')
-  console.error('Searched:')
-  console.error(`  - ${standalonePath}`)
-  console.error(`  - ${npmStandalonePath}`)
-  console.error(`  - next (via Node.js module resolution)`)
-  process.exit(1)
-})()
-
+// Resolve the Next.js CLI via Node.js module resolution to handle npm's
+// dependency hoisting correctly.
+let nextPath
 let proc
 
-if (serverStrategy.type === 'server.js') {
-  proc = spawn(process.execPath, [serverStrategy.path], {
-    stdio: 'inherit',
-    cwd: serverStrategy.cwd,
-    env
-  })
-} else {
-  proc = spawn(process.execPath, [serverStrategy.path, 'start'], {
-    stdio: 'inherit',
-    cwd: serverStrategy.cwd,
-    env
-  })
+try {
+  const nextUrl = import.meta.resolve('next/dist/bin/next')
+  nextPath = fileURLToPath(nextUrl)
+} catch {
+  console.error('Error: Could not find Next.js CLI (next/dist/bin/next).')
+  console.error('Make sure next is installed as a dependency.')
+  process.exit(1)
 }
+
+proc = spawn(process.execPath, [nextPath, 'start'], {
+  stdio: 'inherit',
+  cwd: dirname(__dirname),
+  env
+})
 
 if (args.open) {
   openBrowser(`http://localhost:${process.env.PORT}`)
@@ -98,6 +63,11 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   proc.kill('SIGINT')
+})
+
+proc.on('error', (err) => {
+  console.error(`Failed to start Next.js server: ${err.message}`)
+  process.exit(1)
 })
 
 // Exit when child exits (naturally handles both normal and signal-based termination)
