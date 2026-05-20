@@ -26,6 +26,8 @@ export interface ServerConfig {
   rtuDataBits: number
   /** Serial stop bits for RTU: 1 | 2 (default 1). */
   rtuStopBits: number
+  /** Maximum in-memory communication log entries (default 1000, range 100-10000). */
+  logMaxCount: number
 }
 
 /** Set to true after the first call to prevent duplicate server startups. Uses globalThis to survive Next.js module reloads. */
@@ -70,7 +72,8 @@ const config: ServerConfig = {
   rtuBaudRate: 9600,
   rtuParity: 'none',
   rtuDataBits: 8,
-  rtuStopBits: 1
+  rtuStopBits: 1,
+  logMaxCount: Number(process.env.MODBUS_LOG_MAX_COUNT) || 1000
 }
 
 /**
@@ -111,6 +114,9 @@ export function setConfig(newConfig: Partial<ServerConfig>): void {
   }
   if (newConfig.rtuStopBits !== undefined) {
     config.rtuStopBits = newConfig.rtuStopBits
+  }
+  if (newConfig.logMaxCount !== undefined) {
+    config.logMaxCount = newConfig.logMaxCount
   }
 }
 

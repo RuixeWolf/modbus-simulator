@@ -47,7 +47,9 @@ vi.mock('@/src/lib/modbus/engine', () => {
         writeDiscreteInput: vi.fn(),
         addErrorLog: vi.fn(),
         getLogFilter: vi.fn().mockReturnValue({ read: true, write: true, error: true }),
-        setLogFilter: vi.fn()
+        setLogFilter: vi.fn(),
+        getLogMaxCount: vi.fn().mockReturnValue(1000),
+        setLogMaxCount: vi.fn()
       })
     }
   }

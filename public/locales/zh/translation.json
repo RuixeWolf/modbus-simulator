@@ -29,7 +29,9 @@
     "parityEven": "偶校验",
     "parityOdd": "奇校验",
     "dataBits": "数据位",
-    "stopBits": "停止位"
+    "stopBits": "停止位",
+    "logMaxCount": "日志条数上限",
+    "logMaxCountHint": "范围: 100–10,000"
   },
   "tabs": {
     "coils": "线圈",
@@ -61,7 +63,12 @@
     "write": "写入",
     "error": "错误",
     "filter": "过滤",
-    "clear": "清空"
+    "clear": "清空",
+    "source": {
+      "tcp": "TCP",
+      "serial": "串口",
+      "web": "Web 控制台"
+    }
   },
   "common": {
     "close": "关闭"

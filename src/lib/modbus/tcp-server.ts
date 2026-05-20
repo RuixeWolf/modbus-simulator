@@ -1,5 +1,7 @@
+import type { Socket } from 'net'
 import { ServerTCP } from 'modbus-serial'
 import { ModbusEngine } from './engine'
+import { logSourceStore } from './log-context'
 
 const g = globalThis as typeof globalThis & {
   __modbus_tcp_server__?: ServerTCP | null
@@ -156,6 +158,25 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
   g.__modbus_tcp_server__ = server
   g.__modbus_tcp_running__ = true
   g.__modbus_tcp_port__ = currentPort
+
+  // Patch socket.emit so that 'data' events carry AsyncLocalStorage context
+  // through modbus-serial's setTimeout → vector callbacks → engine.addLog.
+  const netServer = (server as unknown as { _server?: import('net').Server })._server
+  if (netServer) {
+    netServer.on('connection', (sock: Socket) => {
+      const source = {
+        type: 'tcp' as const,
+        detail: `${sock.remoteAddress ?? 'unknown'}:${sock.remotePort ?? 0}`
+      }
+      const originalEmit = sock.emit.bind(sock)
+      sock.emit = function (event: string | symbol, ...args: unknown[]) {
+        if (event === 'data') {
+          return logSourceStore.run(source, () => originalEmit(event, ...args))
+        }
+        return originalEmit(event, ...args)
+      } as typeof sock.emit
+    })
+  }
 
   server.on('serverError', (err: Error) => {
     console.error('Modbus TCP Server error:', err.message)

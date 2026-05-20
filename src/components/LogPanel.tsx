@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
-import type { LogFilterConfig, ModbusLogEntry } from '@/src/hooks/useModbusData'
+import type { LogFilterConfig, LogSource, ModbusLogEntry } from '@/src/hooks/useModbusData'
 import { Button, Modal, ScrollShadow, ToggleButton, ToggleButtonGroup } from '@heroui/react'
 
 /** Props for {@link LogPanel}. */
@@ -76,6 +76,29 @@ export function LogPanel({
     }
   }
 
+  const getSourceBadge = (source: LogSource) => {
+    switch (source.type) {
+      case 'tcp':
+        return (
+          <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+            {t('logs.source.tcp')} {source.detail}
+          </span>
+        )
+      case 'serial':
+        return (
+          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            {t('logs.source.serial')} {source.detail}
+          </span>
+        )
+      case 'web':
+        return (
+          <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+            {t('logs.source.web')}
+          </span>
+        )
+    }
+  }
+
   return (
     <Modal>
       <Button variant="secondary">
@@ -131,6 +154,7 @@ export function LogPanel({
                         {new Date(log.timestamp).toLocaleTimeString()}
                       </span>
                       {getTypeBadge(log.type)}
+                      {log.source && getSourceBadge(log.source)}
                       <span className="text-text-muted font-mono text-xs">
                         {log.registerType}@{log.address}
                       </span>

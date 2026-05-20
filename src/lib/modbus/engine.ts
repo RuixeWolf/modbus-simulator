@@ -1,4 +1,8 @@
 import { EventEmitter } from 'events'
+import { logSourceStore } from './log-context'
+import type { LogSource } from './log-context'
+
+export type { LogSource }
 
 /** Single communication log entry emitted by the Modbus engine. */
 export interface ModbusLogEntry {
@@ -14,6 +18,8 @@ export interface ModbusLogEntry {
   value?: number | boolean
   /** Human-readable detail, often used for error descriptions. */
   message?: string
+  /** Origin of the operation (TCP client, serial port, or web console). */
+  source?: LogSource
 }
 
 /** Snapshot of all Modbus register arrays. */
@@ -39,8 +45,12 @@ const DISCRETE_INPUT_COUNT = 1000
 const HOLDING_REGISTER_COUNT = 10000
 /** Number of input registers allocated in the engine. */
 const INPUT_REGISTER_COUNT = 10000
-/** Maximum in-memory log entries before old entries are dropped. */
-const MAX_LOGS = 1000
+/** Default maximum in-memory log entries before old entries are dropped. */
+const DEFAULT_MAX_LOGS = 1000
+/** Minimum allowed log limit. */
+const MIN_LOGS = 100
+/** Maximum allowed log limit. */
+const MAX_LOGS_LIMIT = 10000
 
 /**
  * Singleton EventEmitter that owns all Modbus register state.
@@ -62,6 +72,7 @@ export class ModbusEngine extends EventEmitter {
   private inputRegisters: number[]
   private logs: ModbusLogEntry[]
   private logFilter: LogFilterConfig
+  private logMaxCount: number
 
   private constructor() {
     super()
@@ -71,6 +82,7 @@ export class ModbusEngine extends EventEmitter {
     this.inputRegisters = new Array(INPUT_REGISTER_COUNT).fill(0)
     this.logs = []
     this.logFilter = { read: true, write: true, error: true }
+    this.logMaxCount = DEFAULT_MAX_LOGS
   }
 
   /**
@@ -365,14 +377,37 @@ export class ModbusEngine extends EventEmitter {
   // Logs
 
   /** Appends an entry and emits `'log'`. Drops oldest entry when capacity is exceeded.
-   *  Respects the current {@link LogFilterConfig} — disabled types are silently ignored. */
+   *  Respects the current {@link LogFilterConfig} — disabled types are silently ignored.
+   *  Automatically injects the current {@link LogSource} from AsyncLocalStorage if present. */
   private addLog(entry: ModbusLogEntry): void {
     if (!this.logFilter[entry.type]) return
+    const source = logSourceStore.getStore()
+    if (source) {
+      entry.source = source
+    }
     this.logs.push(entry)
-    if (this.logs.length > MAX_LOGS) {
+    if (this.logs.length > this.logMaxCount) {
       this.logs.shift()
     }
     this.emit('log', entry)
+  }
+
+  /**
+   * @returns The current maximum number of log entries retained in memory.
+   */
+  getLogMaxCount(): number {
+    return this.logMaxCount
+  }
+
+  /**
+   * Updates the maximum log capacity and immediately trims if over limit.
+   * @param count – Desired limit, clamped to [100, 10000].
+   */
+  setLogMaxCount(count: number): void {
+    this.logMaxCount = Math.max(MIN_LOGS, Math.min(MAX_LOGS_LIMIT, count))
+    while (this.logs.length > this.logMaxCount) {
+      this.logs.shift()
+    }
   }
 
   /**
@@ -407,6 +442,7 @@ export class ModbusEngine extends EventEmitter {
 
   /**
    * Convenience helper for logging out-of-range or protocol errors.
+   * Injects the current {@link LogSource} from AsyncLocalStorage if present.
    * @param registerType – Category that triggered the error.
    * @param address      – Modbus address involved.
    * @param message      – Human-readable error description.

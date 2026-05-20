@@ -29,7 +29,9 @@
     "parityEven": "偶数",
     "parityOdd": "奇数",
     "dataBits": "データビット",
-    "stopBits": "ストップビット"
+    "stopBits": "ストップビット",
+    "logMaxCount": "ログ上限数",
+    "logMaxCountHint": "範囲: 100–10,000"
   },
   "tabs": {
     "coils": "コイル",
@@ -61,7 +63,12 @@
     "write": "書き込み",
     "error": "エラー",
     "filter": "フィルタ",
-    "clear": "クリア"
+    "clear": "クリア",
+    "source": {
+      "tcp": "TCP",
+      "serial": "シリアル",
+      "web": "Web コンソール"
+    }
   },
   "common": {
     "close": "閉じる"

@@ -29,7 +29,9 @@
     "parityEven": "Even",
     "parityOdd": "Odd",
     "dataBits": "Data Bits",
-    "stopBits": "Stop Bits"
+    "stopBits": "Stop Bits",
+    "logMaxCount": "Log Max Count",
+    "logMaxCountHint": "Range: 100–10,000"
   },
   "tabs": {
     "coils": "Coils",
@@ -61,7 +63,12 @@
     "write": "WRITE",
     "error": "ERROR",
     "filter": "Filter",
-    "clear": "Clear"
+    "clear": "Clear",
+    "source": {
+      "tcp": "TCP",
+      "serial": "Serial",
+      "web": "Web Console"
+    }
   },
   "common": {
     "close": "Close"

@@ -1,5 +1,6 @@
 import { SerialPort } from 'serialport'
 import { ModbusEngine } from './engine'
+import { logSourceStore } from './log-context'
 
 /** Serial port configuration parameters. */
 export interface SerialConfig {
@@ -283,33 +284,37 @@ export function startRTUSerialServer(
     })
     g.__modbus_rtu_serial_port__ = serialPort
 
+    const serialSource = { type: 'serial' as const, detail: serialPath }
+
     serialPort.on('data', (data: Buffer) => {
-      buffer = Buffer.concat([buffer, data])
-      g.__modbus_rtu_buffer__ = buffer
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(() => {
-        if (buffer.length < 4) {
-          buffer = Buffer.alloc(0)
-          g.__modbus_rtu_buffer__ = buffer
-          return
-        }
-
-        if (!verifyCRC(buffer)) {
-          console.warn('RTU Serial: Invalid CRC, discarding frame')
-          buffer = Buffer.alloc(0)
-          g.__modbus_rtu_buffer__ = buffer
-          return
-        }
-
-        const response = processFrame(buffer, engine, slaveId)
-        buffer = Buffer.alloc(0)
+      logSourceStore.run(serialSource, () => {
+        buffer = Buffer.concat([buffer, data])
         g.__modbus_rtu_buffer__ = buffer
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(() => {
+          if (buffer.length < 4) {
+            buffer = Buffer.alloc(0)
+            g.__modbus_rtu_buffer__ = buffer
+            return
+          }
 
-        if (response && serialPort) {
-          serialPort.write(response)
-        }
-      }, frameTimeoutMs)
-      g.__modbus_rtu_timer__ = timer
+          if (!verifyCRC(buffer)) {
+            console.warn('RTU Serial: Invalid CRC, discarding frame')
+            buffer = Buffer.alloc(0)
+            g.__modbus_rtu_buffer__ = buffer
+            return
+          }
+
+          const response = processFrame(buffer, engine, slaveId)
+          buffer = Buffer.alloc(0)
+          g.__modbus_rtu_buffer__ = buffer
+
+          if (response && serialPort) {
+            serialPort.write(response)
+          }
+        }, frameTimeoutMs)
+        g.__modbus_rtu_timer__ = timer
+      })
     })
 
     serialPort.on('error', (err: Error) => {

@@ -34,7 +34,8 @@ describe('modbus server manager', () => {
       rtuBaudRate: 9600,
       rtuParity: 'none',
       rtuDataBits: 8,
-      rtuStopBits: 1
+      rtuStopBits: 1,
+      logMaxCount: 1000
     })
   })
 
