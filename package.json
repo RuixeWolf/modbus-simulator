@@ -1,6 +1,6 @@
 {
   "name": "@ruixe/modbus-simulator",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Modbus Device Simulator built with Next.js. Provides a real-time dashboard with paginated register tables, communication logs, and configurable TCP/RTU server settings.",
   "bin": {
     "modbus-simulator": "scripts/cli.mjs"
