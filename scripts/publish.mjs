@@ -81,24 +81,24 @@ if (existsSync(libSource)) {
   cpSync(libSource, libTarget, { recursive: true, force: true })
 }
 
-// Copy .next/ (regular build output) including only necessary files
+// Copy .next/ (regular build output) including only necessary files.
+// Derive the required file list from Next.js's own required-server-files.json
+// so the copy set stays correct across Next.js versions.
+const requiredFilesPath = join(nextDir, 'required-server-files.json')
+let requiredBasenames = []
+if (existsSync(requiredFilesPath)) {
+  const requiredData = JSON.parse(readFileSync(requiredFilesPath, 'utf-8'))
+  requiredBasenames = requiredData.files.map((f) => f.replace(/^\.next[/\\]/, ''))
+}
+
 const nextTarget = join(publishDir, '.next')
 mkdirSync(nextTarget, { recursive: true })
 copyDirInclude(nextDir, nextTarget, [
   'BUILD_ID',
-  'app-path-routes-manifest.json',
-  'build-manifest.json',
-  'export-marker.json',
-  'fallback-build-manifest.json',
-  'images-manifest.json',
-  'package.json',
-  'prerender-manifest.json',
-  'required-server-files.js',
-  'required-server-files.json',
-  'routes-manifest.json',
   'server',
   'static',
-  'node_modules'
+  'node_modules',
+  ...requiredBasenames
 ])
 
 // Fix Next.js Turbopack external module symlinks.
@@ -168,9 +168,23 @@ if (isDryRun) {
   publishArgs.push('--dry-run')
 }
 
-const npmPublish = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', publishArgs, {
-  stdio: 'inherit',
-  cwd: publishDir
+const npmPublish = spawn(
+  process.platform === 'win32' ? 'cmd.exe' : 'npm',
+  process.platform === 'win32' ? ['/c', 'npm', ...publishArgs] : publishArgs,
+  {
+    stdio: 'inherit',
+    cwd: publishDir
+  }
+)
+
+npmPublish.on('error', (err) => {
+  console.error(`\n❌ Failed to spawn npm publish: ${err.message}`)
+  try {
+    rmSync(publishDir, { recursive: true, force: true })
+  } catch {
+    // ignore cleanup errors
+  }
+  process.exit(1)
 })
 
 npmPublish.on('exit', (code) => {

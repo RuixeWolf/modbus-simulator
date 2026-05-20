@@ -65,6 +65,11 @@ process.on('SIGINT', () => {
   proc.kill('SIGINT')
 })
 
+proc.on('error', (err) => {
+  console.error(`Failed to start Next.js server: ${err.message}`)
+  process.exit(1)
+})
+
 // Exit when child exits (naturally handles both normal and signal-based termination)
 proc.on('exit', (code) => {
   process.exit(code ?? 0)
