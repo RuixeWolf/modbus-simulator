@@ -50,7 +50,7 @@ ESLint uses flat config (`eslint.config.mjs`) with: `typescript-eslint`, `@eslin
 
 ### Native Module Builds
 
-`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM (Performant npm) may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
@@ -174,5 +174,5 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - `next.config.ts` enables `reactCompiler: true`
 - Path alias `@/` resolves to the project root (e.g., `@/src/lib/modbus`)
 - Published to npm as `@ruixe/modbus-simulator`; runnable via `npx @ruixe/modbus-simulator@latest`
-- When using Playwright MCP tools (screenshots, snapshots, console logs), write temp files to `.temp/` — never the project root. `.temp/` is gitignored except for `.gitkeep`.
+- When using Playwright MCP (Model Context Protocol) tools (screenshots, snapshots, console logs), write temp files to `.temp/` — never the project root. `.temp/` is gitignored except for `.gitkeep`.
 - For Next.js 16-specific agent rules and breaking changes, see `AGENTS.md`
