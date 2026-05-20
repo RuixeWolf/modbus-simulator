@@ -46,14 +46,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Don't use registry-url here — it adds always-auth=true to .npmrc which
+      # blocks npm's OIDC Trusted Publishing flow. We configure registry manually.
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
+      - run: npm config set registry https://registry.npmjs.org/
       - run: corepack enable && corepack prepare pnpm@latest --activate
       - run: pnpm install --frozen-lockfile
       - run: node scripts/publish.mjs
-        env:
-          # Unset the placeholder token so npm falls back to OIDC Trusted Publishing
-          NODE_AUTH_TOKEN: ''
