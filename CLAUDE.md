@@ -73,7 +73,12 @@ Use `ModbusEngine.getInstance()` everywhere.
 
 #### Log Source Context
 
-`src/lib/modbus/log-context.ts` provides an `AsyncLocalStorage<LogSource>` singleton (stored on `globalThis.__modbus_log_source_store__`) that propagates log origin context (TCP, serial, or web) through to the engine's `addLog` method without threading extra parameters through every read/write signature. Entry points in the TCP server, RTU serial server, and web API routes run their handlers inside `logSourceStore.run()` so downstream log entries are automatically annotated with `source: { type, detail }`.
+`src/lib/modbus/log-context.ts` provides an `AsyncLocalStorage<LogSource>` singleton.
+It is stored on `globalThis.__modbus_log_source_store__`.
+It propagates log origin context (TCP, serial, or web) to the engine's `addLog` method.
+This avoids threading extra parameters through every read/write signature.
+Entry points in the TCP server, RTU serial server, and web API routes run their handlers inside `logSourceStore.run()`.
+Downstream log entries are then automatically annotated with `source: { type, detail }`.
 
 ### Server Layer: TCP + Serial RTU
 
@@ -115,7 +120,11 @@ All routes live under `app/api/` and call `ensureServersStarted()` on import:
 - `GET /api/logs` — All communication logs
 - `GET /api/status` — `{ tcp: boolean, rtu: boolean }`
 - `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter, logMaxCount }`
-- `POST /api/config` — Update config and restart servers. The request body may include a supported subset of config fields. Invalid values are rejected (for example, `slaveId` outside 1-247). `logFilter` controls which log types are recorded. `logMaxCount` sets the in-memory log buffer limit.
+- `POST /api/config` — Update config and restart servers.
+  - Body may include a subset of config fields.
+  - Invalid values are rejected (for example, `slaveId` outside 1-247).
+  - `logFilter` controls which log types are recorded.
+  - `logMaxCount` sets the in-memory log buffer limit.
 - `GET /api/serial-ports` — List available serial ports from `SerialPort.list()`
 
 All API routes export `dynamic = 'force-dynamic'` to prevent Next.js from attempting static optimization.
