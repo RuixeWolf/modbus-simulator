@@ -132,7 +132,10 @@ export async function POST(request: NextRequest) {
       typeof body.logFilter.connection !== 'boolean'
     ) {
       return NextResponse.json(
-        { error: 'Invalid logFilter (must be object with boolean read/write/error fields)' },
+        {
+          error:
+            'Invalid logFilter (must be object with boolean read/write/error/connection fields)'
+        },
         { status: 400 }
       )
     }
