@@ -63,7 +63,9 @@ export function StatusIndicator({
                 }`}
                 data-testid="tcp-client-count"
               >
-                {t('header.tcpClients', { count: tcpClientCount })}
+                {tcpClientCount === 0
+                  ? t('header.tcpClients_zero')
+                  : t('header.tcpClients', { count: tcpClientCount })}
               </button>
             )}
           </div>

@@ -467,8 +467,8 @@ export class ModbusEngine extends EventEmitter {
   /**
    * Logs a TCP client connection event.
    * @param host – Client remote address.
-   * @param event – Connection event type.
    * @param port – Client remote port.
+   * @param event – Connection event type.
    */
   addConnectionLog(host: string, port: number, event: 'connected' | 'disconnected'): void {
     this.addLog({

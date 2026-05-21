@@ -114,8 +114,8 @@ All routes live under `app/api/` and call `ensureServersStarted()` on import:
 - `POST /api/registers` — Write coil or holding register (body: `{ registerType, address, value }`)
 - `GET /api/logs` — All communication logs
 - `GET /api/status` — `{ tcp: boolean, rtu: boolean }`
-- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter, maxLogs }`
-- `POST /api/config` — Update config and restart servers. The request body may include a supported subset of config fields. Invalid values are rejected (for example, `slaveId` outside 1-247). `logFilter` controls which log types are recorded. `maxLogs` sets the in-memory log buffer limit.
+- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter, logMaxCount }`
+- `POST /api/config` — Update config and restart servers. The request body may include a supported subset of config fields. Invalid values are rejected (for example, `slaveId` outside 1-247). `logFilter` controls which log types are recorded. `logMaxCount` sets the in-memory log buffer limit.
 - `GET /api/serial-ports` — List available serial ports from `SerialPort.list()`
 
 All API routes export `dynamic = 'force-dynamic'` to prevent Next.js from attempting static optimization.
