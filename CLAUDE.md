@@ -50,7 +50,7 @@ ESLint uses flat config (`eslint.config.mjs`) with: `typescript-eslint`, `@eslin
 
 ### Native Module Builds
 
-`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, pnpm may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
