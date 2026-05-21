@@ -50,7 +50,7 @@ ESLint uses flat config (`eslint.config.mjs`) with: `typescript-eslint`, `@eslin
 
 ### Native Module Builds
 
-`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM (Performant npm) may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
+`pnpm-workspace.yaml` enables builds for `@serialport/bindings-cpp`. On fresh installs, PNPM may prompt to build this native dependency — approve it, or the RTU serial server will fail at runtime.
 
 ## Architecture
 
@@ -62,7 +62,7 @@ ESLint uses flat config (`eslint.config.mjs`) with: `typescript-eslint`, `@eslin
 - 1,000 discrete inputs (`boolean[]`)
 - 10,000 holding registers (`number[]`, 16-bit values)
 - 10,000 input registers (`number[]`, 16-bit values)
-- Up to 1,000 in-memory communication logs
+- Up to 1,000 in-memory communication logs (configurable max count)
 
 Use `ModbusEngine.getInstance()` everywhere.
 
@@ -70,6 +70,10 @@ Use `ModbusEngine.getInstance()` everywhere.
 - The engine instance is stored on `globalThis.__modbus_engine_instance__`.
 - The global storage approach keeps the instance alive across Next.js Hot Module Replacement (HMR) / module reloads in dev mode.
 - The singleton persistence strategy mirrors the behavior used by the server layer.
+
+#### Log Source Context
+
+`src/lib/modbus/log-context.ts` provides an `AsyncLocalStorage<LogSource>` singleton (stored on `globalThis.__modbus_log_source_store__`) that propagates log origin context (TCP, serial, or web) through to the engine's `addLog` method without threading extra parameters through every read/write signature. Entry points in the TCP server, RTU serial server, and web API routes run their handlers inside `logSourceStore.run()` so downstream log entries are automatically annotated with `source: { type, detail }`.
 
 ### Server Layer: TCP + Serial RTU
 
@@ -110,8 +114,8 @@ All routes live under `app/api/` and call `ensureServersStarted()` on import:
 - `POST /api/registers` — Write coil or holding register (body: `{ registerType, address, value }`)
 - `GET /api/logs` — All communication logs
 - `GET /api/status` — `{ tcp: boolean, rtu: boolean }`
-- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter }`
-- `POST /api/config` — Update config and restart servers. The request body may include a supported subset of config fields. Invalid values are rejected (for example, `slaveId` outside 1-247). `logFilter` controls which log types are recorded.
+- `GET /api/config` — `{ tcpPort, slaveId, rtuSerialPath, rtuBaudRate, rtuParity, rtuDataBits, rtuStopBits, logFilter, maxLogs }`
+- `POST /api/config` — Update config and restart servers. The request body may include a supported subset of config fields. Invalid values are rejected (for example, `slaveId` outside 1-247). `logFilter` controls which log types are recorded. `maxLogs` sets the in-memory log buffer limit.
 - `GET /api/serial-ports` — List available serial ports from `SerialPort.list()`
 
 All API routes export `dynamic = 'force-dynamic'` to prevent Next.js from attempting static optimization.
@@ -143,7 +147,7 @@ The dashboard at `app/page.tsx` is a client component using `useModbusData()` wh
 - The `<html>` tag has `suppressHydrationWarning` because of the theme bootstrap script.
 - The `<head>` script reads `localStorage.getItem('theme-preference')` and sets both `data-theme` (HeroUI styles) and `.dark` (Tailwind `@custom-variant dark`) before React hydration, which avoids theme flash.
 
-**i18n**: Translations are bundled at build time in `src/i18n/index.ts` (English and Chinese). No HTTP backend — JSON files from `public/locales/` are imported directly. `app/page.tsx` imports `@/src/i18n` to initialize before rendering.
+**i18n**: Translations are bundled at build time in `src/i18n/index.ts` (English, Chinese, French, Japanese). No HTTP backend — JSON files from `public/locales/` are imported directly. `app/page.tsx` imports `@/src/i18n` to initialize before rendering.
 
 **Theme**: Dark mode is custom (not HeroUI's built-in). `useTheme()` in `src/hooks/useTheme.ts` manages a `localStorage` preference (`light` / `dark` / `system`) and toggles the `.dark` class on `<html>`.
 

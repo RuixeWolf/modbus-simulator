@@ -3,14 +3,58 @@ import { ServerTCP } from 'modbus-serial'
 import { ModbusEngine } from './engine'
 import { logSourceStore } from './log-context'
 
+/** Metadata for an active TCP client connection. */
+export interface TcpClientInfo {
+  id: number
+  host: string
+  port: number
+  connectedAt: string
+}
+
+/** Internal record pairing client metadata with its live socket. */
+interface TcpClientRecord {
+  info: TcpClientInfo
+  socket: Socket
+  /** True if a disconnect log has already been written for this client. */
+  logged: boolean
+}
+
 const g = globalThis as typeof globalThis & {
   __modbus_tcp_server__?: ServerTCP | null
   __modbus_tcp_running__?: boolean
   __modbus_tcp_port__?: number
+  __modbus_tcp_clients__?: Map<number, TcpClientRecord>
+  __modbus_tcp_next_client_id__?: number
+}
+
+/** Returns the active client map stored on globalThis (survives module reloads). */
+function getClientMap(): Map<number, TcpClientRecord> {
+  return g.__modbus_tcp_clients__ ?? new Map()
+}
+
+/** Returns the next client ID from globalThis. */
+function getNextClientId(): number {
+  return g.__modbus_tcp_next_client_id__ ?? 1
+}
+
+/** Stores the next client ID on globalThis. */
+function setNextClientId(id: number): void {
+  g.__modbus_tcp_next_client_id__ = id
+}
+
+/** Returns the active server stored on globalThis. */
+function getServer(): ServerTCP | null {
+  return g.__modbus_tcp_server__ ?? null
+}
+
+/** Stores the server on globalThis. */
+function setServer(s: ServerTCP | null): void {
+  g.__modbus_tcp_server__ = s
+  server = s
 }
 
 /** Active TCP server instance, or null when stopped. */
-let server: ServerTCP | null = g.__modbus_tcp_server__ ?? null
+let server: ServerTCP | null = getServer()
 /** Port the server was most recently started on. */
 let currentPort: number = g.__modbus_tcp_port__ ?? 502
 
@@ -153,21 +197,52 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
     }
   }
 
-  server = new ServerTCP(vector, { host: '0.0.0.0', port: currentPort, debug: false, unitID })
-  g.__modbus_tcp_running__ = true
-  g.__modbus_tcp_server__ = server
+  const newServer = new ServerTCP(vector, {
+    host: '0.0.0.0',
+    port: currentPort,
+    debug: false,
+    unitID
+  })
+  setServer(newServer)
   g.__modbus_tcp_running__ = true
   g.__modbus_tcp_port__ = currentPort
 
   // Patch socket.emit so that 'data' events carry AsyncLocalStorage context
   // through modbus-serial's setTimeout → vector callbacks → engine.addLog.
-  const netServer = (server as unknown as { _server?: import('node:net').Server })._server
+  // Also track active client connections for the management UI.
+  const netServer = (newServer as unknown as { _server?: import('node:net').Server })._server
   if (netServer) {
     netServer.on('connection', (sock: Socket) => {
+      const host = sock.remoteAddress ?? 'unknown'
+      const port = sock.remotePort ?? 0
       const source = {
         type: 'tcp' as const,
-        detail: `${sock.remoteAddress ?? 'unknown'}:${sock.remotePort ?? 0}`
+        detail: `${host}:${port}`
       }
+
+      // Track client connection using globalThis so data survives module reloads
+      const clients = getClientMap()
+      const clientId = getNextClientId()
+      setNextClientId(clientId + 1)
+      const clientInfo: TcpClientInfo = {
+        id: clientId,
+        host,
+        port,
+        connectedAt: new Date().toISOString()
+      }
+      clients.set(clientId, { info: clientInfo, socket: sock, logged: false })
+      g.__modbus_tcp_clients__ = clients
+
+      engine.addConnectionLog(host, port, 'connected')
+
+      sock.once('close', () => {
+        const record = clients.get(clientId)
+        if (record && !record.logged) {
+          engine.addConnectionLog(record.info.host, record.info.port, 'disconnected')
+        }
+        clients.delete(clientId)
+      })
+
       const originalEmit = sock.emit.bind(sock)
       sock.emit = ((event: string | symbol, ...args: unknown[]) => {
         if (event === 'data') {
@@ -183,33 +258,37 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
     )
   }
 
-  server.on('serverError', (err: Error) => {
+  newServer.on('serverError', (err: Error) => {
     console.error('Modbus TCP Server error:', err.message)
   })
 
   console.log(`Modbus TCP Server started on port ${currentPort} (slave ID ${unitID})`)
-  return server
+  return newServer
 }
 
 /** Stops and clears the active TCP server, if any. Returns a Promise that resolves once the server is closed. */
 export function stopTCPServer(): Promise<void> {
   return new Promise((resolve) => {
-    if (!server) {
+    const currentServer = getServer()
+    if (!currentServer) {
       resolve()
       return
     }
 
     g.__modbus_tcp_running__ = false
-    const s = server
-    server = null
-    g.__modbus_tcp_server__ = null
+    setServer(null)
+
+    // Clear client tracking but do not destroy sockets here; net.Server close
+    // will terminate underlying connections.
+    getClientMap().clear()
+    g.__modbus_tcp_clients__ = new Map()
 
     let resolved = false
 
     const timeout = setTimeout(() => {
       if (resolved) return
       resolved = true
-      s.removeListener('close', onClose)
+      currentServer.removeListener('close', onClose)
       resolve()
     }, 5000)
     timeout.unref()
@@ -222,8 +301,8 @@ export function stopTCPServer(): Promise<void> {
       resolve()
     }
 
-    s.once('close', onClose)
-    s.close()
+    currentServer.once('close', onClose)
+    currentServer.close()
   })
 }
 
@@ -235,4 +314,49 @@ export function isTCPServerRunning(): boolean {
 /** @returns The port the TCP server was most recently started on. */
 export function getTCPPort(): number {
   return g.__modbus_tcp_port__ ?? 502
+}
+
+/**
+ * @returns A snapshot of all currently connected TCP clients,
+ *          sorted by connection time (oldest first).
+ */
+export function getTCPClients(): TcpClientInfo[] {
+  return Array.from(getClientMap().values())
+    .map((record) => record.info)
+    .sort((a, b) => new Date(a.connectedAt).getTime() - new Date(b.connectedAt).getTime())
+}
+
+/**
+ * Forcibly disconnects a single TCP client by its ID.
+ * @param id – Client ID returned by {@link getTCPClients}.
+ * @returns True if the client existed and was disconnected.
+ */
+export function disconnectTCPClient(id: number): boolean {
+  const clients = getClientMap()
+  const record = clients.get(id)
+  if (!record) return false
+  const engine = ModbusEngine.getInstance()
+  engine.addConnectionLog(record.info.host, record.info.port, 'disconnected')
+  record.logged = true
+  record.socket.destroy()
+  clients.delete(id)
+  return true
+}
+
+/**
+ * Forcibly disconnects all active TCP clients.
+ * @returns The number of clients that were disconnected.
+ */
+export function disconnectAllTCPClients(): number {
+  const clients = getClientMap()
+  const engine = ModbusEngine.getInstance()
+  let count = 0
+  for (const [id, record] of clients) {
+    engine.addConnectionLog(record.info.host, record.info.port, 'disconnected')
+    record.logged = true
+    record.socket.destroy()
+    clients.delete(id)
+    count++
+  }
+  return count
 }

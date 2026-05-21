@@ -128,7 +128,8 @@ export async function POST(request: NextRequest) {
       typeof body.logFilter !== 'object' ||
       typeof body.logFilter.read !== 'boolean' ||
       typeof body.logFilter.write !== 'boolean' ||
-      typeof body.logFilter.error !== 'boolean'
+      typeof body.logFilter.error !== 'boolean' ||
+      typeof body.logFilter.connection !== 'boolean'
     ) {
       return NextResponse.json(
         { error: 'Invalid logFilter (must be object with boolean read/write/error fields)' },
@@ -139,7 +140,8 @@ export async function POST(request: NextRequest) {
     engine.setLogFilter({
       read: body.logFilter.read,
       write: body.logFilter.write,
-      error: body.logFilter.error
+      error: body.logFilter.error,
+      connection: body.logFilter.connection
     })
   }
 

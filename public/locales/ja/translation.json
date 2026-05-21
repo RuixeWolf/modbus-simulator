@@ -7,7 +7,9 @@
     "tcp": "TCP",
     "rtu": "RTU",
     "port": "ポート",
-    "notSet": "未設定"
+    "notSet": "未設定",
+    "tcpClients": "{{count}} クライアント",
+    "tcpClients_zero": "クライアントなし"
   },
   "settings": {
     "title": "サーバー設定",
@@ -55,6 +57,16 @@
     "gotoAddress": "アドレスへ移動",
     "goto": "移動"
   },
+  "tcpClients": {
+    "title": "TCP クライアント接続",
+    "host": "ホスト",
+    "port": "ポート",
+    "connectedAt": "接続日時",
+    "action": "操作",
+    "disconnect": "切断",
+    "disconnectAll": "すべて切断",
+    "noClients": "アクティブな TCP 接続がありません"
+  },
   "logs": {
     "title": "通信ログ",
     "entries": "{{count}} 件",
@@ -62,6 +74,7 @@
     "read": "読み取り",
     "write": "書き込み",
     "error": "エラー",
+    "connection": "接続",
     "filter": "フィルタ",
     "clear": "クリア",
     "source": {

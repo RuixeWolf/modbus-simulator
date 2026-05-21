@@ -5,7 +5,15 @@ import {
   startRTUSerialServer,
   stopRTUSerialServer
 } from './rtu-serial-server'
-import { getTCPPort, isTCPServerRunning, startTCPServer, stopTCPServer } from './tcp-server'
+import {
+  disconnectAllTCPClients,
+  disconnectTCPClient,
+  getTCPClients,
+  getTCPPort,
+  isTCPServerRunning,
+  startTCPServer,
+  stopTCPServer
+} from './tcp-server'
 
 /** Mutable server configuration shared across TCP and RTU. */
 export interface ServerConfig {
@@ -219,4 +227,12 @@ export async function restartServers(): Promise<void> {
   }
 }
 
-export { isTCPServerRunning, isRTUSerialServerRunning, getTCPPort, getRTUSerialPath }
+export {
+  disconnectAllTCPClients,
+  disconnectTCPClient,
+  getTCPClients,
+  getTCPPort,
+  isRTUSerialServerRunning,
+  isTCPServerRunning,
+  getRTUSerialPath
+}

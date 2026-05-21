@@ -145,4 +145,71 @@ test.describe('Modbus Simulator E2E', () => {
     const logPanel = page.getByTestId('log-panel')
     await expect(logPanel).toContainText('ERROR', { timeout: 10000 })
   })
+
+  test('TCP client management: connect, view, disconnect via UI', async ({ page }) => {
+    await page.goto('/')
+
+    await expect(page.getByTestId('tcp-status')).toContainText('11502', {
+      timeout: 30000
+    })
+
+    // Initially no clients
+    await expect(page.getByTestId('tcp-client-count')).toContainText('No clients')
+
+    // Connect a mock Modbus client and perform a read to ensure the connection is active
+    const client = new MockModbusClient('tcp', 'localhost', 11502)
+    await client.connect()
+    await client.readHoldingRegister(0)
+
+    try {
+      // Wait for polling to update client count
+      await expect(page.getByTestId('tcp-client-count')).toContainText('1 clients', {
+        timeout: 10000
+      })
+
+      // Open the client panel
+      await page.getByTestId('tcp-client-count').click()
+      await page.waitForTimeout(300)
+
+      // Verify the panel shows the connected client
+      const clientPanel = page.getByTestId('tcp-client-panel')
+      await expect(clientPanel).toContainText('127.0.0.1')
+      await expect(clientPanel).toContainText('Disconnect')
+
+      // Disconnect the client
+      await page
+        .getByRole('button', { name: /Disconnect/i })
+        .first()
+        .click()
+
+      // Wait for the client count to update
+      await expect(page.getByTestId('tcp-client-count')).toContainText('No clients', {
+        timeout: 5000
+      })
+
+      // Close the client panel modal
+      await page.getByRole('button', { name: /Close/i }).first().click()
+      await page.waitForTimeout(300)
+    } finally {
+      await client.disconnect()
+    }
+
+    // Open communication logs and verify disconnect log
+    await page.evaluate(async () => {
+      await fetch('/api/logs', { method: 'DELETE' })
+    })
+
+    // Reconnect and disconnect to generate a fresh log
+    const client2 = new MockModbusClient('tcp', 'localhost', 11502)
+    await client2.connect()
+    await client2.disconnect()
+
+    await page.waitForTimeout(1500)
+
+    await page.getByRole('button', { name: /Communication Logs/i }).click()
+    await page.waitForTimeout(300)
+
+    const logPanel = page.getByTestId('log-panel')
+    await expect(logPanel).toContainText('CONNECTION', { timeout: 10000 })
+  })
 })

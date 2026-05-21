@@ -183,7 +183,9 @@ describe('API Routes', () => {
 
     it('should update log filter', async () => {
       const { POST } = await import('./config/route')
-      const req = createMockRequest({ logFilter: { read: false, write: true, error: true } })
+      const req = createMockRequest({
+        logFilter: { read: false, write: true, error: true, connection: true }
+      })
       const res = await POST(req as unknown as import('next/server').NextRequest)
       const data = await res.json()
       expect(data.success).toBe(true)

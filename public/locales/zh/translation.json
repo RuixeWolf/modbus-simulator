@@ -7,7 +7,9 @@
     "tcp": "TCP",
     "rtu": "RTU",
     "port": "端口",
-    "notSet": "未设置"
+    "notSet": "未设置",
+    "tcpClients": "{{count}} 个客户端",
+    "tcpClients_zero": "无客户端"
   },
   "settings": {
     "title": "服务器设置",
@@ -55,6 +57,16 @@
     "gotoAddress": "跳转到地址",
     "goto": "跳转"
   },
+  "tcpClients": {
+    "title": "TCP 客户端连接",
+    "host": "主机",
+    "port": "端口",
+    "connectedAt": "连接时间",
+    "action": "操作",
+    "disconnect": "断开连接",
+    "disconnectAll": "断开全部连接",
+    "noClients": "暂无 TCP 连接"
+  },
   "logs": {
     "title": "通信日志",
     "entries": "{{count}} 条记录",
@@ -62,6 +74,7 @@
     "read": "读取",
     "write": "写入",
     "error": "错误",
+    "connection": "连接",
     "filter": "过滤",
     "clear": "清空",
     "source": {
