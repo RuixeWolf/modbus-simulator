@@ -278,7 +278,7 @@ export function stopTCPServer(): Promise<void> {
     g.__modbus_tcp_running__ = false
     setServer(null)
 
-    // Log disconnects for all active clients before clearing the map.
+    // Log disconnects and terminate all active client sockets before clearing the map.
     const clients = getClientMap()
     for (const [id, record] of clients) {
       ModbusEngine.getInstance().addConnectionLog(
@@ -286,6 +286,7 @@ export function stopTCPServer(): Promise<void> {
         record.info.port,
         'disconnected'
       )
+      record.socket.destroy()
       clients.delete(id)
     }
     getClientMap().clear()
