@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureServersStarted } from '@/src/lib/modbus'
-import { numberToBuffer, parseHexString, type DataType } from '@/src/lib/modbus/buffer-convert'
+import { numberToBuffer, parseHexString } from '@/src/lib/modbus/buffer-convert'
+import type { DataType } from '@/src/lib/modbus/buffer-convert'
 import { ModbusEngine } from '@/src/lib/modbus/engine'
 import { logSourceStore } from '@/src/lib/modbus/log-context'
 

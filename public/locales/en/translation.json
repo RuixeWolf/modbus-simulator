@@ -61,7 +61,6 @@
     "modeNumber": "Number",
     "modeBytes": "Bytes",
     "dataType": "Data Type",
-    "value": "Value",
     "hexString": "Hex String",
     "startAddress": "Start Address",
     "registersToWrite": "Will write {{count}} register(s)",

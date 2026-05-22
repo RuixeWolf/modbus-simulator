@@ -64,8 +64,8 @@ export function AdvancedWriteModal({
       return Math.ceil(getDataTypeSize(dataType) / 2)
     }
     const cleaned = hexString.replace(/0x/gi, '').replace(/[,\s]/g, '').trim()
-    const byteCount = cleaned.length / 2
-    return Math.max(1, Math.ceil(byteCount / 2))
+    const count = Math.ceil(cleaned.length / 4)
+    return count > 0 ? count : 1
   }, [mode, dataType, hexString])
 
   const handleSubmit = async () => {

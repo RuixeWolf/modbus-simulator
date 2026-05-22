@@ -61,7 +61,6 @@
     "modeNumber": "数值",
     "modeBytes": "字节",
     "dataType": "数据类型",
-    "value": "数值",
     "hexString": "十六进制字符串",
     "startAddress": "起始地址",
     "registersToWrite": "将写入 {{count}} 个寄存器",

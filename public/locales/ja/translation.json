@@ -61,7 +61,6 @@
     "modeNumber": "数値",
     "modeBytes": "バイト",
     "dataType": "データ型",
-    "value": "値",
     "hexString": "16進文字列",
     "startAddress": "開始アドレス",
     "registersToWrite": "{{count}} 個のレジスタに書き込みます",
