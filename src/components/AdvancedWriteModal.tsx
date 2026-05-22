@@ -63,9 +63,16 @@ export function AdvancedWriteModal({
     if (mode === 'number') {
       return Math.ceil(getDataTypeSize(dataType) / 2)
     }
-    const cleaned = hexString.replace(/0x/gi, '').replace(/[,\s]/g, '').trim()
-    const count = Math.ceil(cleaned.length / 4)
-    return count > 0 ? count : 1
+    const cleaned = hexString
+      .toLowerCase()
+      .split('0x')
+      .join('')
+      .split(',')
+      .join('')
+      .split(' ')
+      .join('')
+      .trim()
+    return Math.ceil(cleaned.length / 4) || 1
   }, [mode, dataType, hexString])
 
   const handleSubmit = async () => {
