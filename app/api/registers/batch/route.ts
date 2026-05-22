@@ -33,6 +33,10 @@ const VALID_DATA_TYPES: readonly string[] = [
   'DoubleLE'
 ]
 
+function isDataType(value: unknown): value is DataType {
+  return typeof value === 'string' && VALID_DATA_TYPES.includes(value)
+}
+
 function getErrorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
 }
@@ -67,16 +71,13 @@ export async function POST(request: NextRequest) {
     let buffer: Buffer
 
     if (mode === 'number') {
-      if (!dataType || typeof value !== 'number' || !Number.isFinite(value)) {
+      if (!isDataType(dataType) || typeof value !== 'number' || !Number.isFinite(value)) {
         return NextResponse.json(
           { error: 'dataType and a finite numeric value are required for number mode' },
           { status: 400 }
         )
       }
-      if (!VALID_DATA_TYPES.includes(dataType)) {
-        return NextResponse.json({ error: 'Invalid dataType' }, { status: 400 })
-      }
-      buffer = numberToBuffer(dataType as DataType, value)
+      buffer = numberToBuffer(dataType, value)
     } else {
       if (!hexString || typeof hexString !== 'string') {
         return NextResponse.json({ error: 'hexString required for bytes mode' }, { status: 400 })
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, registersWritten: registerCount })
   } catch (e) {
     const message = getErrorMessage(e)
-    engine.addErrorLog(registerType, addr ?? -1, message)
+    engine.addErrorLog(registerType, addr, message)
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

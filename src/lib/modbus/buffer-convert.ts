@@ -59,6 +59,9 @@ export function getDataTypeSize(dataType: DataType): number {
 
 /**
  * Convert a user-supplied numeric value into a Buffer using the specified data type.
+ * @param dataType – Target data type encoding.
+ * @param value    – Numeric value to encode.
+ * @returns Buffer containing the encoded bytes.
  */
 export function numberToBuffer(dataType: DataType, value: number): Buffer {
   const size = TYPE_SIZES[dataType]
@@ -167,6 +170,9 @@ export function numberToBuffer(dataType: DataType, value: number): Buffer {
  * Rejects malformed input (non-hex characters, odd-length compact form,
  * or space-separated tokens that are not exactly 2 hex digits).
  * Returns an empty buffer for any invalid input.
+ *
+ * @param input – Hex string to parse.
+ * @returns Buffer containing the parsed bytes, or an empty buffer on invalid input.
  */
 export function parseHexString(input: string): Buffer {
   // Strip optional "0x" / "0X" prefixes and commas, normalize whitespace
