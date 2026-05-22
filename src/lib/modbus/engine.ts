@@ -9,7 +9,7 @@ export interface ModbusLogEntry {
   /** ISO 8601 timestamp of when the operation occurred. */
   timestamp: string
   /** Direction or outcome of the operation. */
-  type: 'read' | 'write' | 'error'
+  type: 'read' | 'write' | 'error' | 'connection'
   /** Register category involved in the operation (e.g. "coil", "holdingRegister"). */
   registerType: string
   /** Zero-based Modbus address. */
@@ -35,6 +35,7 @@ export interface LogFilterConfig {
   read: boolean
   write: boolean
   error: boolean
+  connection: boolean
 }
 
 /** Number of coils allocated in the engine. */
@@ -81,7 +82,7 @@ export class ModbusEngine extends EventEmitter {
     this.holdingRegisters = new Array(HOLDING_REGISTER_COUNT).fill(0)
     this.inputRegisters = new Array(INPUT_REGISTER_COUNT).fill(0)
     this.logs = []
-    this.logFilter = { read: true, write: true, error: true }
+    this.logFilter = { read: true, write: true, error: true, connection: true }
     this.logMaxCount = DEFAULT_MAX_LOGS
   }
 
@@ -430,6 +431,7 @@ export class ModbusEngine extends EventEmitter {
     if (filter.read !== undefined) this.logFilter.read = filter.read
     if (filter.write !== undefined) this.logFilter.write = filter.write
     if (filter.error !== undefined) this.logFilter.error = filter.error
+    if (filter.connection !== undefined) this.logFilter.connection = filter.connection
   }
 
   /**
@@ -459,6 +461,22 @@ export class ModbusEngine extends EventEmitter {
       registerType,
       address,
       message
+    })
+  }
+
+  /**
+   * Logs a TCP client connection event.
+   * @param host – Client remote address.
+   * @param port – Client remote port.
+   * @param event – Connection event type.
+   */
+  addConnectionLog(host: string, port: number, event: 'connected' | 'disconnected'): void {
+    this.addLog({
+      timestamp: new Date().toISOString(),
+      type: 'connection',
+      registerType: 'tcp',
+      address: 0,
+      message: `Client ${host}:${port} ${event}`
     })
   }
 }

@@ -28,7 +28,8 @@ function toLogFilterConfig(keys: Set<string | number>): Partial<LogFilterConfig>
   return {
     read: keys.has('read'),
     write: keys.has('write'),
-    error: keys.has('error')
+    error: keys.has('error'),
+    connection: keys.has('connection')
   }
 }
 
@@ -50,6 +51,12 @@ function getTypeBadge(type: string, t: (key: string) => string) {
       return (
         <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
           {t('logs.error')}
+        </span>
+      )
+    case 'connection':
+      return (
+        <span className="inline-flex items-center rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+          {t('logs.connection')}
         </span>
       )
     default:
@@ -128,6 +135,8 @@ export function LogPanel({
                     <ToggleButton id="write">{t('logs.write')}</ToggleButton>
                     <ToggleButtonGroup.Separator />
                     <ToggleButton id="error">{t('logs.error')}</ToggleButton>
+                    <ToggleButtonGroup.Separator />
+                    <ToggleButton id="connection">{t('logs.connection')}</ToggleButton>
                   </ToggleButtonGroup>
                 </div>
                 <div className="text-muted pb-2 text-sm leading-5 sm:pb-0">

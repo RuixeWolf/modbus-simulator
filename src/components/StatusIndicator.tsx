@@ -12,6 +12,10 @@ interface StatusIndicatorProps {
   tcpPort?: number
   /** Active serial port path; shown as "Not set" when null. */
   rtuPath?: string | null
+  /** Number of currently connected TCP clients. */
+  tcpClientCount?: number
+  /** Called when the user clicks the TCP client count badge. */
+  onOpenClientPanel?: () => void
 }
 
 /**
@@ -23,7 +27,9 @@ export function StatusIndicator({
   tcp,
   rtu,
   tcpPort = 502,
-  rtuPath
+  rtuPath,
+  tcpClientCount = 0,
+  onOpenClientPanel
 }: Readonly<StatusIndicatorProps>) {
   const { t } = useTranslation()
 
@@ -44,9 +50,25 @@ export function StatusIndicator({
         </span>
         <div className="flex flex-col">
           <span className="text-foreground text-[11px] font-semibold">{t('header.tcp')}</span>
-          <span className="text-text-muted font-mono text-[10px]">
-            {tcpPort} {tcp ? '●' : '○'}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-text-muted font-mono text-[10px]">
+              {tcpPort} {tcp ? '●' : '○'}
+            </span>
+            {tcp && (
+              <button
+                type="button"
+                onClick={onOpenClientPanel}
+                className={`cursor-pointer text-left text-[10px] underline-offset-2 hover:underline ${
+                  tcpClientCount > 0 ? 'text-blue-500 dark:text-blue-400' : 'text-text-muted'
+                }`}
+                data-testid="tcp-client-count"
+              >
+                {tcpClientCount === 0
+                  ? t('header.tcpClients_zero')
+                  : t('header.tcpClients', { count: tcpClientCount })}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

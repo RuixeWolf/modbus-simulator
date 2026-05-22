@@ -16,10 +16,18 @@ export interface LogSource {
   detail: string
 }
 
+/** Metadata for an active TCP client connection. */
+export interface TcpClientInfo {
+  id: number
+  host: string
+  port: number
+  connectedAt: string
+}
+
 /** Single log entry returned by the REST API. */
 export interface ModbusLogEntry {
   timestamp: string
-  type: 'read' | 'write' | 'error'
+  type: 'read' | 'write' | 'error' | 'connection'
   registerType: string
   address: number
   value?: number | boolean
@@ -59,6 +67,7 @@ export interface LogFilterConfig {
   read: boolean
   write: boolean
   error: boolean
+  connection: boolean
 }
 
 /** Polling interval in milliseconds for register / status / log updates. */
@@ -95,8 +104,10 @@ export function useModbusData() {
   const [logFilter, setLogFilter] = useState<LogFilterConfig>({
     read: true,
     write: true,
-    error: true
+    error: true,
+    connection: true
   })
+  const [tcpClients, setTcpClients] = useState<TcpClientInfo[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const fetchState = useCallback(async () => {
@@ -169,6 +180,51 @@ export function useModbusData() {
       // silently fail for log filter
     }
   }, [])
+
+  const fetchTcpClients = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tcp-clients')
+      if (!res.ok) throw new Error('Failed to fetch TCP clients')
+      const data = await res.json()
+      if (Array.isArray(data.clients)) {
+        setTcpClients(data.clients)
+      }
+    } catch {
+      // silently fail for TCP clients
+    }
+  }, [])
+
+  /**
+   * Disconnects a single TCP client by ID.
+   * @param id – Client ID from the TCP client list.
+   */
+  const disconnectTcpClient = useCallback(
+    async (id: number) => {
+      try {
+        const res = await fetch(`/api/tcp-clients/${id}`, { method: 'DELETE' })
+        if (!res.ok) throw new Error('Failed to disconnect client')
+        await fetchTcpClients()
+        await fetchLogs()
+      } catch (e) {
+        setError((e as Error).message)
+      }
+    },
+    [fetchTcpClients, fetchLogs]
+  )
+
+  /**
+   * Disconnects all active TCP clients.
+   */
+  const disconnectAllTcpClients = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tcp-clients', { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to disconnect all clients')
+      await fetchTcpClients()
+      await fetchLogs()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchTcpClients, fetchLogs])
 
   /**
    * Writes a single coil or holding register via POST /api/registers,
@@ -270,6 +326,7 @@ export function useModbusData() {
       await fetchConfig()
       await fetchSerialPorts()
       await fetchLogFilter()
+      await fetchTcpClients()
     }
     void init()
 
@@ -277,12 +334,21 @@ export function useModbusData() {
       void fetchState()
       void fetchLogs()
       void fetchStatus()
+      void fetchTcpClients()
     }, POLL_INTERVAL)
 
     return () => {
       clearInterval(interval)
     }
-  }, [fetchState, fetchLogs, fetchStatus, fetchConfig, fetchSerialPorts, fetchLogFilter])
+  }, [
+    fetchState,
+    fetchLogs,
+    fetchStatus,
+    fetchConfig,
+    fetchSerialPorts,
+    fetchLogFilter,
+    fetchTcpClients
+  ])
 
   return {
     state,
@@ -291,11 +357,14 @@ export function useModbusData() {
     config,
     serialPorts,
     logFilter,
+    tcpClients,
     error,
     writeRegister,
     updateConfig,
     updateLogFilter,
     clearLogs,
+    disconnectTcpClient,
+    disconnectAllTcpClients,
     refresh: fetchState
   }
 }

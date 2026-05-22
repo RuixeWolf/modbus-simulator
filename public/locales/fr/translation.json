@@ -7,7 +7,9 @@
     "tcp": "TCP",
     "rtu": "RTU",
     "port": "Port",
-    "notSet": "Non défini"
+    "notSet": "Non défini",
+    "tcpClients": "{{count}} clients",
+    "tcpClients_zero": "Aucun client"
   },
   "settings": {
     "title": "Paramètres du Serveur",
@@ -55,6 +57,16 @@
     "gotoAddress": "Aller à l'adresse",
     "goto": "Aller"
   },
+  "tcpClients": {
+    "title": "Connexions Clients TCP",
+    "host": "Hôte",
+    "port": "Port",
+    "connectedAt": "Connecté le",
+    "action": "Action",
+    "disconnect": "Déconnecter",
+    "disconnectAll": "Tout déconnecter",
+    "noClients": "Aucune connexion TCP active"
+  },
   "logs": {
     "title": "Journaux de communication",
     "entries": "{{count}} entrées",
@@ -62,6 +74,7 @@
     "read": "LECTURE",
     "write": "ÉCRITURE",
     "error": "ERREUR",
+    "connection": "CONNEXION",
     "filter": "Filtrer",
     "clear": "Effacer",
     "source": {

@@ -1,13 +1,14 @@
 'use client'
 
 import '@/src/i18n'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/src/components/LanguageSwitcher'
 import { LogPanel } from '@/src/components/LogPanel'
 import { RegisterTable } from '@/src/components/RegisterTable'
 import { SettingsPanel } from '@/src/components/SettingsPanel'
 import { StatusIndicator } from '@/src/components/StatusIndicator'
+import { TcpClientPanel } from '@/src/components/TcpClientPanel'
 import { ThemeToggle } from '@/src/components/ThemeToggle'
 import { useModbusData } from '@/src/hooks/useModbusData'
 import { Tabs } from '@heroui/react'
@@ -34,12 +35,17 @@ export default function Home() {
     config,
     serialPorts,
     logFilter,
+    tcpClients,
     error,
     writeRegister,
     updateConfig,
     updateLogFilter,
-    clearLogs
+    clearLogs,
+    disconnectTcpClient,
+    disconnectAllTcpClients
   } = useModbusData()
+
+  const [isClientPanelOpen, setIsClientPanelOpen] = useState(false)
 
   useEffect(() => {
     const lng = detectLanguage()
@@ -62,6 +68,15 @@ export default function Home() {
             rtu={status.rtu}
             tcpPort={config.tcpPort}
             rtuPath={config.rtuSerialPath}
+            tcpClientCount={tcpClients.length}
+            onOpenClientPanel={() => setIsClientPanelOpen(true)}
+          />
+          <TcpClientPanel
+            clients={tcpClients}
+            isOpen={isClientPanelOpen}
+            onOpenChange={setIsClientPanelOpen}
+            onDisconnect={disconnectTcpClient}
+            onDisconnectAll={disconnectAllTcpClients}
           />
           <LogPanel
             logs={logs}

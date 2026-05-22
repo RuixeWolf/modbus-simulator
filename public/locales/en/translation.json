@@ -7,7 +7,9 @@
     "tcp": "TCP",
     "rtu": "RTU",
     "port": "Port",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "tcpClients": "{{count}} clients",
+    "tcpClients_zero": "No clients"
   },
   "settings": {
     "title": "Server Settings",
@@ -55,6 +57,16 @@
     "gotoAddress": "Go to address",
     "goto": "Go"
   },
+  "tcpClients": {
+    "title": "TCP Client Connections",
+    "host": "Host",
+    "port": "Port",
+    "connectedAt": "Connected At",
+    "action": "Action",
+    "disconnect": "Disconnect",
+    "disconnectAll": "Disconnect All",
+    "noClients": "No active TCP connections"
+  },
   "logs": {
     "title": "Communication Logs",
     "entries": "{{count}} entries",
@@ -62,6 +74,7 @@
     "read": "READ",
     "write": "WRITE",
     "error": "ERROR",
+    "connection": "CONNECTION",
     "filter": "Filter",
     "clear": "Clear",
     "source": {
