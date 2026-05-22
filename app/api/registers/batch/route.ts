@@ -41,24 +41,42 @@ function getErrorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
 }
 
+/** Expected shape of the POST /api/registers/batch request body. */
+interface BatchWriteBody {
+  registerType?: unknown
+  startAddress?: unknown
+  mode?: unknown
+  dataType?: unknown
+  value?: unknown
+  hexString?: unknown
+}
+
 export async function POST(request: NextRequest) {
   const engine = ModbusEngine.getInstance()
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
 
   if (typeof body !== 'object' || body === null) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { registerType, startAddress, mode, dataType, value, hexString } = body
+  const { registerType, startAddress, mode, dataType, value, hexString } = body as BatchWriteBody
 
-  if (!registerType || (registerType !== 'holdingRegister' && registerType !== 'inputRegister')) {
+  if (
+    typeof registerType !== 'string' ||
+    (registerType !== 'holdingRegister' && registerType !== 'inputRegister')
+  ) {
     return NextResponse.json(
       { error: 'registerType must be holdingRegister or inputRegister' },
       { status: 400 }
     )
   }
 
-  const addr = Number(startAddress)
+  const addr = typeof startAddress === 'number' ? startAddress : Number(startAddress)
   if (!Number.isInteger(addr) || addr < 0 || addr >= 10000) {
     return NextResponse.json({ error: 'Invalid startAddress (must be 0–9999)' }, { status: 400 })
   }
@@ -79,7 +97,7 @@ export async function POST(request: NextRequest) {
       }
       buffer = numberToBuffer(dataType, value)
     } else {
-      if (!hexString || typeof hexString !== 'string') {
+      if (typeof hexString !== 'string' || hexString.length === 0) {
         return NextResponse.json({ error: 'hexString required for bytes mode' }, { status: 400 })
       }
       buffer = parseHexString(hexString)
