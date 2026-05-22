@@ -55,7 +55,16 @@
     "off": "关",
     "set": "设置",
     "gotoAddress": "跳转到地址",
-    "goto": "跳转"
+    "goto": "跳转",
+    "advancedWrite": "高级操作",
+    "advancedWriteTitle": "高级批量写入",
+    "modeNumber": "数值",
+    "modeBytes": "字节",
+    "dataType": "数据类型",
+    "hexString": "十六进制字符串",
+    "startAddress": "起始地址",
+    "registersToWrite": "将写入 {{count}} 个寄存器",
+    "submit": "提交"
   },
   "tcpClients": {
     "title": "TCP 客户端连接",

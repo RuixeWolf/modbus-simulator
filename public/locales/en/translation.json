@@ -55,7 +55,16 @@
     "off": "OFF",
     "set": "Set",
     "gotoAddress": "Go to address",
-    "goto": "Go"
+    "goto": "Go",
+    "advancedWrite": "Advanced",
+    "advancedWriteTitle": "Advanced Batch Write",
+    "modeNumber": "Number",
+    "modeBytes": "Bytes",
+    "dataType": "Data Type",
+    "hexString": "Hex String",
+    "startAddress": "Start Address",
+    "registersToWrite": "Will write {{count}} register(s)",
+    "submit": "Submit"
   },
   "tcpClients": {
     "title": "TCP Client Connections",

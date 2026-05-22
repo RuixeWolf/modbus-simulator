@@ -55,7 +55,16 @@
     "off": "INACTIF",
     "set": "Définir",
     "gotoAddress": "Aller à l'adresse",
-    "goto": "Aller"
+    "goto": "Aller",
+    "advancedWrite": "Avancé",
+    "advancedWriteTitle": "Écriture Avancée par Lot",
+    "modeNumber": "Nombre",
+    "modeBytes": "Octets",
+    "dataType": "Type de Données",
+    "hexString": "Chaîne Hexadécimale",
+    "startAddress": "Adresse de Départ",
+    "registersToWrite": "Écrira {{count}} registre(s)",
+    "submit": "Soumettre"
   },
   "tcpClients": {
     "title": "Connexions Clients TCP",

@@ -227,6 +227,45 @@ export function useModbusData() {
   }, [fetchTcpClients, fetchLogs])
 
   /**
+   * Batch-writes registers via POST /api/registers/batch using typed data,
+   * then refreshes state and logs.
+   */
+  const batchWrite = useCallback(
+    async (payload: {
+      registerType: string
+      startAddress: number
+      mode: 'number' | 'bytes'
+      dataType?: string
+      value?: number
+      hexString?: string
+    }) => {
+      try {
+        const res = await fetch('/api/registers/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!res.ok) {
+          const errData = await res.json()
+          const errMsg =
+            typeof errData === 'object' &&
+            errData !== null &&
+            'error' in errData &&
+            typeof errData.error === 'string'
+              ? errData.error
+              : 'Batch write failed'
+          throw new Error(errMsg)
+        }
+        await fetchState()
+        await fetchLogs()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e))
+      }
+    },
+    [fetchState, fetchLogs]
+  )
+
+  /**
    * Writes a single coil or holding register via POST /api/registers,
    * then refreshes state and logs.
    *
@@ -360,6 +399,7 @@ export function useModbusData() {
     tcpClients,
     error,
     writeRegister,
+    batchWrite,
     updateConfig,
     updateLogFilter,
     clearLogs,
