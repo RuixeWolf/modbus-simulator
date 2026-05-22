@@ -55,7 +55,17 @@
     "off": "OFF",
     "set": "設定",
     "gotoAddress": "アドレスへ移動",
-    "goto": "移動"
+    "goto": "移動",
+    "advancedWrite": "高度な操作",
+    "advancedWriteTitle": "高度な一括書き込み",
+    "modeNumber": "数値",
+    "modeBytes": "バイト",
+    "dataType": "データ型",
+    "value": "値",
+    "hexString": "16進文字列",
+    "startAddress": "開始アドレス",
+    "registersToWrite": "{{count}} 個のレジスタに書き込みます",
+    "submit": "送信"
   },
   "tcpClients": {
     "title": "TCP クライアント接続",

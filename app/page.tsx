@@ -38,6 +38,7 @@ export default function Home() {
     tcpClients,
     error,
     writeRegister,
+    batchWrite,
     updateConfig,
     updateLogFilter,
     clearLogs,
@@ -150,6 +151,7 @@ export default function Home() {
             data={state.holdingRegisters}
             writable
             onWrite={(addr, val) => writeRegister('holdingRegister', addr, val)}
+            onBatchWrite={batchWrite}
           />
         </Tabs.Panel>
         <Tabs.Panel id="input" className="animate-fade-in px-0">
@@ -159,6 +161,7 @@ export default function Home() {
             data={state.inputRegisters}
             writable
             onWrite={(addr, val) => writeRegister('inputRegister', addr, val)}
+            onBatchWrite={batchWrite}
           />
         </Tabs.Panel>
       </Tabs>

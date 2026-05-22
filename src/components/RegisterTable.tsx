@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, Pagination, Table } from '@heroui/react'
+import { AdvancedWriteModal } from './AdvancedWriteModal'
 
 /** Props for {@link RegisterTable}. */
 interface RegisterTableProps {
@@ -16,6 +17,15 @@ interface RegisterTableProps {
   writable?: boolean
   /** Callback fired when the user submits a new value. */
   onWrite?: (address: number, value: number | boolean) => void
+  /** Callback fired for advanced batch writes. */
+  onBatchWrite?: (payload: {
+    registerType: string
+    startAddress: number
+    mode: 'number' | 'bytes'
+    dataType?: string
+    value?: number
+    hexString?: string
+  }) => Promise<void>
 }
 
 /** Number of rows shown per page. */
@@ -74,7 +84,8 @@ export function RegisterTable({
   type,
   data,
   writable = false,
-  onWrite
+  onWrite,
+  onBatchWrite
 }: Readonly<RegisterTableProps>) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
@@ -82,6 +93,8 @@ export function RegisterTable({
   const [editValue, setEditValue] = useState<Record<number, string>>({})
   /** Staging value for the goto-address input. */
   const [gotoAddr, setGotoAddr] = useState('')
+  /** Controls the advanced write modal visibility. */
+  const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE))
   const startAddr = (page - 1) * PAGE_SIZE
@@ -165,6 +178,11 @@ export function RegisterTable({
             >
               {t('registerTable.goto')}
             </Button>
+            {(type === 'holdingRegister' || type === 'inputRegister') && onBatchWrite && (
+              <Button size="sm" variant="secondary" onPress={() => setAdvancedOpen(true)}>
+                {t('registerTable.advancedWrite')}
+              </Button>
+            )}
           </div>
         </div>
         <Table.ScrollContainer>
@@ -218,7 +236,7 @@ export function RegisterTable({
                     </Table.Cell>
                     {writable && (
                       <Table.Cell>
-                        {type === 'coil' ? (
+                        {type === 'coil' || type === 'discreteInput' ? (
                           <Button
                             size="sm"
                             variant={value ? 'primary' : 'ghost'}
@@ -295,6 +313,14 @@ export function RegisterTable({
           </Pagination>
         </Table.Footer>
       </Table>
+      {onBatchWrite && (
+        <AdvancedWriteModal
+          isOpen={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          registerType={type as 'holdingRegister' | 'inputRegister'}
+          onSubmit={onBatchWrite}
+        />
+      )}
     </div>
   )
 }

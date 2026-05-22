@@ -53,6 +53,9 @@ next-env.d.ts
 *.log
 .firecrawl
 
+# claude local settings
+.claude/settings.local.json
+
 # Playwright MCP temp files — always use .temp/ directory, never root
 /.temp/*
 !/.temp/.gitkeep
