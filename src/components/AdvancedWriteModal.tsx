@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import type { DataType } from '@/src/lib/modbus/buffer-convert'
 import { getDataTypeSize } from '@/src/lib/modbus/buffer-convert'
 import { Button, Input, Label, ListBox, Modal, Select, Tabs } from '@heroui/react'
-import type { Key } from '@heroui/react'
 
 const DATA_TYPES: DataType[] = [
   'UInt8',
@@ -55,14 +54,14 @@ export function AdvancedWriteModal({
   const { t } = useTranslation()
   const [mode, setMode] = useState<'number' | 'bytes'>('number')
   const [startAddress, setStartAddress] = useState('')
-  const [dataType, setDataType] = useState<string>('UInt16BE')
+  const [dataType, setDataType] = useState<DataType>('UInt16BE')
   const [value, setValue] = useState('')
   const [hexString, setHexString] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const registerCount = useMemo(() => {
     if (mode === 'number') {
-      return Math.ceil(getDataTypeSize(dataType as DataType) / 2)
+      return Math.ceil(getDataTypeSize(dataType) / 2)
     }
     const cleaned = hexString.replace(/0x/gi, '').replace(/[,\s]/g, '').trim()
     const byteCount = cleaned.length / 2
@@ -145,7 +144,10 @@ export function AdvancedWriteModal({
                 <Tabs.Panel id="number" className="space-y-3 pt-3">
                   <Select
                     value={dataType}
-                    onChange={(val: Key | null) => setDataType(String(val ?? 'UInt16BE'))}
+                    onChange={(val) => {
+                      const matched = DATA_TYPES.find((dt) => dt === val)
+                      setDataType(matched ?? 'UInt16BE')
+                    }}
                     className="w-full"
                   >
                     <Label className="mb-1 block text-sm font-medium">
