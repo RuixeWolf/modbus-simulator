@@ -48,6 +48,11 @@ const TYPE_SIZES: Record<DataType, number> = {
   DoubleLE: 8
 }
 
+/**
+ * Return the byte size for a given data type.
+ * @param dataType – One of the supported DataType values.
+ * @returns Byte size (1, 2, 4, or 8).
+ */
 export function getDataTypeSize(dataType: DataType): number {
   return TYPE_SIZES[dataType]
 }

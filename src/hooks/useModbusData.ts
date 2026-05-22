@@ -246,13 +246,20 @@ export function useModbusData() {
           body: JSON.stringify(payload)
         })
         if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Batch write failed')
+          const errData = await res.json()
+          const errMsg =
+            typeof errData === 'object' &&
+            errData !== null &&
+            'error' in errData &&
+            typeof errData.error === 'string'
+              ? errData.error
+              : 'Batch write failed'
+          throw new Error(errMsg)
         }
         await fetchState()
         await fetchLogs()
       } catch (e) {
-        setError((e as Error).message)
+        setError(e instanceof Error ? e.message : String(e))
       }
     },
     [fetchState, fetchLogs]

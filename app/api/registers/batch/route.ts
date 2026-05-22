@@ -8,6 +8,35 @@ export const dynamic = 'force-dynamic'
 
 ensureServersStarted()
 
+const VALID_DATA_TYPES: readonly string[] = [
+  'UIntBE',
+  'UIntLE',
+  'UInt8',
+  'UInt16BE',
+  'UInt16LE',
+  'UInt32BE',
+  'UInt32LE',
+  'IntBE',
+  'IntLE',
+  'Int8',
+  'Int16BE',
+  'Int16LE',
+  'Int32BE',
+  'Int32LE',
+  'FloatBE',
+  'FloatLE',
+  'Float1234',
+  'Float2143',
+  'Float3412',
+  'Float4321',
+  'DoubleBE',
+  'DoubleLE'
+]
+
+function getErrorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
 export async function POST(request: NextRequest) {
   const engine = ModbusEngine.getInstance()
   const body = await request.json()
@@ -39,6 +68,9 @@ export async function POST(request: NextRequest) {
           { error: 'dataType and value required for number mode' },
           { status: 400 }
         )
+      }
+      if (!VALID_DATA_TYPES.includes(dataType)) {
+        return NextResponse.json({ error: 'Invalid dataType' }, { status: 400 })
       }
       buffer = numberToBuffer(dataType as DataType, Number(value))
     } else {
@@ -72,7 +104,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, registersWritten: registerCount })
   } catch (e) {
-    engine.addErrorLog(registerType, addr ?? -1, (e as Error).message)
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 })
+    const message = getErrorMessage(e)
+    engine.addErrorLog(registerType, addr ?? -1, message)
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 }
