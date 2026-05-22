@@ -163,17 +163,40 @@ export function numberToBuffer(dataType: DataType, value: number): Buffer {
 /**
  * Parse a flexible hex string into a Buffer.
  * Supports: "0A 45 B1 30", "0a45b130", "0x0A 0x45", "0x0A,0x45"
+ *
+ * Rejects malformed input (non-hex characters, odd-length compact form,
+ * or space-separated tokens that are not exactly 2 hex digits).
+ * Returns an empty buffer for any invalid input.
  */
 export function parseHexString(input: string): Buffer {
+  // Strip optional "0x" / "0X" prefixes and commas, normalize whitespace
   const cleaned = input.replace(/0x/gi, '').replace(/,/g, ' ').replace(/\s+/g, ' ').trim()
 
   if (!cleaned) {
     return Buffer.alloc(0)
   }
 
-  const parts = cleaned.includes(' ') ? cleaned.split(' ') : (cleaned.match(/.{1,2}/g) ?? [])
+  // Reject any characters other than hex digits and spaces
+  if (/[^0-9a-fA-F\s]/.test(cleaned)) {
+    return Buffer.alloc(0)
+  }
 
-  const bytes = parts.map((p) => parseInt(p, 16)).filter((b) => !Number.isNaN(b))
+  if (cleaned.includes(' ')) {
+    // Space-separated: each token must be exactly 2 hex digits
+    const parts = cleaned.split(' ')
+    if (parts.some((p) => p.length !== 2)) {
+      return Buffer.alloc(0)
+    }
+    const bytes = parts.map((p) => parseInt(p, 16))
+    return Buffer.from(bytes)
+  }
 
+  // Compact form: length must be even
+  if (cleaned.length % 2 !== 0) {
+    return Buffer.alloc(0)
+  }
+
+  const parts = cleaned.match(/.{1,2}/g) ?? []
+  const bytes = parts.map((p) => parseInt(p, 16))
   return Buffer.from(bytes)
 }

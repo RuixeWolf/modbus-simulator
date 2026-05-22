@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
   const engine = ModbusEngine.getInstance()
   const body = await request.json()
 
+  if (typeof body !== 'object' || body === null) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
   const { registerType, startAddress, mode, dataType, value, hexString } = body
 
   if (!registerType || (registerType !== 'holdingRegister' && registerType !== 'inputRegister')) {
@@ -63,16 +67,16 @@ export async function POST(request: NextRequest) {
     let buffer: Buffer
 
     if (mode === 'number') {
-      if (!dataType || value === undefined) {
+      if (!dataType || typeof value !== 'number' || !Number.isFinite(value)) {
         return NextResponse.json(
-          { error: 'dataType and value required for number mode' },
+          { error: 'dataType and a finite numeric value are required for number mode' },
           { status: 400 }
         )
       }
       if (!VALID_DATA_TYPES.includes(dataType)) {
         return NextResponse.json({ error: 'Invalid dataType' }, { status: 400 })
       }
-      buffer = numberToBuffer(dataType as DataType, Number(value))
+      buffer = numberToBuffer(dataType as DataType, value)
     } else {
       if (!hexString || typeof hexString !== 'string') {
         return NextResponse.json({ error: 'hexString required for bytes mode' }, { status: 400 })

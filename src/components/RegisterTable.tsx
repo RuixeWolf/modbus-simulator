@@ -313,11 +313,11 @@ export function RegisterTable({
           </Pagination>
         </Table.Footer>
       </Table>
-      {onBatchWrite && (
+      {(type === 'holdingRegister' || type === 'inputRegister') && onBatchWrite && (
         <AdvancedWriteModal
           isOpen={advancedOpen}
           onOpenChange={setAdvancedOpen}
-          registerType={type as 'holdingRegister' | 'inputRegister'}
+          registerType={type}
           onSubmit={onBatchWrite}
         />
       )}
