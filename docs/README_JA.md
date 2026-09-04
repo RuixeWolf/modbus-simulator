@@ -192,7 +192,19 @@ npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-hos
 
 公開ディスカバリーは `GET /api/v1` と `GET /api/v1/openapi.json` です。その他の v1 ルートはヘルス、状態とリセット、レジスタ範囲、型付き/16 進書き込み、設定、カーソルログ、シリアルポート、TCP クライアントを扱います。成功は `{ "data": ..., "meta": ... }`、失敗は `{ "error": { "code", "message", "issues"? }, "meta": ... }` 形式です。
 
-Token 設定時は `Authorization: Bearer <token>` を送信します。アドレスは 0 起点、範囲書き込みはアトミックで最大 1,000 値です。[1.1 移行ガイド](MIGRATION_1.1.md) と [Agent Skill](../skills/modbus-simulator/SKILL.md) を参照してください。
+Token 設定時は `Authorization: Bearer <token>` を送信します。アドレスは 0 起点、範囲書き込みはアトミックで最大 1,000 値です。
+
+### Agent Skill
+
+[`npx skills`](https://skills.sh/) で Modbus Simulator Agent Skill をインストールすると、対応するコーディングエージェントに、統合テストで使い捨てのシミュレーターを実行するための再利用可能で安全なワークフローを提供できます：
+
+```bash
+npx skills add RuixeWolf/modbus-simulator --skill modbus-simulator --agent codex
+```
+
+`--agent codex` を省略すると、検出されたエージェントを対話的に選択できます。`codex` を他の対応エージェントに置き換えることもできます。インストール後、隔離された Modbus TCP/RTU デバイスを必要とするテストでは、エージェントに `modbus-simulator` Skill を使用するよう依頼してください。この Skill は置き換え可能な高位ポートで自ら所有するプロセスを起動し、ヘルスチェックの準備完了を待機し、制御 API でフィクスチャとアサーションを処理し、診断情報を収集して、そのプロセスだけをクリーンアップします。
+
+完全なワークフローとヘルパーコマンドは、リポジトリの [Agent Skill](../skills/modbus-simulator/SKILL.md) を参照してください。あわせて[生成された OpenAPI ドキュメント](http://127.0.0.1:5000/api/v1/openapi.json)と [1.1 移行ガイド](MIGRATION_1.1.md) も参照してください。
 
 ## プロジェクト構造
 

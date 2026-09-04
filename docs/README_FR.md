@@ -192,7 +192,19 @@ npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-hos
 
 La découverte publique est disponible via `GET /api/v1` et `GET /api/v1/openapi.json`. Les autres routes v1 couvrent la santé, l'état et sa réinitialisation, les plages de registres, les écritures typées/hexadécimales, la configuration, les journaux par curseur, les ports série et les clients TCP. Les succès utilisent `{ "data": ..., "meta": ... }` et les erreurs `{ "error": { "code", "message", "issues"? }, "meta": ... }`.
 
-Avec un Token configuré, envoyez `Authorization: Bearer <token>`. Les adresses commencent à 0, les écritures de plage sont atomiques et limitées à 1 000 valeurs. Consultez le [guide de migration 1.1](MIGRATION_1.1.md) et l'[Agent Skill](../skills/modbus-simulator/SKILL.md).
+Avec un Token configuré, envoyez `Authorization: Bearer <token>`. Les adresses commencent à 0, les écritures de plage sont atomiques et limitées à 1 000 valeurs.
+
+### Agent Skill
+
+Installez le Modbus Simulator Agent Skill avec [`npx skills`](https://skills.sh/) pour donner à un agent de programmation pris en charge un workflow réutilisable et sûr afin d'exécuter un simulateur éphémère dans des tests d'intégration :
+
+```bash
+npx skills add RuixeWolf/modbus-simulator --skill modbus-simulator --agent codex
+```
+
+Omettez `--agent codex` pour sélectionner de façon interactive un agent détecté, ou remplacez `codex` par un autre agent pris en charge. Après l'installation, demandez à votre agent d'utiliser le Skill `modbus-simulator` lorsqu'un test requiert un périphérique Modbus TCP/RTU isolé. Le Skill démarre un processus qu'il possède sur des ports hauts remplaçables, attend que l'état de santé soit prêt, utilise l'API de contrôle pour les données de test et les assertions, collecte les diagnostics, et ne nettoie que ce processus.
+
+Consultez l'[Agent Skill](../skills/modbus-simulator/SKILL.md) du dépôt pour le workflow complet et les commandes d'assistance. Consultez également le [document OpenAPI généré](http://127.0.0.1:5000/api/v1/openapi.json) et le [guide de migration 1.1](MIGRATION_1.1.md).
 
 ## Structure du projet
 
