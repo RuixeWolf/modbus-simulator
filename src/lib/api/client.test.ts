@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  CONTROL_TOKEN_SESSION_KEY,
+  CONTROL_SESSION_KEY,
   ControlApiError,
   controlRequest,
   validateAndStoreControlToken
@@ -14,7 +14,7 @@ describe('Dashboard v1 API client', () => {
   })
 
   it('adds session Bearer auth without placing tokens in URLs', async () => {
-    sessionStorage.setItem(CONTROL_TOKEN_SESSION_KEY, 'session-secret')
+    sessionStorage.setItem(CONTROL_SESSION_KEY, 'session-secret')
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(
@@ -22,7 +22,7 @@ describe('Dashboard v1 API client', () => {
       )
     await controlRequest('/api/v1/health')
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('/api/v1/health')
+    expect(String(url)).toBe('http://localhost:3000/api/v1/health')
     expect(String(url)).not.toContain('session-secret')
     expect(new Headers(init?.headers).get('authorization')).toBe('Bearer session-secret')
   })
@@ -51,7 +51,7 @@ describe('Dashboard v1 API client', () => {
       Response.json({ data: { ready: true }, meta: { apiVersion: '1', instanceId: 'id' } })
     )
     await validateAndStoreControlToken('valid-secret')
-    expect(sessionStorage.getItem(CONTROL_TOKEN_SESSION_KEY)).toBe('valid-secret')
+    expect(sessionStorage.getItem(CONTROL_SESSION_KEY)).toBe('valid-secret')
     expect(localStorage.length).toBe(0)
 
     sessionStorage.clear()
@@ -65,6 +65,6 @@ describe('Dashboard v1 API client', () => {
       )
     )
     await expect(validateAndStoreControlToken('bad-secret')).rejects.toBeInstanceOf(ControlApiError)
-    expect(sessionStorage.getItem(CONTROL_TOKEN_SESSION_KEY)).toBeNull()
+    expect(sessionStorage.getItem(CONTROL_SESSION_KEY)).toBeNull()
   })
 })

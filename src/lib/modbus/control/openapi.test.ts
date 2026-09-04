@@ -20,7 +20,7 @@ describe('control OpenAPI document', () => {
       const source = readFileSync(routeFile, 'utf8')
       for (const method of methods) {
         expect(document.paths?.[path]).toHaveProperty(method)
-        expect(source).toMatch(new RegExp(`export const ${method.toUpperCase()}\\b`))
+        expect(source).toContain(`export const ${method.toUpperCase()} `)
       }
     }
   })

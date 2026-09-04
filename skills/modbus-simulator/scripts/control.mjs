@@ -26,30 +26,30 @@ class TimeoutError extends Error {}
 /**
  * Parses raw argv into a command name and an options map.
  * @param {string[]} argv - Arguments following the script path.
- * @returns {{ command: string, options: Record<string, string | boolean> }} The parsed invocation.
+ * @returns {{ command: string, options: Map<string, string | boolean> }} The parsed invocation.
  */
 function parse(argv) {
   const command = argv.shift()
   if (!command) throw new UsageError('A command is required.')
-  const options = {}
+  const options = new Map()
   while (argv.length) {
     const key = argv.shift()
     if (!key?.startsWith('--')) throw new UsageError(`Unexpected argument: ${key}`)
     if (key === '--clear-logs') {
-      options.clearLogs = true
+      options.set('clear-logs', true)
       continue
     }
     const value = argv.shift()
     if (value === undefined || value.startsWith('--'))
       throw new UsageError(`${key} requires a value.`)
-    options[key.slice(2)] = value
+    options.set(key.slice(2), value)
   }
   return { command, options }
 }
 
 /**
  * Reads an integer CLI option with optional fallback and inclusive bounds.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @param {string} name - Option key without the leading `--`.
  * @param {number} [fallback] - Used when the option is absent.
  * @param {number} [min] - Inclusive lower bound.
@@ -57,7 +57,7 @@ function parse(argv) {
  * @returns {number} The validated integer value.
  */
 function integer(options, name, fallback, min = 0, max = Number.MAX_SAFE_INTEGER) {
-  const raw = options[name]
+  const raw = options.get(name)
   if (raw === undefined && fallback !== undefined) return fallback
   if (raw === undefined || !/^\d+$/.test(raw)) throw new UsageError(`--${name} must be an integer.`)
   const value = Number(raw)
@@ -68,12 +68,13 @@ function integer(options, name, fallback, min = 0, max = Number.MAX_SAFE_INTEGER
 
 /**
  * Validates the `--table` option against the public tables.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {string} A public Modbus table name.
  */
 function table(options) {
-  if (!TABLES.has(options.table)) throw new UsageError('--table must name a public Modbus table.')
-  return options.table
+  const selected = options.get('table')
+  if (!TABLES.has(selected)) throw new UsageError('--table must name a public Modbus table.')
+  return selected
 }
 
 /**
@@ -88,9 +89,13 @@ async function request(baseUrl, path, init = {}) {
   if (init.body) headers.set('content-type', 'application/json')
   if (process.env.MODBUS_API_TOKEN)
     headers.set('authorization', `Bearer ${process.env.MODBUS_API_TOKEN}`)
+  const url = new URL(path, `${baseUrl}/`)
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
+    throw new UsageError('--base-url must be an HTTP(S) URL without embedded credentials.')
+  }
   let response
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(url, {
       ...init,
       headers,
       signal: AbortSignal.timeout(3000)
@@ -117,7 +122,7 @@ async function request(baseUrl, path, init = {}) {
 /**
  * Polls `/api/v1/health` until ready or the `--timeout` deadline elapses.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The final health payload.
  */
 async function runWait(baseUrl, options) {
@@ -134,7 +139,7 @@ async function runWait(baseUrl, options) {
     }
     await new Promise((resolve) => setTimeout(resolve, 200))
   }
-  throw new TimeoutError(last)
+  return Promise.reject(new TimeoutError(last))
 }
 
 /**
@@ -149,18 +154,19 @@ function runHealth(baseUrl) {
 /**
  * Resets all or selected tables, optionally clearing the log buffer.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The reset payload.
  */
 function runReset(baseUrl, options) {
-  const tables = options.tables ? options.tables.split(',') : undefined
+  const tableOption = options.get('tables')
+  const tables = typeof tableOption === 'string' ? tableOption.split(',') : undefined
   if (tables?.some((value) => !TABLES.has(value)))
     throw new UsageError('--tables contains an unknown table.')
   return request(baseUrl, '/api/v1/state/reset', {
     method: 'POST',
     body: JSON.stringify({
       ...(tables ? { tables } : {}),
-      ...(options.clearLogs ? { clearLogs: true } : {})
+      ...(options.get('clear-logs') ? { clearLogs: true } : {})
     })
   })
 }
@@ -168,7 +174,7 @@ function runReset(baseUrl, options) {
 /**
  * Reads a contiguous range from one public table.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The register payload.
  */
 function runRead(baseUrl, options) {
@@ -181,7 +187,7 @@ function runRead(baseUrl, options) {
 /**
  * Writes raw 16-bit values to one public table.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The write payload.
  */
 function runWrite(baseUrl, options) {
@@ -189,7 +195,7 @@ function runWrite(baseUrl, options) {
   const start = integer(options, 'start', undefined)
   let values
   try {
-    values = JSON.parse(options.values)
+    values = JSON.parse(options.get('values'))
   } catch {
     throw new UsageError('--values must be a JSON array.')
   }
@@ -203,19 +209,17 @@ function runWrite(baseUrl, options) {
 /**
  * Writes byte- or typed-encoded values to one public table.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The encoded-write payload.
  */
 function runWriteEncoded(baseUrl, options) {
   const selected = table(options)
   const address = integer(options, 'address', undefined)
-  const body = options.bytes
-    ? { address, bytes: options.bytes }
-    : { address, dataType: options['data-type'], value: Number(options.value) }
-  if (
-    !options.bytes &&
-    (!options['data-type'] || options.value === undefined || !Number.isFinite(body.value))
-  ) {
+  const bytes = options.get('bytes')
+  const dataType = options.get('data-type')
+  const rawValue = options.get('value')
+  const body = bytes ? { address, bytes } : { address, dataType, value: Number(rawValue) }
+  if (!bytes && (!dataType || rawValue === undefined || !Number.isFinite(body.value))) {
     throw new UsageError('write-encoded requires --bytes or --data-type with --value.')
   }
   return request(baseUrl, `/api/v1/registers/${selected}/encoded`, {
@@ -227,13 +231,13 @@ function runWriteEncoded(baseUrl, options) {
 /**
  * Applies a partial configuration patch.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The config payload.
  */
 function runConfig(baseUrl, options) {
   let body
   try {
-    body = JSON.parse(options.json)
+    body = JSON.parse(options.get('json'))
   } catch {
     throw new UsageError('--json must contain a JSON object.')
   }
@@ -243,54 +247,60 @@ function runConfig(baseUrl, options) {
 /**
  * Reads log entries with optional filters.
  * @param {string} baseUrl - Simulator API root URL.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The log payload.
  */
 function runLogs(baseUrl, options) {
   const query = new URLSearchParams()
-  for (const [option, parameter] of [
-    ['after-id', 'afterId'],
-    ['limit', 'limit'],
-    ['type', 'type'],
-    ['source', 'source']
-  ]) {
-    if (options[option] !== undefined) query.set(parameter, options[option])
-  }
-  const path = '/api/v1/logs' + (query.size ? '?' + query.toString() : '')
+  const afterId = options.get('after-id')
+  const limit = options.get('limit')
+  const type = options.get('type')
+  const source = options.get('source')
+  if (typeof afterId === 'string') query.set('afterId', afterId)
+  if (typeof limit === 'string') query.set('limit', limit)
+  if (typeof type === 'string') query.set('type', type)
+  if (typeof source === 'string') query.set('source', source)
+  const path = `/api/v1/logs${query.size ? `?${query}` : ''}`
   return request(baseUrl, path)
-}
-
-/** Dispatch table from command name to handler; handlers receive the base URL and CLI options. */
-const COMMANDS = {
-  wait: runWait,
-  health: runHealth,
-  reset: runReset,
-  read: runRead,
-  write: runWrite,
-  'write-encoded': runWriteEncoded,
-  config: runConfig,
-  logs: runLogs
 }
 
 /**
  * Resolves the base URL and dispatches to the command handler.
  * @param {string} command - Command name, the first CLI argument.
- * @param {Record<string, string | boolean>} options - Parsed CLI options.
+ * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The command payload, printed as JSON by the entrypoint.
  */
 async function run(command, options) {
   const baseUrl = (
-    options['base-url'] ??
+    options.get('base-url') ??
     process.env.MODBUS_SIMULATOR_URL ??
     'http://127.0.0.1:15000'
   ).replace(/\/$/, '')
-  if (!Object.hasOwn(COMMANDS, command)) throw new UsageError(`Unknown command: ${command}`)
-  return COMMANDS[command](baseUrl, options)
+  switch (command) {
+    case 'wait':
+      return runWait(baseUrl, options)
+    case 'health':
+      return runHealth(baseUrl)
+    case 'reset':
+      return runReset(baseUrl, options)
+    case 'read':
+      return runRead(baseUrl, options)
+    case 'write':
+      return runWrite(baseUrl, options)
+    case 'write-encoded':
+      return runWriteEncoded(baseUrl, options)
+    case 'config':
+      return runConfig(baseUrl, options)
+    case 'logs':
+      return runLogs(baseUrl, options)
+    default:
+      throw new UsageError(`Unknown command: ${command}`)
+  }
 }
 
 /** One-line usage text printed under usage-error messages. */
-const usage =
-  'Usage: control.mjs <wait|health|reset|read|write|write-encoded|config|logs> [options]'
+const USAGE_TEXT =
+  'Usage: control.mjs COMMAND [options]\nCommands: wait, health, reset, read, write, write-encoded, config, logs'
 
 try {
   const { command, options } = parse(process.argv.slice(2))
@@ -298,7 +308,7 @@ try {
   process.exitCode = EXIT.SUCCESS
 } catch (error) {
   if (error instanceof UsageError) {
-    console.error(`${error.message}\n${usage}`)
+    console.error(`${error.message}\n${USAGE_TEXT}`)
     process.exitCode = EXIT.USAGE
   } else if (error instanceof NetworkError) {
     console.error(JSON.stringify({ code: 'NETWORK_ERROR', message: error.message }))

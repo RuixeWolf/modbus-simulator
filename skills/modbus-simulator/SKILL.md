@@ -1,6 +1,7 @@
 ---
 name: modbus-simulator
 description: Run and control an isolated Modbus TCP/RTU simulator for automated integration tests, including readiness, fixture writes, state reads, logs, and safe process cleanup.
+author: Ruixe Wolf
 ---
 
 # Modbus Simulator Automation

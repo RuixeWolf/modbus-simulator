@@ -28,6 +28,6 @@ try {
   process.exitCode = await launchSimulator({ args, nextPath, nextCommand: 'start', projectRoot })
 } catch (error) {
   console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
-  if (error instanceof UsageError) console.error('\n' + HELP_TEXT)
+  if (error instanceof UsageError) console.error(`\n${HELP_TEXT}`)
   process.exitCode = error instanceof UsageError ? 2 : 1
 }

@@ -18,7 +18,11 @@ function loadEnvFile(path) {
     if (separator < 1) continue
     const key = trimmed.slice(0, separator).trim()
     const value = trimmed.slice(separator + 1).trim()
-    if (process.env[key] === undefined) process.env[key] = value
+    if (key === 'PORT' && process.env.PORT === undefined) process.env.PORT = value
+    if (key === 'MODBUS_TCP_PORT' && process.env.MODBUS_TCP_PORT === undefined)
+      process.env.MODBUS_TCP_PORT = value
+    if (key === 'MODBUS_RTU_SERIAL_PATH' && process.env.MODBUS_RTU_SERIAL_PATH === undefined)
+      process.env.MODBUS_RTU_SERIAL_PATH = value
   }
 }
 
@@ -42,6 +46,6 @@ try {
   })
 } catch (error) {
   console.error(`Error: ${error instanceof Error ? error.message : String(error)}`)
-  if (error instanceof UsageError) console.error('\n' + HELP_TEXT)
+  if (error instanceof UsageError) console.error(`\n${HELP_TEXT}`)
   process.exitCode = error instanceof UsageError ? 2 : 1
 }

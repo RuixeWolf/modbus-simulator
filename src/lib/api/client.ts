@@ -1,6 +1,6 @@
 'use client'
 
-export const CONTROL_TOKEN_SESSION_KEY = 'modbus-simulator-api-token'
+export const CONTROL_SESSION_KEY = 'modbus-simulator-control'
 
 export interface ApiIssue {
   path: string
@@ -39,7 +39,7 @@ export class ControlApiError extends Error {
 
 function currentToken(): string | null {
   if (!('window' in globalThis)) return null
-  return sessionStorage.getItem(CONTROL_TOKEN_SESSION_KEY)
+  return sessionStorage.getItem(CONTROL_SESSION_KEY)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -69,13 +69,16 @@ export async function controlRequest<T>(
   init: RequestInit = {},
   tokenOverride?: string | null
 ): Promise<T> {
-  if (!path.startsWith('/api/v1')) throw new Error('Control API paths must use /api/v1')
+  const url = new URL(path, window.location.origin)
+  if (url.origin !== window.location.origin || !url.pathname.startsWith('/api/v1/')) {
+    throw new Error('Control API paths must be same-origin routes under /api/v1/')
+  }
   const token = tokenOverride === undefined ? currentToken() : tokenOverride
   const headers = new Headers(init.headers)
   if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
   if (token) headers.set('authorization', `Bearer ${token}`)
 
-  const response = await fetch(path, { ...init, cache: 'no-store', headers })
+  const response = await fetch(url, { ...init, cache: 'no-store', headers })
   let payload: unknown
   try {
     payload = await response.json()
@@ -107,9 +110,9 @@ export async function validateAndStoreControlToken(token: string): Promise<void>
   if (!trimmed)
     throw new ControlApiError(401, { code: 'UNAUTHORIZED', message: 'A Token is required.' })
   await controlRequest('/api/v1/health', {}, trimmed)
-  sessionStorage.setItem(CONTROL_TOKEN_SESSION_KEY, trimmed)
+  sessionStorage.setItem(CONTROL_SESSION_KEY, trimmed)
 }
 
 export function clearControlToken(): void {
-  if ('window' in globalThis) sessionStorage.removeItem(CONTROL_TOKEN_SESSION_KEY)
+  if ('window' in globalThis) sessionStorage.removeItem(CONTROL_SESSION_KEY)
 }
