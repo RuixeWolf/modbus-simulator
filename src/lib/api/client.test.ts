@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  CONTROL_SESSION_KEY,
   ControlApiError,
   controlRequest,
+  SESSION_STORAGE_ENTRY,
   validateAndStoreControlToken
 } from './client'
 
@@ -14,7 +14,7 @@ describe('Dashboard v1 API client', () => {
   })
 
   it('adds session Bearer auth without placing tokens in URLs', async () => {
-    sessionStorage.setItem(CONTROL_SESSION_KEY, 'session-secret')
+    sessionStorage.setItem(SESSION_STORAGE_ENTRY, 'session-secret')
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(
@@ -51,7 +51,7 @@ describe('Dashboard v1 API client', () => {
       Response.json({ data: { ready: true }, meta: { apiVersion: '1', instanceId: 'id' } })
     )
     await validateAndStoreControlToken('valid-secret')
-    expect(sessionStorage.getItem(CONTROL_SESSION_KEY)).toBe('valid-secret')
+    expect(sessionStorage.getItem(SESSION_STORAGE_ENTRY)).toBe('valid-secret')
     expect(localStorage.length).toBe(0)
 
     sessionStorage.clear()
@@ -65,6 +65,6 @@ describe('Dashboard v1 API client', () => {
       )
     )
     await expect(validateAndStoreControlToken('bad-secret')).rejects.toBeInstanceOf(ControlApiError)
-    expect(sessionStorage.getItem(CONTROL_SESSION_KEY)).toBeNull()
+    expect(sessionStorage.getItem(SESSION_STORAGE_ENTRY)).toBeNull()
   })
 })

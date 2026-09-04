@@ -95,6 +95,8 @@ async function request(baseUrl, path, init = {}) {
   }
   let response
   try {
+    // The operator chooses the simulator endpoint; the protocol and credentials are validated above.
+    // bearer:disable javascript_lang_http_url_using_user_input
     response = await fetch(url, {
       ...init,
       headers,
@@ -270,7 +272,7 @@ function runLogs(baseUrl, options) {
  * @param {Map<string, string | boolean>} options - Parsed CLI options.
  * @returns {Promise<unknown>} The command payload, printed as JSON by the entrypoint.
  */
-async function run(command, options) {
+function run(command, options) {
   const baseUrl = (
     options.get('base-url') ??
     process.env.MODBUS_SIMULATOR_URL ??

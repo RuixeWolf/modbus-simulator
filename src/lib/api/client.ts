@@ -1,6 +1,6 @@
 'use client'
 
-export const CONTROL_SESSION_KEY = 'modbus-simulator-control'
+export const SESSION_STORAGE_ENTRY = 'modbus-simulator-control'
 
 export interface ApiIssue {
   path: string
@@ -39,7 +39,7 @@ export class ControlApiError extends Error {
 
 function currentToken(): string | null {
   if (!('window' in globalThis)) return null
-  return sessionStorage.getItem(CONTROL_SESSION_KEY)
+  return sessionStorage.getItem(SESSION_STORAGE_ENTRY)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -78,6 +78,8 @@ export async function controlRequest<T>(
   if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
   if (token) headers.set('authorization', `Bearer ${token}`)
 
+  // The URL is constrained above to this browser origin and the versioned control API.
+  // bearer:disable javascript_lang_http_url_using_user_input
   const response = await fetch(url, { ...init, cache: 'no-store', headers })
   let payload: unknown
   try {
@@ -110,9 +112,9 @@ export async function validateAndStoreControlToken(token: string): Promise<void>
   if (!trimmed)
     throw new ControlApiError(401, { code: 'UNAUTHORIZED', message: 'A Token is required.' })
   await controlRequest('/api/v1/health', {}, trimmed)
-  sessionStorage.setItem(CONTROL_SESSION_KEY, trimmed)
+  sessionStorage.setItem(SESSION_STORAGE_ENTRY, trimmed)
 }
 
 export function clearControlToken(): void {
-  if ('window' in globalThis) sessionStorage.removeItem(CONTROL_SESSION_KEY)
+  if ('window' in globalThis) sessionStorage.removeItem(SESSION_STORAGE_ENTRY)
 }

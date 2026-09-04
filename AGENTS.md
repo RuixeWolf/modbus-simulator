@@ -2,7 +2,15 @@
 
 # This is NOT the Next.js you know
 
-This version has breaking changes. Its APIs, conventions, and file structure may differ from your training data. Before writing code, read the relevant guide in `node_modules/next/dist/docs/`. Resolve that path from this file's directory because a monorepo may not expose the `next` package at its root. Heed deprecation notices.
+This version has breaking changes.
+
+Its APIs, conventions, and file structure may differ from your training data.
+
+Before writing code, read the relevant guide in `node_modules/next/dist/docs/`.
+
+Resolve that path from this file's directory because a monorepo may not expose the `next` package at its root.
+
+Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
@@ -22,8 +30,14 @@ Modbus Transmission Control Protocol (TCP) / Remote Terminal Unit (RTU) serial d
 | `pnpm run type-check`  | `tsc --noEmit`                 |
 | `pnpm run format-lint` | Prettier + ESLint              |
 
-- Run one unit test file with `npx vitest run src/lib/modbus/engine.test.ts`.
-- Run one end-to-end (E2E) test with `npx playwright test e2e/modbus.spec.ts --grep "<test name>"`.
+Focused unit test:
+
+`npx vitest run src/lib/modbus/engine.test.ts`
+
+Focused end-to-end (E2E) test:
+
+`npx playwright test e2e/modbus.spec.ts --grep "<test name>"`
+
 - Playwright starts the dev server through `webServer` in `playwright.config.ts` and reuses a local server when available. Avoid starting another server unless the test configuration requires it.
 - Husky pre-commit runs lint-staged.
 - For staged JavaScript or TypeScript, lint-staged runs Prettier and `eslint --fix`.
@@ -40,7 +54,15 @@ Modbus Transmission Control Protocol (TCP) / Remote Terminal Unit (RTU) serial d
 - **Singleton state**: `ModbusEngine.getInstance()` in `src/lib/modbus/engine.ts` owns all register state and survives hot module replacement (HMR) via `globalThis.__modbus_engine_instance__`.
 - **Server lifecycle**: `ensureServersStarted()` from `src/lib/modbus/index.ts` is called at **module level** (not inside handlers) in every API route, and by the root `instrumentation.ts` hook on server boot. Keep new API routes consistent with this pattern.
 - **No WebSocket / server-sent events (SSE)**: the frontend polls REST endpoints every 1 second via `useModbusData()`.
-- **Log source tagging**: writes from API routes are wrapped in `logSourceStore.run()`. The wrapper uses `AsyncLocalStorage` from `src/lib/modbus/log-context.ts`. This lets the engine tag entries with a web, TCP, or serial source. Apply the same wrapper to new write paths.
+  **Log source tagging**
+
+Writes from API routes are wrapped in `logSourceStore.run()`.
+
+The wrapper uses `AsyncLocalStorage` from `src/lib/modbus/log-context.ts`.
+
+This lets the engine tag entries with a web, TCP, or serial source.
+
+Apply the same wrapper to new write paths.
 
 ## Conventions
 
