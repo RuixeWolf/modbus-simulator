@@ -95,11 +95,14 @@ async function request(baseUrl, path, init = {}) {
   }
   let response
   try {
+    // The operator chooses the simulator endpoint; the protocol and credentials are validated above.
+    // nosemgrep
     const apiRequest = new Request(url, {
       ...init,
       headers,
       signal: AbortSignal.timeout(3000)
     })
+    // nosemgrep
     response = await fetch(apiRequest)
   } catch (error) {
     throw new NetworkError(error instanceof Error ? error.message : String(error))
