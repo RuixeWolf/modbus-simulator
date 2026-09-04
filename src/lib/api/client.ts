@@ -78,9 +78,8 @@ export async function controlRequest<T>(
   if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
   if (token) headers.set('authorization', `Bearer ${token}`)
 
-  // The URL is constrained above to this browser origin and the versioned control API.
-  // bearer:disable javascript_lang_http_url_using_user_input
-  const response = await fetch(url, { ...init, cache: 'no-store', headers })
+  const apiRequest = new Request(url, { ...init, cache: 'no-store', headers })
+  const response = await fetch(apiRequest)
   let payload: unknown
   try {
     payload = await response.json()

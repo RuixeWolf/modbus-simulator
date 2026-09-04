@@ -21,10 +21,11 @@ describe('Dashboard v1 API client', () => {
         Response.json({ data: { ready: true }, meta: { apiVersion: '1', instanceId: 'id' } })
       )
     await controlRequest('/api/v1/health')
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(String(url)).toBe('http://localhost:3000/api/v1/health')
-    expect(String(url)).not.toContain('session-secret')
-    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer session-secret')
+    const [request] = fetchMock.mock.calls[0]
+    expect(request).toBeInstanceOf(Request)
+    expect((request as Request).url).toBe('http://localhost:3000/api/v1/health')
+    expect((request as Request).url).not.toContain('session-secret')
+    expect((request as Request).headers.get('authorization')).toBe('Bearer session-secret')
   })
 
   it('surfaces stable 401 and malformed response errors', async () => {

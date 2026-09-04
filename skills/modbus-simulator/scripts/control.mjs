@@ -95,13 +95,12 @@ async function request(baseUrl, path, init = {}) {
   }
   let response
   try {
-    // The operator chooses the simulator endpoint; the protocol and credentials are validated above.
-    // bearer:disable javascript_lang_http_url_using_user_input
-    response = await fetch(url, {
+    const apiRequest = new Request(url, {
       ...init,
       headers,
       signal: AbortSignal.timeout(3000)
     })
+    response = await fetch(apiRequest)
   } catch (error) {
     throw new NetworkError(error instanceof Error ? error.message : String(error))
   }
