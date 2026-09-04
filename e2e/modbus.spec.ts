@@ -260,8 +260,8 @@ test.describe('Modbus Simulator E2E', () => {
 
     expect(
       await page.evaluate(() => ({
-        local: localStorage.getItem('modbus-simulator-api-token'),
-        session: sessionStorage.getItem('modbus-simulator-api-token')
+        local: localStorage.getItem('modbus-simulator-control'),
+        session: sessionStorage.getItem('modbus-simulator-control')
       }))
     ).toEqual({ local: null, session: null })
 
@@ -270,8 +270,8 @@ test.describe('Modbus Simulator E2E', () => {
     await expect(page.getByTestId('tcp-status')).toContainText('11502')
     expect(
       await page.evaluate(() => ({
-        local: localStorage.getItem('modbus-simulator-api-token'),
-        session: sessionStorage.getItem('modbus-simulator-api-token')
+        local: localStorage.getItem('modbus-simulator-control'),
+        session: sessionStorage.getItem('modbus-simulator-control')
       }))
     ).toEqual({ local: null, session: API_TOKEN })
   })
