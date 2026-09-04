@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
+import type { TransportState } from '@/src/hooks/useModbusData'
 
 /** Props for {@link StatusIndicator}. */
 interface StatusIndicatorProps {
@@ -8,6 +9,10 @@ interface StatusIndicatorProps {
   tcp: boolean
   /** Whether the RTU serial server is currently running. */
   rtu: boolean
+  tcpState?: TransportState
+  rtuState?: TransportState
+  tcpError?: string | null
+  rtuError?: string | null
   /** TCP port displayed next to the TCP label. */
   tcpPort?: number
   /** Active serial port path; shown as "Not set" when null. */
@@ -26,6 +31,10 @@ interface StatusIndicatorProps {
 export function StatusIndicator({
   tcp,
   rtu,
+  tcpState = tcp ? 'running' : 'stopped',
+  rtuState = rtu ? 'running' : 'disabled',
+  tcpError,
+  rtuError,
   tcpPort = 502,
   rtuPath,
   tcpClientCount = 0,
@@ -34,8 +43,11 @@ export function StatusIndicator({
   const { t } = useTranslation()
 
   return (
-    <div className="bg-surface flex items-center gap-3 rounded-full px-3 py-1.5 shadow-sm sm:gap-4 sm:px-4 sm:py-2">
-      <div className="flex items-center gap-2" data-testid="tcp-status">
+    <div
+      className="bg-surface flex items-center gap-3 rounded-full px-3 py-1.5 shadow-sm sm:gap-4 sm:px-4 sm:py-2"
+      title={[tcpError, rtuError].filter(Boolean).join('\n') || undefined}
+    >
+      <div className="flex items-center gap-2" data-testid="tcp-status" data-state={tcpState}>
         <span className="relative flex size-2">
           <span
             className={`absolute inline-flex h-full w-full rounded-full ${
@@ -52,7 +64,7 @@ export function StatusIndicator({
           <span className="text-foreground text-[11px] font-semibold">{t('header.tcp')}</span>
           <div className="flex items-center gap-1.5">
             <span className="text-text-muted font-mono text-[10px]">
-              {tcpPort} {tcp ? '●' : '○'}
+              {tcpPort} · {t(`lifecycle.${tcpState}`)}
             </span>
             {tcp && (
               <button
@@ -74,7 +86,7 @@ export function StatusIndicator({
 
       <div className="bg-border h-5 w-px" />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" data-testid="rtu-status" data-state={rtuState}>
         <span className="relative flex size-2">
           <span
             className={`absolute inline-flex h-full w-full rounded-full ${
@@ -90,7 +102,7 @@ export function StatusIndicator({
         <div className="flex flex-col">
           <span className="text-foreground text-[11px] font-semibold">{t('header.rtu')}</span>
           <span className="text-text-muted max-w-[3.75rem] truncate font-mono text-[10px] sm:max-w-[5rem]">
-            {rtuPath || t('header.notSet')}
+            {rtuPath || t('header.notSet')} · {t(`lifecycle.${rtuState}`)}
           </span>
         </div>
       </div>

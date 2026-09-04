@@ -2,3 +2,6 @@ allowBuilds:
   '@serialport/bindings-cpp': true
   sharp: true
   unrs-resolver: true
+
+overrides:
+  '@babel/core': 7.29.6

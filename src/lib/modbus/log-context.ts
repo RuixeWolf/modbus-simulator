@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 /** Where a communication log entry originated from. */
 export interface LogSource {
   /** Origin channel of the Modbus operation. */
-  type: 'tcp' | 'serial' | 'web'
+  type: 'tcp' | 'serial' | 'web' | 'api'
   /** Human-readable detail: IP:port for TCP, serial path for Serial, 'Web Console' for Web. */
   detail: string
 }

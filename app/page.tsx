@@ -10,6 +10,7 @@ import { SettingsPanel } from '@/src/components/SettingsPanel'
 import { StatusIndicator } from '@/src/components/StatusIndicator'
 import { TcpClientPanel } from '@/src/components/TcpClientPanel'
 import { ThemeToggle } from '@/src/components/ThemeToggle'
+import { TokenPrompt } from '@/src/components/TokenPrompt'
 import { useModbusData } from '@/src/hooks/useModbusData'
 import { Tabs } from '@heroui/react'
 
@@ -43,7 +44,11 @@ export default function Home() {
     updateLogFilter,
     clearLogs,
     disconnectTcpClient,
-    disconnectAllTcpClients
+    disconnectAllTcpClients,
+    requiresToken,
+    authError,
+    isAuthenticating,
+    authenticate
   } = useModbusData()
 
   const [isClientPanelOpen, setIsClientPanelOpen] = useState(false)
@@ -67,6 +72,10 @@ export default function Home() {
           <StatusIndicator
             tcp={status.tcp}
             rtu={status.rtu}
+            tcpState={status.tcpState}
+            rtuState={status.rtuState}
+            tcpError={status.tcpError}
+            rtuError={status.rtuError}
             tcpPort={config.tcpPort}
             rtuPath={config.rtuSerialPath}
             tcpClientCount={tcpClients.length}
@@ -102,6 +111,13 @@ export default function Home() {
         config={config}
         serialPorts={serialPorts}
         onApply={updateConfig}
+      />
+
+      <TokenPrompt
+        isOpen={requiresToken}
+        error={authError}
+        isPending={isAuthenticating}
+        onSubmit={authenticate}
       />
 
       {/* Register Tables */}

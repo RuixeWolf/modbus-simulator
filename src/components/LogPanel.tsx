@@ -29,7 +29,8 @@ function toLogFilterConfig(keys: Set<string | number>): Partial<LogFilterConfig>
     read: keys.has('read'),
     write: keys.has('write'),
     error: keys.has('error'),
-    connection: keys.has('connection')
+    connection: keys.has('connection'),
+    system: keys.has('system')
   }
 }
 
@@ -59,6 +60,12 @@ function getTypeBadge(type: string, t: (key: string) => string) {
           {t('logs.connection')}
         </span>
       )
+    case 'system':
+      return (
+        <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+          {t('logs.system')}
+        </span>
+      )
     default:
       return (
         <span className="bg-default text-text-muted inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
@@ -86,6 +93,12 @@ function getSourceBadge(source: LogSource, t: (key: string) => string) {
       return (
         <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
           {t('logs.source.web')}
+        </span>
+      )
+    case 'api':
+      return (
+        <span className="inline-flex items-center rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-600 dark:text-cyan-400">
+          {t('logs.source.api')}
         </span>
       )
   }
@@ -137,6 +150,8 @@ export function LogPanel({
                     <ToggleButton id="error">{t('logs.error')}</ToggleButton>
                     <ToggleButtonGroup.Separator />
                     <ToggleButton id="connection">{t('logs.connection')}</ToggleButton>
+                    <ToggleButtonGroup.Separator />
+                    <ToggleButton id="system">{t('logs.system')}</ToggleButton>
                   </ToggleButtonGroup>
                 </div>
                 <div className="text-muted pb-2 text-sm leading-5 sm:pb-0">

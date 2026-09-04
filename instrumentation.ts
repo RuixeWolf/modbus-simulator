@@ -1,5 +1,3 @@
-import { ensureServersStarted } from '@/src/lib/modbus'
-
 /**
  * Next.js instrumentation hook.
  * Called once when the Next.js server process starts.
@@ -7,5 +5,8 @@ import { ensureServersStarted } from '@/src/lib/modbus'
  * instead of waiting for the first HTTP API request (lazy loading).
  */
 export async function register(): Promise<void> {
-  ensureServersStarted()
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { ensureServersStarted } = await import('@/src/lib/modbus')
+    await ensureServersStarted()
+  }
 }

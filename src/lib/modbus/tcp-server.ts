@@ -23,9 +23,15 @@ const g = globalThis as typeof globalThis & {
   __modbus_tcp_server__?: ServerTCP | null
   __modbus_tcp_running__?: boolean
   __modbus_tcp_port__?: number
+  __modbus_tcp_host__?: string
+  __modbus_tcp_error__?: string | null
   __modbus_tcp_clients__?: Map<number, TcpClientRecord>
   __modbus_tcp_next_client_id__?: number
 }
+
+let readinessResolve: (() => void) | null = null
+let readinessReject: ((error: Error) => void) | null = null
+let readinessPromise: Promise<void> | null = null
 
 /** Returns the active client map stored on globalThis (survives module reloads). */
 function getClientMap(): Map<number, TcpClientRecord> {
@@ -57,6 +63,7 @@ function setServer(s: ServerTCP | null): void {
 let server: ServerTCP | null = getServer()
 /** Port the server was most recently started on. */
 let currentPort: number = g.__modbus_tcp_port__ ?? 502
+let currentHost: string = g.__modbus_tcp_host__ ?? '127.0.0.1'
 
 /**
  * Starts a Modbus TCP server backed by the singleton ModbusEngine.
@@ -66,11 +73,12 @@ let currentPort: number = g.__modbus_tcp_port__ ?? 502
  * @param slaveId – Modbus slave ID / unit ID (default 1, range 1-247).
  * @returns The started ServerTCP instance.
  */
-export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
+export function startTCPServer(port?: number, slaveId?: number, host?: string): ServerTCP {
   if (server) {
     return server
   }
   currentPort = port ?? (Number(process.env.MODBUS_TCP_PORT) || 502)
+  currentHost = host ?? process.env.MODBUS_TCP_HOST ?? '127.0.0.1'
   const unitID = slaveId ?? 1
 
   const engine = ModbusEngine.getInstance()
@@ -198,14 +206,20 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
   }
 
   const newServer = new ServerTCP(vector, {
-    host: '0.0.0.0',
+    host: currentHost,
     port: currentPort,
     debug: false,
     unitID
   })
   setServer(newServer)
-  g.__modbus_tcp_running__ = true
+  g.__modbus_tcp_running__ = false
   g.__modbus_tcp_port__ = currentPort
+  g.__modbus_tcp_host__ = currentHost
+  g.__modbus_tcp_error__ = null
+  readinessPromise = new Promise<void>((resolve, reject) => {
+    readinessResolve = resolve
+    readinessReject = reject
+  })
 
   // Patch socket.emit so that 'data' events carry AsyncLocalStorage context
   // through modbus-serial's setTimeout → vector callbacks → engine.addLog.
@@ -259,11 +273,38 @@ export function startTCPServer(port?: number, slaveId?: number): ServerTCP {
   }
 
   newServer.on('serverError', (err: Error) => {
+    g.__modbus_tcp_running__ = false
+    g.__modbus_tcp_error__ = err.message
+    readinessReject?.(err)
+    readinessReject = null
+    readinessResolve = null
     console.error('Modbus TCP Server error:', err.message)
   })
 
-  console.log(`Modbus TCP Server started on port ${currentPort} (slave ID ${unitID})`)
+  newServer.on('initialized', () => {
+    g.__modbus_tcp_running__ = true
+    g.__modbus_tcp_error__ = null
+    readinessResolve?.()
+    readinessReject = null
+    readinessResolve = null
+  })
+
+  if (netServer?.listening) {
+    g.__modbus_tcp_running__ = true
+    readinessResolve?.()
+    readinessReject = null
+    readinessResolve = null
+  }
+
+  console.log(`Modbus TCP Server starting on ${currentHost}:${currentPort} (slave ID ${unitID})`)
   return newServer
+}
+
+/** Resolves only after the listener is initialized, or rejects on bind failure. */
+export function waitForTCPServerReady(): Promise<void> {
+  if (isTCPServerRunning()) return Promise.resolve()
+  if (g.__modbus_tcp_error__) return Promise.reject(new Error(g.__modbus_tcp_error__))
+  return readinessPromise ?? Promise.reject(new Error('Modbus TCP server has not been started'))
 }
 
 /** Stops and clears the active TCP server, if any. Returns a Promise that resolves once the server is closed. */
@@ -276,6 +317,10 @@ export function stopTCPServer(): Promise<void> {
     }
 
     g.__modbus_tcp_running__ = false
+    g.__modbus_tcp_error__ = null
+    readinessPromise = null
+    readinessResolve = null
+    readinessReject = null
     setServer(null)
 
     // Log disconnects and terminate all active client sockets before clearing the map.
@@ -323,6 +368,16 @@ export function isTCPServerRunning(): boolean {
 /** @returns The port the TCP server was most recently started on. */
 export function getTCPPort(): number {
   return g.__modbus_tcp_port__ ?? 502
+}
+
+/** @returns The host the TCP server most recently attempted to bind. */
+export function getTCPHost(): string {
+  return g.__modbus_tcp_host__ ?? '127.0.0.1'
+}
+
+/** @returns The most recent listener error, if any. */
+export function getTCPError(): string | null {
+  return g.__modbus_tcp_error__ ?? null
 }
 
 /**

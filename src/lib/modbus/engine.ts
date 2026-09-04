@@ -4,12 +4,33 @@ import type { LogSource } from './log-context'
 
 export type { LogSource }
 
+export const MODBUS_TABLE = {
+  COILS: 'coils',
+  DISCRETE_INPUTS: 'discrete-inputs',
+  HOLDING_REGISTERS: 'holding-registers',
+  INPUT_REGISTERS: 'input-registers'
+} as const
+
+export type ModbusTable = (typeof MODBUS_TABLE)[keyof typeof MODBUS_TABLE]
+
+export const MODBUS_LOG_TYPE = {
+  READ: 'read',
+  WRITE: 'write',
+  ERROR: 'error',
+  CONNECTION: 'connection',
+  SYSTEM: 'system'
+} as const
+
+export type ModbusLogType = (typeof MODBUS_LOG_TYPE)[keyof typeof MODBUS_LOG_TYPE]
+
 /** Single communication log entry emitted by the Modbus engine. */
 export interface ModbusLogEntry {
+  /** Instance-monotonic cursor. IDs are never reused, including after clear. */
+  id: number
   /** ISO 8601 timestamp of when the operation occurred. */
   timestamp: string
   /** Direction or outcome of the operation. */
-  type: 'read' | 'write' | 'error' | 'connection'
+  type: ModbusLogType
   /** Register category involved in the operation (e.g. "coil", "holdingRegister"). */
   registerType: string
   /** Zero-based Modbus address. */
@@ -36,16 +57,17 @@ export interface LogFilterConfig {
   write: boolean
   error: boolean
   connection: boolean
+  system: boolean
 }
 
 /** Number of coils allocated in the engine. */
-const COIL_COUNT = 1000
+export const COIL_COUNT = 1000
 /** Number of discrete inputs allocated in the engine. */
-const DISCRETE_INPUT_COUNT = 1000
+export const DISCRETE_INPUT_COUNT = 1000
 /** Number of holding registers allocated in the engine. */
-const HOLDING_REGISTER_COUNT = 10000
+export const HOLDING_REGISTER_COUNT = 10000
 /** Number of input registers allocated in the engine. */
-const INPUT_REGISTER_COUNT = 10000
+export const INPUT_REGISTER_COUNT = 10000
 /** Default maximum in-memory log entries before old entries are dropped. */
 const DEFAULT_MAX_LOGS = 1000
 /** Minimum allowed log limit. */
@@ -74,6 +96,8 @@ export class ModbusEngine extends EventEmitter {
   private logs: ModbusLogEntry[]
   private logFilter: LogFilterConfig
   private logMaxCount: number
+  private nextLogId: number
+  private droppedBeforeId: number | null
 
   private constructor() {
     super()
@@ -82,8 +106,10 @@ export class ModbusEngine extends EventEmitter {
     this.holdingRegisters = new Array(HOLDING_REGISTER_COUNT).fill(0)
     this.inputRegisters = new Array(INPUT_REGISTER_COUNT).fill(0)
     this.logs = []
-    this.logFilter = { read: true, write: true, error: true, connection: true }
+    this.logFilter = { read: true, write: true, error: true, connection: true, system: true }
     this.logMaxCount = DEFAULT_MAX_LOGS
+    this.nextLogId = 1
+    this.droppedBeforeId = null
   }
 
   /**
@@ -375,22 +401,104 @@ export class ModbusEngine extends EventEmitter {
     }
   }
 
+  /** Resets all or selected tables without replacing the process singleton. */
+  resetState(tables?: readonly ModbusTable[], clearLogs = false): void {
+    const selected = new Set(tables ?? Object.values(MODBUS_TABLE))
+    if (selected.has(MODBUS_TABLE.COILS)) this.coils.fill(false)
+    if (selected.has(MODBUS_TABLE.DISCRETE_INPUTS)) this.discreteInputs.fill(false)
+    if (selected.has(MODBUS_TABLE.HOLDING_REGISTERS)) this.holdingRegisters.fill(0)
+    if (selected.has(MODBUS_TABLE.INPUT_REGISTERS)) this.inputRegisters.fill(0)
+    if (clearLogs) this.clearLogs()
+    this.emit('change', { reset: [...selected] })
+  }
+
+  /** Reads one validated contiguous table range without changing its contents. */
+  readRange(table: ModbusTable, start: number, count: number): (boolean | number)[] {
+    const target = this.getTable(table)
+    this.assertRange(target.length, start, count)
+    const result = target.slice(start, start + count)
+    this.addLog({
+      timestamp: new Date().toISOString(),
+      type: MODBUS_LOG_TYPE.READ,
+      registerType: table,
+      address: start,
+      message: `Read ${count} values from ${table}`
+    })
+    return result
+  }
+
+  /** Atomically writes a fully validated contiguous table range. */
+  writeRange(table: ModbusTable, start: number, values: readonly (boolean | number)[]): void {
+    const target = this.getTable(table)
+    this.assertRange(target.length, start, values.length)
+    if (values.length > 1000) throw new Error('Range count must not exceed 1000')
+
+    const bitTable = table === MODBUS_TABLE.COILS || table === MODBUS_TABLE.DISCRETE_INPUTS
+    for (const value of values) {
+      if (bitTable && typeof value !== 'boolean') {
+        throw new Error(`${table} values must be booleans`)
+      }
+      if (
+        !bitTable &&
+        (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 0xffff)
+      ) {
+        throw new Error(`${table} values must be integers from 0 to 65535`)
+      }
+    }
+
+    for (let index = 0; index < values.length; index++) {
+      ;(target as (boolean | number)[])[start + index] = values[index]
+    }
+    this.addLog({
+      timestamp: new Date().toISOString(),
+      type: MODBUS_LOG_TYPE.WRITE,
+      registerType: table,
+      address: start,
+      message: `Wrote ${values.length} values to ${table}`
+    })
+    this.emit('change', { registerType: table, address: start, values: [...values] })
+  }
+
+  private getTable(table: ModbusTable): boolean[] | number[] {
+    switch (table) {
+      case MODBUS_TABLE.COILS:
+        return this.coils
+      case MODBUS_TABLE.DISCRETE_INPUTS:
+        return this.discreteInputs
+      case MODBUS_TABLE.HOLDING_REGISTERS:
+        return this.holdingRegisters
+      case MODBUS_TABLE.INPUT_REGISTERS:
+        return this.inputRegisters
+    }
+  }
+
+  private assertRange(length: number, start: number, count: number): void {
+    if (!Number.isInteger(start) || !Number.isInteger(count) || start < 0 || count < 1) {
+      throw new Error('Range start and count must be positive integers')
+    }
+    if (count > 1000) throw new Error('Range count must not exceed 1000')
+    if (start + count > length) throw new Error(`Range [${start}, ${start + count}) out of range`)
+  }
+
   // Logs
 
   /** Appends an entry and emits `'log'`. Drops oldest entry when capacity is exceeded.
    *  Respects the current {@link LogFilterConfig} — disabled types are silently ignored.
    *  Automatically injects the current {@link LogSource} from AsyncLocalStorage if present. */
-  private addLog(entry: ModbusLogEntry): void {
+  private addLog(entry: Omit<ModbusLogEntry, 'id'>): void {
     if (!this.logFilter[entry.type]) return
     const source = logSourceStore.getStore()
-    if (source) {
-      entry.source = source
+    const storedEntry: ModbusLogEntry = {
+      ...entry,
+      id: this.nextLogId++,
+      ...(source ? { source } : {})
     }
-    this.logs.push(entry)
+    this.logs.push(storedEntry)
     if (this.logs.length > this.logMaxCount) {
-      this.logs.shift()
+      const removed = this.logs.shift()
+      if (removed) this.droppedBeforeId = removed.id + 1
     }
-    this.emit('log', entry)
+    this.emit('log', storedEntry)
   }
 
   /**
@@ -412,7 +520,9 @@ export class ModbusEngine extends EventEmitter {
     }
     const excess = this.logs.length - this.logMaxCount
     if (excess > 0) {
-      this.logs.splice(0, excess)
+      const removed = this.logs.splice(0, excess)
+      const newestRemoved = removed.at(-1)
+      if (newestRemoved) this.droppedBeforeId = newestRemoved.id + 1
     }
   }
 
@@ -432,6 +542,7 @@ export class ModbusEngine extends EventEmitter {
     if (filter.write !== undefined) this.logFilter.write = filter.write
     if (filter.error !== undefined) this.logFilter.error = filter.error
     if (filter.connection !== undefined) this.logFilter.connection = filter.connection
+    if (filter.system !== undefined) this.logFilter.system = filter.system
   }
 
   /**
@@ -439,6 +550,30 @@ export class ModbusEngine extends EventEmitter {
    */
   getLogs(): ModbusLogEntry[] {
     return [...this.logs]
+  }
+
+  /** Returns ascending cursor-based logs and cursor-loss metadata. */
+  queryLogs(options: {
+    afterId?: number
+    limit?: number
+    type?: ModbusLogType
+    source?: LogSource['type']
+  }): { entries: ModbusLogEntry[]; nextAfterId: number; droppedBeforeId: number | null } {
+    const afterId = options.afterId ?? 0
+    const limit = options.limit ?? 1000
+    const entries = this.logs
+      .filter((entry) => entry.id > afterId)
+      .filter((entry) => !options.type || entry.type === options.type)
+      .filter((entry) => !options.source || entry.source?.type === options.source)
+      .slice(0, limit)
+    return {
+      entries,
+      nextAfterId: entries.at(-1)?.id ?? afterId,
+      droppedBeforeId:
+        this.droppedBeforeId !== null && afterId < this.droppedBeforeId
+          ? this.droppedBeforeId
+          : null
+    }
   }
 
   /** Clears all stored log entries. */
@@ -477,6 +612,17 @@ export class ModbusEngine extends EventEmitter {
       registerType: 'tcp',
       address: 0,
       message: `Client ${host}:${port} ${event}`
+    })
+  }
+
+  /** Adds a lifecycle/configuration event without including secrets. */
+  addSystemLog(message: string, registerType = 'runtime'): void {
+    this.addLog({
+      timestamp: new Date().toISOString(),
+      type: MODBUS_LOG_TYPE.SYSTEM,
+      registerType,
+      address: 0,
+      message
     })
   }
 }

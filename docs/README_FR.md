@@ -148,7 +148,7 @@ PORT=5000
 MODBUS_TCP_PORT=502
 ```
 
-Les paramètres du serveur (port TCP, ID esclave, chemin série RTU, débit en bauds, parité, filtre de journaux, nombre maximal de journaux, etc.) peuvent également être modifiés à l'exécution via le tableau de bord Web ou le point de terminaison `/api/config`.
+Les paramètres peuvent aussi être modifiés via le tableau de bord ou le point de terminaison authentifié `/api/v1/config`. Les écouteurs HTTP et Modbus TCP utilisent `127.0.0.1` par défaut ; configurez `MODBUS_API_TOKEN` (ou `--api-token-file`) avant toute écoute hors boucle locale.
 
 ## Utilisation
 
@@ -182,71 +182,24 @@ client.close()
 
 Configurez le chemin du port série RTU (par exemple `COM3` sur Windows, `/dev/ttyUSB0` sur Linux) dans les paramètres du tableau de bord, puis connectez-vous avec n'importe quel client Modbus RTU standard.
 
-## Référence API
+## Automatisation et API v1
 
-Toutes les routes API sont préfixées par `/api` et nécessitent que le serveur de développement soit en cours d'exécution.
-
-| Méthode | Point de terminaison   | Description                                                                                                                                          |
-| ------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET     | `/api/registers`       | Récupérer l'état complet du moteur Modbus                                                                                                            |
-| POST    | `/api/registers`       | Écrire un coil ou un registre. Corps : `{ registerType, address, value }`                                                                            |
-| POST    | `/api/registers/batch` | Écriture par lots de registres. Corps : `{ registerType, startAddress, mode, dataType, value }` ou `{ registerType, startAddress, mode, hexString }` |
-| GET     | `/api/logs`            | Récupérer tous les journaux de communication                                                                                                         |
-| DELETE  | `/api/logs`            | Effacer tous les journaux de communication                                                                                                           |
-| GET     | `/api/status`          | État du serveur : `{ tcp: boolean, rtu: boolean }`                                                                                                   |
-| GET     | `/api/config`          | Récupérer la configuration actuelle (inclut `logFilter` et `logMaxCount`)                                                                            |
-| POST    | `/api/config`          | Mettre à jour la configuration et redémarrer les serveurs. Corps : objet de configuration partiel                                                    |
-| GET     | `/api/serial-ports`    | Lister les ports série disponibles                                                                                                                   |
-| GET     | `/api/tcp-clients`     | Lister les connexions client TCP actives                                                                                                             |
-| GET     | `/api/tcp-clients/:id` | Récupérer les détails d'un client TCP spécifique                                                                                                     |
-
-### API d'écriture par lots
-
-Le point de terminaison d'écriture par lots prend en charge deux modes :
-
-**Mode nombre** — Convertir une valeur numérique en registres à l'aide d'un format de données typé :
+La version 1.1.0 fournit une API de contrôle stricte et versionnée. Lancez une instance locale isolée et attendez son état de santé réel :
 
 ```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 0,
-    "mode": "number",
-    "dataType": "FloatBE",
-    "value": 3.14
-  }'
+npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-host 127.0.0.1 --tcp-port 15020 --ready-output json --ready-timeout 30 --strict-ready
 ```
 
-Types de données pris en charge : `UInt8`, `UInt16BE`, `UInt16LE`, `UInt32BE`, `UInt32LE`, `UIntBE`, `UIntLE`, `Int8`, `Int16BE`, `Int16LE`, `Int32BE`, `Int32LE`, `IntBE`, `IntLE`, `FloatBE`, `FloatLE`, `Float1234`, `Float2143`, `Float3412`, `Float4321`, `DoubleBE`, `DoubleLE`.
+La découverte publique est disponible via `GET /api/v1` et `GET /api/v1/openapi.json`. Les autres routes v1 couvrent la santé, l'état et sa réinitialisation, les plages de registres, les écritures typées/hexadécimales, la configuration, les journaux par curseur, les ports série et les clients TCP. Les succès utilisent `{ "data": ..., "meta": ... }` et les erreurs `{ "error": { "code", "message", "issues"? }, "meta": ... }`.
 
-**Mode octets** — Écrire des octets bruts à partir d'une chaîne hexadécimale :
-
-```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 10,
-    "mode": "bytes",
-    "hexString": "0A 45 B1 30"
-  }'
-```
+Avec un Token configuré, envoyez `Authorization: Bearer <token>`. Les adresses commencent à 0, les écritures de plage sont atomiques et limitées à 1 000 valeurs. Consultez le [guide de migration 1.1](MIGRATION_1.1.md) et l'[Agent Skill](../skills/modbus-simulator/SKILL.md).
 
 ## Structure du projet
 
 ```
 modbus-simulator/
 ├── app/
-│   ├── api/                    # Routes API Next.js
-│   │   ├── config/route.ts
-│   │   ├── logs/route.ts
-│   │   ├── registers/route.ts
-│   │   ├── registers/batch/route.ts
-│   │   ├── serial-ports/route.ts
-│   │   ├── status/route.ts
-│   │   ├── tcp-clients/route.ts
-│   │   └── tcp-clients/[id]/route.ts
+│   ├── api/v1/                 # API de contrôle versionnée + OpenAPI
 │   ├── globals.css             # Entrée Tailwind CSS v4 + variables de thème
 │   ├── layout.tsx              # Layout racine avec i18n & thème
 │   └── page.tsx                # Page tableau de bord (composant client)

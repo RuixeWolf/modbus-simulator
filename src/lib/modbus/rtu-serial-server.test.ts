@@ -4,7 +4,8 @@ import {
   getRTUSerialPath,
   isRTUSerialServerRunning,
   startRTUSerialServer,
-  stopRTUSerialServer
+  stopRTUSerialServer,
+  waitForRTUSerialServerReady
 } from './rtu-serial-server'
 
 let mockOpen = false
@@ -12,6 +13,7 @@ let dataHandler: ((data: Buffer) => void) | null = null
 let _errorHandler: ((err: Error) => void) | null = null
 let openHandler: (() => void) | null = null
 let closeHandler: (() => void) | null = null
+let failOnOpen = false
 
 function createMockSerialPort() {
   return {
@@ -39,9 +41,15 @@ let mockPort = createMockSerialPort()
 vi.mock('serialport', () => ({
   SerialPort: vi.fn(function SerialPort() {
     mockPort = createMockSerialPort()
-    mockOpen = true
+    mockOpen = false
     setTimeout(() => {
-      if (openHandler) openHandler()
+      if (failOnOpen) {
+        mockOpen = false
+        if (_errorHandler) _errorHandler(new Error('Access denied'))
+      } else {
+        mockOpen = true
+        if (openHandler) openHandler()
+      }
     }, 0)
     return mockPort
   })
@@ -55,15 +63,22 @@ describe('rtu-serial-server', () => {
     _errorHandler = null
     openHandler = null
     closeHandler = null
+    failOnOpen = false
     vi.clearAllMocks()
   })
 
   it('should start RTU serial server on given path', async () => {
     startRTUSerialServer('COM3')
-    // Wait for the open event to fire asynchronously
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    await waitForRTUSerialServerReady()
     expect(isRTUSerialServerRunning()).toBe(true)
     expect(getRTUSerialPath()).toBe('COM3')
+  })
+
+  it('rejects readiness and stays stopped when the serial port cannot open', async () => {
+    failOnOpen = true
+    startRTUSerialServer('COM9')
+    await expect(waitForRTUSerialServerReady()).rejects.toThrow('Access denied')
+    expect(isRTUSerialServerRunning()).toBe(false)
   })
 
   it('should not start a second server if already running', async () => {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { ServerConfig } from '@/src/hooks/useModbusData'
 import { Button, Card, Input, Label, ListBox, Select, Switch } from '@heroui/react'
 import type { Key } from '@heroui/react'
 import { Icon } from '@iconify/react'
@@ -14,30 +15,17 @@ interface SerialPortInfo {
 }
 
 /** Serial port RTU Parity options. */
-type RtuParity = 'none' | 'even' | 'odd'
-
-/** Mutable server configuration. */
-interface ServerConfig {
-  tcpEnabled: boolean
-  tcpPort: number
-  slaveId: number
-  rtuEnabled: boolean
-  rtuSerialPath: string | null
-  rtuBaudRate: number
-  rtuParity: RtuParity
-  rtuDataBits: number
-  rtuStopBits: number
-  logMaxCount: number
-}
+type RtuParity = ServerConfig['rtuParity']
+type EditableServerConfig = Omit<ServerConfig, 'tcpHost' | 'logFilter'>
 
 /** Props for {@link SettingsPanel}. */
 interface SettingsPanelProps {
   /** Current server configuration. */
-  config: ServerConfig
+  config: EditableServerConfig
   /** Available serial ports discovered by the backend. */
   serialPorts: SerialPortInfo[]
   /** Called when the user presses "Apply". */
-  onApply: (config: ServerConfig) => void | Promise<void>
+  onApply: (config: EditableServerConfig) => void | Promise<void>
 }
 
 /** Available baud rates for RTU serial communication. */
@@ -102,8 +90,8 @@ export function SettingsPanel({ config, serialPorts, onApply }: Readonly<Setting
         rtuSerialPath: rtuPath || null,
         rtuBaudRate: baudRate,
         rtuParity,
-        rtuDataBits: dataBits,
-        rtuStopBits: stopBits,
+        rtuDataBits: dataBits as EditableServerConfig['rtuDataBits'],
+        rtuStopBits: stopBits as EditableServerConfig['rtuStopBits'],
         logMaxCount: maxCount
       })
     } finally {

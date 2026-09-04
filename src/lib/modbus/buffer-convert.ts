@@ -1,26 +1,29 @@
-export type DataType =
-  | 'UIntBE'
-  | 'UIntLE'
-  | 'UInt8'
-  | 'UInt16BE'
-  | 'UInt16LE'
-  | 'UInt32BE'
-  | 'UInt32LE'
-  | 'IntBE'
-  | 'IntLE'
-  | 'Int8'
-  | 'Int16BE'
-  | 'Int16LE'
-  | 'Int32BE'
-  | 'Int32LE'
-  | 'FloatBE'
-  | 'FloatLE'
-  | 'Float1234'
-  | 'Float2143'
-  | 'Float3412'
-  | 'Float4321'
-  | 'DoubleBE'
-  | 'DoubleLE'
+export const DATA_TYPES = [
+  'UIntBE',
+  'UIntLE',
+  'UInt8',
+  'UInt16BE',
+  'UInt16LE',
+  'UInt32BE',
+  'UInt32LE',
+  'IntBE',
+  'IntLE',
+  'Int8',
+  'Int16BE',
+  'Int16LE',
+  'Int32BE',
+  'Int32LE',
+  'FloatBE',
+  'FloatLE',
+  'Float1234',
+  'Float2143',
+  'Float3412',
+  'Float4321',
+  'DoubleBE',
+  'DoubleLE'
+] as const
+
+export type DataType = (typeof DATA_TYPES)[number]
 
 /** Map each data type to its byte size. */
 const TYPE_SIZES: Record<DataType, number> = {
@@ -64,31 +67,32 @@ export function getDataTypeSize(dataType: DataType): number {
  * @returns Buffer containing the encoded bytes.
  */
 export function numberToBuffer(dataType: DataType, value: number): Buffer {
+  assertEncodableNumber(dataType, value)
   const size = TYPE_SIZES[dataType]
   const buf = Buffer.alloc(size)
 
   switch (dataType) {
     // Unsigned integers
     case 'UInt8':
-      buf.writeUInt8(value & 0xff, 0)
+      buf.writeUInt8(value, 0)
       break
     case 'UInt16BE':
-      buf.writeUInt16BE(value & 0xffff, 0)
+      buf.writeUInt16BE(value, 0)
       break
     case 'UInt16LE':
-      buf.writeUInt16LE(value & 0xffff, 0)
+      buf.writeUInt16LE(value, 0)
       break
     case 'UInt32BE':
-      buf.writeUInt32BE(value >>> 0, 0)
+      buf.writeUInt32BE(value, 0)
       break
     case 'UInt32LE':
-      buf.writeUInt32LE(value >>> 0, 0)
+      buf.writeUInt32LE(value, 0)
       break
     case 'UIntBE':
-      buf.writeUInt32BE(value >>> 0, 0)
+      buf.writeUInt32BE(value, 0)
       break
     case 'UIntLE':
-      buf.writeUInt32LE(value >>> 0, 0)
+      buf.writeUInt32LE(value, 0)
       break
 
     // Signed integers
@@ -161,6 +165,37 @@ export function numberToBuffer(dataType: DataType, value: number): Buffer {
   }
 
   return buf
+}
+
+function assertEncodableNumber(dataType: DataType, value: number): void {
+  if (!Number.isFinite(value)) throw new RangeError('Encoded value must be finite')
+
+  const integerRange: Partial<Record<DataType, readonly [number, number]>> = {
+    UInt8: [0, 0xff],
+    UInt16BE: [0, 0xffff],
+    UInt16LE: [0, 0xffff],
+    UInt32BE: [0, 0xffffffff],
+    UInt32LE: [0, 0xffffffff],
+    UIntBE: [0, 0xffffffff],
+    UIntLE: [0, 0xffffffff],
+    Int8: [-0x80, 0x7f],
+    Int16BE: [-0x8000, 0x7fff],
+    Int16LE: [-0x8000, 0x7fff],
+    Int32BE: [-0x80000000, 0x7fffffff],
+    Int32LE: [-0x80000000, 0x7fffffff],
+    IntBE: [-0x80000000, 0x7fffffff],
+    IntLE: [-0x80000000, 0x7fffffff]
+  }
+  const range = integerRange[dataType]
+  if (range && (!Number.isInteger(value) || value < range[0] || value > range[1])) {
+    throw new RangeError(`${dataType} value must be an integer from ${range[0]} to ${range[1]}`)
+  }
+
+  if (dataType.startsWith('Float')) {
+    const probe = Buffer.alloc(4)
+    probe.writeFloatBE(value, 0)
+    if (!Number.isFinite(probe.readFloatBE(0))) throw new RangeError(`${dataType} value overflows`)
+  }
 }
 
 /**
