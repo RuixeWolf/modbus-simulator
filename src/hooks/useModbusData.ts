@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { ControlApiError, controlRequest, validateAndStoreControlToken } from '@/src/lib/api/client'
 
-/** Snapshot of all Modbus register arrays returned by the REST API. */
 export interface ModbusState {
   coils: boolean[]
   discreteInputs: boolean[]
@@ -10,24 +10,30 @@ export interface ModbusState {
   inputRegisters: number[]
 }
 
-/** Origin of a communication log entry. */
+export const LOG_SOURCE_TYPE = {
+  TCP: 'tcp',
+  SERIAL: 'serial',
+  WEB: 'web',
+  API: 'api'
+} as const
+
 export interface LogSource {
-  type: 'tcp' | 'serial' | 'web'
+  type: (typeof LOG_SOURCE_TYPE)[keyof typeof LOG_SOURCE_TYPE]
   detail: string
 }
 
-/** Metadata for an active TCP client connection. */
-export interface TcpClientInfo {
-  id: number
-  host: string
-  port: number
-  connectedAt: string
-}
+export const LOG_ENTRY_TYPE = {
+  READ: 'read',
+  WRITE: 'write',
+  ERROR: 'error',
+  CONNECTION: 'connection',
+  SYSTEM: 'system'
+} as const
 
-/** Single log entry returned by the REST API. */
 export interface ModbusLogEntry {
+  id: number
   timestamp: string
-  type: 'read' | 'write' | 'error' | 'connection'
+  type: (typeof LOG_ENTRY_TYPE)[keyof typeof LOG_ENTRY_TYPE]
   registerType: string
   address: number
   value?: number | boolean
@@ -35,201 +41,231 @@ export interface ModbusLogEntry {
   source?: LogSource
 }
 
-/** TCP and RTU server online status. */
+export interface TcpClientInfo {
+  id: number
+  host: string
+  port: number
+  connectedAt: string
+}
+
+export const TRANSPORT_STATE = {
+  DISABLED: 'disabled',
+  STARTING: 'starting',
+  RUNNING: 'running',
+  STOPPING: 'stopping',
+  STOPPED: 'stopped',
+  ERROR: 'error'
+} as const
+
+export type TransportState = (typeof TRANSPORT_STATE)[keyof typeof TRANSPORT_STATE]
+
+interface TransportLifecycle {
+  state: TransportState
+  lastTransitionAt: string
+  error: string | null
+  actualConfig: Record<string, unknown> | null
+}
+
 export interface ServerStatus {
   tcp: boolean
   rtu: boolean
+  ready: boolean
+  tcpState: TransportState
+  rtuState: TransportState
+  tcpError: string | null
+  rtuError: string | null
 }
 
-/** Active server configuration returned by the REST API. */
+export interface LogFilterConfig {
+  read: boolean
+  write: boolean
+  error: boolean
+  connection: boolean
+  system: boolean
+}
+
 export interface ServerConfig {
   tcpEnabled: boolean
+  tcpHost: string
   tcpPort: number
   slaveId: number
   rtuEnabled: boolean
   rtuSerialPath: string | null
   rtuBaudRate: number
   rtuParity: 'none' | 'even' | 'odd'
-  rtuDataBits: number
-  rtuStopBits: number
+  rtuDataBits: 5 | 6 | 7 | 8
+  rtuStopBits: 1 | 2
   logMaxCount: number
+  logFilter: LogFilterConfig
 }
 
-/** Metadata for an available serial port. */
 export interface SerialPortInfo {
   path: string
   manufacturer: string | null
   serialNumber: string | null
 }
 
-/** Log type filter configuration. */
-export interface LogFilterConfig {
-  read: boolean
-  write: boolean
-  error: boolean
-  connection: boolean
+interface HealthResponse {
+  ready: boolean
+  desiredConfig: ServerConfig
+  transports: { tcp: TransportLifecycle; rtu: TransportLifecycle }
 }
 
-/** Polling interval in milliseconds for register / status / log updates. */
-const POLL_INTERVAL = 1000
+interface ConfigResponse {
+  desired: ServerConfig
+  actual: { tcp: TransportLifecycle; rtu: TransportLifecycle }
+}
 
-/**
- * Hook that polls the backend REST APIs and exposes helpers
- * to read state, write registers, and update server config.
- *
- * @returns Current state, logs, status, config helpers, and error state.
- */
+const POLL_INTERVAL = 1000
+const EMPTY_STATE: ModbusState = {
+  coils: [],
+  discreteInputs: [],
+  holdingRegisters: [],
+  inputRegisters: []
+}
+const DEFAULT_LOG_FILTER: LogFilterConfig = {
+  read: true,
+  write: true,
+  error: true,
+  connection: true,
+  system: true
+}
+const DEFAULT_CONFIG: ServerConfig = {
+  tcpEnabled: true,
+  tcpHost: '127.0.0.1',
+  tcpPort: 502,
+  slaveId: 1,
+  rtuEnabled: true,
+  rtuSerialPath: null,
+  rtuBaudRate: 9600,
+  rtuParity: 'none',
+  rtuDataBits: 8,
+  rtuStopBits: 1,
+  logMaxCount: 1000,
+  logFilter: DEFAULT_LOG_FILTER
+}
+const DEFAULT_STATUS: ServerStatus = {
+  tcp: false,
+  rtu: false,
+  ready: false,
+  tcpState: TRANSPORT_STATE.STOPPED,
+  rtuState: TRANSPORT_STATE.DISABLED,
+  tcpError: null,
+  rtuError: null
+}
+
+function tableForRegisterType(registerType: string): string {
+  const tables: Record<string, string> = {
+    coil: 'coils',
+    discreteInput: 'discrete-inputs',
+    holdingRegister: 'holding-registers',
+    inputRegister: 'input-registers'
+  }
+  return tables[registerType] ?? registerType
+}
+
 export function useModbusData() {
-  const [state, setState] = useState<ModbusState>({
-    coils: [],
-    discreteInputs: [],
-    holdingRegisters: [],
-    inputRegisters: []
-  })
+  const [state, setState] = useState<ModbusState>(EMPTY_STATE)
   const [logs, setLogs] = useState<ModbusLogEntry[]>([])
-  const [status, setStatus] = useState<ServerStatus>({ tcp: false, rtu: false })
-  const [config, setConfig] = useState<ServerConfig>({
-    tcpEnabled: true,
-    tcpPort: 502,
-    slaveId: 1,
-    rtuEnabled: true,
-    rtuSerialPath: null,
-    rtuBaudRate: 9600,
-    rtuParity: 'none',
-    rtuDataBits: 8,
-    rtuStopBits: 1,
-    logMaxCount: 1000
-  })
+  const [status, setStatus] = useState<ServerStatus>(DEFAULT_STATUS)
+  const [config, setConfig] = useState<ServerConfig>(DEFAULT_CONFIG)
   const [serialPorts, setSerialPorts] = useState<SerialPortInfo[]>([])
-  const [logFilter, setLogFilter] = useState<LogFilterConfig>({
-    read: true,
-    write: true,
-    error: true,
-    connection: true
-  })
   const [tcpClients, setTcpClients] = useState<TcpClientInfo[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [requiresToken, setRequiresToken] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+
+  const captureError = useCallback((cause: unknown, silent = false) => {
+    if (cause instanceof ControlApiError && cause.status === 401) setRequiresToken(true)
+    if (!silent) setError(cause instanceof Error ? cause.message : String(cause))
+  }, [])
 
   const fetchState = useCallback(async () => {
     try {
-      const res = await fetch('/api/registers')
-      if (!res.ok) throw new Error('Failed to fetch registers')
-      const data = await res.json()
-      setState(data)
+      setState(await controlRequest<ModbusState>('/api/v1/state'))
       setError(null)
-    } catch (e) {
-      setError((e as Error).message)
+    } catch (cause) {
+      captureError(cause)
     }
-  }, [])
+  }, [captureError])
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await fetch('/api/logs')
-      if (!res.ok) throw new Error('Failed to fetch logs')
-      const data = await res.json()
-      setLogs(data)
-    } catch {
-      // silently fail for logs
+      const data = await controlRequest<{ entries: ModbusLogEntry[] }>('/api/v1/logs?limit=1000')
+      setLogs(data.entries)
+    } catch (cause) {
+      captureError(cause, true)
     }
-  }, [])
+  }, [captureError])
 
-  const fetchStatus = useCallback(async () => {
+  const fetchHealth = useCallback(async () => {
     try {
-      const res = await fetch('/api/status')
-      if (!res.ok) throw new Error('Failed to fetch status')
-      const data = await res.json()
-      setStatus(data)
-    } catch {
-      // silently fail for status
+      const health = await controlRequest<HealthResponse>('/api/v1/health')
+      setStatus({
+        tcp: health.transports.tcp.state === TRANSPORT_STATE.RUNNING,
+        rtu: health.transports.rtu.state === TRANSPORT_STATE.RUNNING,
+        ready: health.ready,
+        tcpState: health.transports.tcp.state,
+        rtuState: health.transports.rtu.state,
+        tcpError: health.transports.tcp.error,
+        rtuError: health.transports.rtu.error
+      })
+      setConfig(health.desiredConfig)
+    } catch (cause) {
+      captureError(cause, true)
     }
-  }, [])
+  }, [captureError])
 
   const fetchConfig = useCallback(async () => {
     try {
-      const res = await fetch('/api/config')
-      if (!res.ok) throw new Error('Failed to fetch config')
-      const data = await res.json()
-      setConfig(data)
-    } catch {
-      // silently fail for config
+      const data = await controlRequest<ConfigResponse>('/api/v1/config')
+      setConfig(data.desired)
+    } catch (cause) {
+      captureError(cause, true)
     }
-  }, [])
+  }, [captureError])
 
   const fetchSerialPorts = useCallback(async () => {
     try {
-      const res = await fetch('/api/serial-ports')
-      if (!res.ok) throw new Error('Failed to fetch serial ports')
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        setSerialPorts(data)
-      }
-    } catch {
-      // silently fail for serial ports
+      setSerialPorts(await controlRequest<SerialPortInfo[]>('/api/v1/serial-ports'))
+    } catch (cause) {
+      captureError(cause, true)
     }
-  }, [])
-
-  const fetchLogFilter = useCallback(async () => {
-    try {
-      const res = await fetch('/api/config')
-      if (!res.ok) throw new Error('Failed to fetch config')
-      const data = await res.json()
-      if (data.logFilter) {
-        setLogFilter(data.logFilter)
-      }
-    } catch {
-      // silently fail for log filter
-    }
-  }, [])
+  }, [captureError])
 
   const fetchTcpClients = useCallback(async () => {
     try {
-      const res = await fetch('/api/tcp-clients')
-      if (!res.ok) throw new Error('Failed to fetch TCP clients')
-      const data = await res.json()
-      if (Array.isArray(data.clients)) {
-        setTcpClients(data.clients)
-      }
-    } catch {
-      // silently fail for TCP clients
+      const data = await controlRequest<{ clients: TcpClientInfo[] }>('/api/v1/tcp-clients')
+      setTcpClients(data.clients)
+    } catch (cause) {
+      captureError(cause, true)
     }
-  }, [])
+  }, [captureError])
 
-  /**
-   * Disconnects a single TCP client by ID.
-   * @param id – Client ID from the TCP client list.
-   */
   const disconnectTcpClient = useCallback(
     async (id: number) => {
       try {
-        const res = await fetch(`/api/tcp-clients/${id}`, { method: 'DELETE' })
-        if (!res.ok) throw new Error('Failed to disconnect client')
+        await controlRequest(`/api/v1/tcp-clients/${id}`, { method: 'DELETE' })
         await fetchTcpClients()
         await fetchLogs()
-      } catch (e) {
-        setError((e as Error).message)
+      } catch (cause) {
+        captureError(cause)
       }
     },
-    [fetchTcpClients, fetchLogs]
+    [captureError, fetchLogs, fetchTcpClients]
   )
 
-  /**
-   * Disconnects all active TCP clients.
-   */
   const disconnectAllTcpClients = useCallback(async () => {
     try {
-      const res = await fetch('/api/tcp-clients', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to disconnect all clients')
+      await controlRequest('/api/v1/tcp-clients', { method: 'DELETE' })
       await fetchTcpClients()
       await fetchLogs()
-    } catch (e) {
-      setError((e as Error).message)
+    } catch (cause) {
+      captureError(cause)
     }
-  }, [fetchTcpClients, fetchLogs])
+  }, [captureError, fetchLogs, fetchTcpClients])
 
-  /**
-   * Batch-writes registers via POST /api/registers/batch using typed data,
-   * then refreshes state and logs.
-   */
   const batchWrite = useCallback(
     async (payload: {
       registerType: string
@@ -240,153 +276,133 @@ export function useModbusData() {
       hexString?: string
     }) => {
       try {
-        const res = await fetch('/api/registers/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        const table = tableForRegisterType(payload.registerType)
+        const body =
+          payload.mode === 'bytes'
+            ? { address: payload.startAddress, bytes: payload.hexString }
+            : { address: payload.startAddress, dataType: payload.dataType, value: payload.value }
+        await controlRequest(`/api/v1/registers/${table}/encoded`, {
+          method: 'PUT',
+          body: JSON.stringify(body)
         })
-        if (!res.ok) {
-          const errData = await res.json()
-          const errMsg =
-            typeof errData === 'object' &&
-            errData !== null &&
-            'error' in errData &&
-            typeof errData.error === 'string'
-              ? errData.error
-              : 'Batch write failed'
-          throw new Error(errMsg)
-        }
         await fetchState()
         await fetchLogs()
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
+      } catch (cause) {
+        captureError(cause)
       }
     },
-    [fetchState, fetchLogs]
+    [captureError, fetchLogs, fetchState]
   )
 
-  /**
-   * Writes a single coil or holding register via POST /api/registers,
-   * then refreshes state and logs.
-   *
-   * @param registerType – "coil" or "holdingRegister".
-   * @param address      – Zero-based Modbus address.
-   * @param value        – Boolean for coils, 16-bit number for registers.
-   */
   const writeRegister = useCallback(
     async (registerType: string, address: number, value: number | boolean) => {
       try {
-        const res = await fetch('/api/registers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ registerType, address, value })
+        const table = tableForRegisterType(registerType)
+        await controlRequest(`/api/v1/registers/${table}`, {
+          method: 'PUT',
+          body: JSON.stringify({ start: address, values: [value] })
         })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Write failed')
-        }
         await fetchState()
         await fetchLogs()
-      } catch (e) {
-        setError((e as Error).message)
+      } catch (cause) {
+        captureError(cause)
       }
     },
-    [fetchState, fetchLogs]
+    [captureError, fetchLogs, fetchState]
   )
 
-  /**
-   * Applies new server configuration via POST /api/config,
-   * then refreshes config and status.
-   * @param newConfig – Complete config object to send.
-   */
   const updateConfig = useCallback(
-    async (newConfig: ServerConfig) => {
+    async (newConfig: Omit<ServerConfig, 'tcpHost' | 'logFilter'>) => {
       try {
-        const res = await fetch('/api/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newConfig)
+        const data = await controlRequest<ConfigResponse>('/api/v1/config', {
+          method: 'PATCH',
+          body: JSON.stringify({ ...newConfig, tcpHost: config.tcpHost })
         })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Config update failed')
-        }
-        await fetchConfig()
-        await fetchStatus()
-      } catch (e) {
-        setError((e as Error).message)
+        setConfig(data.desired)
+        await fetchHealth()
+      } catch (cause) {
+        captureError(cause)
       }
     },
-    [fetchConfig, fetchStatus]
+    [captureError, config.tcpHost, fetchHealth]
   )
 
-  /**
-   * Updates the log filter via POST /api/config.
-   * @param newFilter – Partial or complete log filter config.
-   */
-  const updateLogFilter = useCallback(async (newFilter: Partial<LogFilterConfig>) => {
-    try {
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logFilter: newFilter })
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || 'Log filter update failed')
+  const updateLogFilter = useCallback(
+    async (newFilter: Partial<LogFilterConfig>) => {
+      try {
+        const logFilter = { ...config.logFilter, ...newFilter }
+        const data = await controlRequest<ConfigResponse>('/api/v1/config', {
+          method: 'PATCH',
+          body: JSON.stringify({ logFilter })
+        })
+        setConfig(data.desired)
+      } catch (cause) {
+        captureError(cause)
       }
-      const data = await res.json()
-      if (data.logFilter) {
-        setLogFilter(data.logFilter)
-      }
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }, [])
+    },
+    [captureError, config.logFilter]
+  )
 
-  /**
-   * Clears all communication logs via DELETE /api/logs.
-   */
   const clearLogs = useCallback(async () => {
     try {
-      const res = await fetch('/api/logs', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to clear logs')
+      await controlRequest('/api/v1/logs', { method: 'DELETE' })
       setLogs([])
-    } catch (e) {
-      setError((e as Error).message)
+    } catch (cause) {
+      captureError(cause)
     }
-  }, [])
+  }, [captureError])
+
+  const authenticate = useCallback(
+    async (token: string) => {
+      setIsAuthenticating(true)
+      setAuthError(null)
+      try {
+        await validateAndStoreControlToken(token)
+        setRequiresToken(false)
+        await Promise.all([
+          fetchState(),
+          fetchLogs(),
+          fetchHealth(),
+          fetchConfig(),
+          fetchSerialPorts(),
+          fetchTcpClients()
+        ])
+      } catch (cause) {
+        setAuthError(cause instanceof Error ? cause.message : String(cause))
+      } finally {
+        setIsAuthenticating(false)
+      }
+    },
+    [fetchConfig, fetchHealth, fetchLogs, fetchSerialPorts, fetchState, fetchTcpClients]
+  )
 
   useEffect(() => {
-    const init = async () => {
-      await fetchState()
-      await fetchLogs()
-      await fetchStatus()
-      await fetchConfig()
-      await fetchSerialPorts()
-      await fetchLogFilter()
-      await fetchTcpClients()
-    }
-    void init()
-
+    const initialPoll = setTimeout(() => {
+      void Promise.all([
+        fetchState(),
+        fetchLogs(),
+        fetchHealth(),
+        fetchConfig(),
+        fetchSerialPorts(),
+        fetchTcpClients()
+      ])
+    }, 0)
     const interval = setInterval(() => {
-      void fetchState()
-      void fetchLogs()
-      void fetchStatus()
-      void fetchTcpClients()
+      if (!requiresToken)
+        void Promise.all([fetchState(), fetchLogs(), fetchHealth(), fetchTcpClients()])
     }, POLL_INTERVAL)
-
     return () => {
+      clearTimeout(initialPoll)
       clearInterval(interval)
     }
   }, [
-    fetchState,
-    fetchLogs,
-    fetchStatus,
     fetchConfig,
+    fetchHealth,
+    fetchLogs,
     fetchSerialPorts,
-    fetchLogFilter,
-    fetchTcpClients
+    fetchState,
+    fetchTcpClients,
+    requiresToken
   ])
 
   return {
@@ -395,9 +411,13 @@ export function useModbusData() {
     status,
     config,
     serialPorts,
-    logFilter,
+    logFilter: config.logFilter,
     tcpClients,
     error,
+    requiresToken,
+    authError,
+    isAuthenticating,
+    authenticate,
     writeRegister,
     batchWrite,
     updateConfig,

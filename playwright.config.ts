@@ -24,13 +24,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: `node scripts/dev.mjs --host 127.0.0.1 --port ${port} --tcp-host 127.0.0.1 --tcp-port 11502 --ready-output json --ready-timeout 30 --strict-ready`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {
+      MODBUS_API_TOKEN: 'playwright-control-token',
       MODBUS_TCP_PORT: '11502',
-      MODBUS_RTU_SERIAL_PATH: 'COM3'
+      MODBUS_RTU_ENABLED: 'false'
     }
   }
 })

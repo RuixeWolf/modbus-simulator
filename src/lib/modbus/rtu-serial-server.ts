@@ -23,7 +23,12 @@ const g = globalThis as typeof globalThis & {
   __modbus_rtu_path__?: string
   __modbus_rtu_buffer__?: Buffer
   __modbus_rtu_timer__?: NodeJS.Timeout | null
+  __modbus_rtu_error__?: string | null
 }
+
+let readinessResolve: (() => void) | null = null
+let readinessReject: ((error: Error) => void) | null = null
+let readinessPromise: Promise<void> | null = null
 
 /** CRC16-IBM checksum used by Modbus RTU frames. */
 function crc16(buffer: Buffer): number {
@@ -273,6 +278,12 @@ export function startRTUSerialServer(
   g.__modbus_rtu_path__ = serialPath
   const slaveId = serialConfig.slaveId ?? 1
   const frameTimeoutMs = computeFrameTimeout(serialConfig.baudRate)
+  g.__modbus_rtu_running__ = false
+  g.__modbus_rtu_error__ = null
+  readinessPromise = new Promise<void>((resolve, reject) => {
+    readinessResolve = resolve
+    readinessReject = reject
+  })
 
   try {
     serialPort = new SerialPort({
@@ -320,12 +331,21 @@ export function startRTUSerialServer(
     serialPort.on('error', (err: Error) => {
       console.error('Modbus RTU Serial Server error:', err.message)
       engine.addErrorLog('rtu', 0, err.message)
-      // Do NOT set running=false here — error does not imply closed.
-      // Only clear references when the port actually closes.
+      g.__modbus_rtu_error__ = err.message
+      if (!serialPort?.isOpen) {
+        g.__modbus_rtu_running__ = false
+        readinessReject?.(err)
+        readinessResolve = null
+        readinessReject = null
+      }
     })
 
     serialPort.on('open', () => {
       g.__modbus_rtu_running__ = true
+      g.__modbus_rtu_error__ = null
+      readinessResolve?.()
+      readinessResolve = null
+      readinessReject = null
       console.log(
         `Modbus RTU Serial Server started on ${serialPath} ` +
           `(${serialConfig.baudRate}/${serialConfig.dataBits}-${serialConfig.parity.charAt(0).toUpperCase()}-${serialConfig.stopBits}, slave ID ${slaveId})`
@@ -342,9 +362,20 @@ export function startRTUSerialServer(
     console.error('Failed to start Modbus RTU Serial Server:', (e as Error).message)
     engine.addErrorLog('rtu', 0, (e as Error).message)
     g.__modbus_rtu_running__ = false
+    g.__modbus_rtu_error__ = (e as Error).message
+    readinessReject?.(e as Error)
+    readinessResolve = null
+    readinessReject = null
     serialPort = null
     g.__modbus_rtu_serial_port__ = null
   }
+}
+
+/** Resolves after the serial port opens and rejects if opening fails. */
+export function waitForRTUSerialServerReady(): Promise<void> {
+  if (isRTUSerialServerRunning()) return Promise.resolve()
+  if (g.__modbus_rtu_error__) return Promise.reject(new Error(g.__modbus_rtu_error__))
+  return readinessPromise ?? Promise.reject(new Error('Modbus RTU server has not been started'))
 }
 
 /** Closes the serial port and clears frame buffers. Returns a Promise that resolves once the port is fully closed. */
@@ -356,6 +387,9 @@ export function stopRTUSerialServer(): Promise<void> {
     }
 
     g.__modbus_rtu_running__ = false
+    readinessPromise = null
+    readinessResolve = null
+    readinessReject = null
 
     if (timer) {
       clearTimeout(timer)
@@ -396,4 +430,9 @@ export function isRTUSerialServerRunning(): boolean {
 /** @returns The serial port path the RTU server was most recently started on. */
 export function getRTUSerialPath(): string {
   return g.__modbus_rtu_path__ ?? ''
+}
+
+/** @returns The most recent serial runtime error, if any. */
+export function getRTUError(): string | null {
+  return g.__modbus_rtu_error__ ?? null
 }

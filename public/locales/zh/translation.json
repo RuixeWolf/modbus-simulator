@@ -84,13 +84,29 @@
     "write": "写入",
     "error": "错误",
     "connection": "连接",
+    "system": "系统",
     "filter": "过滤",
     "clear": "清空",
     "source": {
       "tcp": "TCP",
       "serial": "串口",
-      "web": "Web 控制台"
+      "web": "Web 控制台",
+      "api": "API"
     }
+  },
+  "auth": {
+    "title": "控制 API 身份验证",
+    "description": "请输入此模拟器配置的令牌。令牌仅保存在当前浏览器标签页中。",
+    "token": "API 令牌",
+    "connect": "连接"
+  },
+  "lifecycle": {
+    "disabled": "已禁用",
+    "starting": "启动中",
+    "running": "运行中",
+    "stopping": "停止中",
+    "stopped": "已停止",
+    "error": "错误"
   },
   "common": {
     "close": "关闭"

@@ -148,7 +148,7 @@ PORT=5000
 MODBUS_TCP_PORT=502
 ```
 
-サーバー設定（TCP ポート、スレーブ ID、RTU シリアルパス、ボーレート、パリティ、ログフィルタ、ログ最大数など）は、Web ダッシュボードまたは `/api/config` エンドポイントを介して実行時に変更することもできます。
+設定は Web ダッシュボードまたは認証付き `/api/v1/config` から実行時に変更できます。HTTP と Modbus TCP は既定で `127.0.0.1` のみにバインドされます。非ループバックで公開する場合は `MODBUS_API_TOKEN`（または `--api-token-file`）を設定してください。
 
 ## 使い方
 
@@ -182,71 +182,24 @@ client.close()
 
 ダッシュボードの設定で RTU シリアルパス（例：Windows では `COM3`、Linux では `/dev/ttyUSB0`）を設定し、標準の Modbus RTU クライアントで接続します。
 
-## API リファレンス
+## 自動化と API v1
 
-すべての API ルートは `/api` でプリフィックスされ、開発サーバーが実行中である必要があります。
-
-| メソッド | エンドポイント         | 説明                                                                                                                                             |
-| -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET      | `/api/registers`       | 完全な Modbus エンジン状態を取得                                                                                                                 |
-| POST     | `/api/registers`       | コイルまたはレジスタを書き込み。本文：`{ registerType, address, value }`                                                                         |
-| POST     | `/api/registers/batch` | レジスタをバッチ書き込み。本文：`{ registerType, startAddress, mode, dataType, value }` または `{ registerType, startAddress, mode, hexString }` |
-| GET      | `/api/logs`            | すべての通信ログを取得                                                                                                                           |
-| DELETE   | `/api/logs`            | すべての通信ログをクリア                                                                                                                         |
-| GET      | `/api/status`          | サーバー状態：`{ tcp: boolean, rtu: boolean }`                                                                                                   |
-| GET      | `/api/config`          | 現在の設定を取得（`logFilter` と `logMaxCount` を含む）                                                                                          |
-| POST     | `/api/config`          | 設定を更新しサーバーを再起動。本文：部分的な設定オブジェクト                                                                                     |
-| GET      | `/api/serial-ports`    | 利用可能なシリアルポートを一覧表示                                                                                                               |
-| GET      | `/api/tcp-clients`     | アクティブな TCP クライアント接続を一覧表示                                                                                                      |
-| GET      | `/api/tcp-clients/:id` | 特定の TCP クライアントの詳細を取得                                                                                                              |
-
-### バッチ書き込み API
-
-バッチ書き込みエンドポイントは 2 つのモードをサポートしています：
-
-**数値モード** — 数値を型付きデータフォーマットを使用してレジスタに変換：
+バージョン 1.1.0 は、厳格でバージョン付きの自動化 API を提供します。分離したループバックインスタンスを起動し、実際のヘルス状態を待機できます：
 
 ```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 0,
-    "mode": "number",
-    "dataType": "FloatBE",
-    "value": 3.14
-  }'
+npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-host 127.0.0.1 --tcp-port 15020 --ready-output json --ready-timeout 30 --strict-ready
 ```
 
-サポートされるデータ型：`UInt8`、`UInt16BE`、`UInt16LE`、`UInt32BE`、`UInt32LE`、`UIntBE`、`UIntLE`、`Int8`、`Int16BE`、`Int16LE`、`Int32BE`、`Int32LE`、`IntBE`、`IntLE`、`FloatBE`、`FloatLE`、`Float1234`、`Float2143`、`Float3412`、`Float4321`、`DoubleBE`、`DoubleLE`。
+公開ディスカバリーは `GET /api/v1` と `GET /api/v1/openapi.json` です。その他の v1 ルートはヘルス、状態とリセット、レジスタ範囲、型付き/16 進書き込み、設定、カーソルログ、シリアルポート、TCP クライアントを扱います。成功は `{ "data": ..., "meta": ... }`、失敗は `{ "error": { "code", "message", "issues"? }, "meta": ... }` 形式です。
 
-**バイトモード** — 16 進数文字列から生のバイトを書き込み：
-
-```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 10,
-    "mode": "bytes",
-    "hexString": "0A 45 B1 30"
-  }'
-```
+Token 設定時は `Authorization: Bearer <token>` を送信します。アドレスは 0 起点、範囲書き込みはアトミックで最大 1,000 値です。[1.1 移行ガイド](MIGRATION_1.1.md) と [Agent Skill](../skills/modbus-simulator/SKILL.md) を参照してください。
 
 ## プロジェクト構造
 
 ```
 modbus-simulator/
 ├── app/
-│   ├── api/                    # Next.js API ルート
-│   │   ├── config/route.ts
-│   │   ├── logs/route.ts
-│   │   ├── registers/route.ts
-│   │   ├── registers/batch/route.ts
-│   │   ├── serial-ports/route.ts
-│   │   ├── status/route.ts
-│   │   ├── tcp-clients/route.ts
-│   │   └── tcp-clients/[id]/route.ts
+│   ├── api/v1/                 # バージョン付き制御 API + OpenAPI
 │   ├── globals.css             # Tailwind CSS v4 エントリ + テーマ変数
 │   ├── layout.tsx              # i18n & テーマ付きルートレイアウト
 │   └── page.tsx                # ダッシュボードページ（クライアントコンポーネント）

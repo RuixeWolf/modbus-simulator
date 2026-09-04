@@ -84,13 +84,29 @@
     "write": "書き込み",
     "error": "エラー",
     "connection": "接続",
+    "system": "システム",
     "filter": "フィルタ",
     "clear": "クリア",
     "source": {
       "tcp": "TCP",
       "serial": "シリアル",
-      "web": "Web コンソール"
+      "web": "Web コンソール",
+      "api": "API"
     }
+  },
+  "auth": {
+    "title": "コントロール API 認証",
+    "description": "このシミュレーターに設定したトークンを入力してください。現在のタブにのみ保存されます。",
+    "token": "API トークン",
+    "connect": "接続"
+  },
+  "lifecycle": {
+    "disabled": "無効",
+    "starting": "起動中",
+    "running": "実行中",
+    "stopping": "停止中",
+    "stopped": "停止済み",
+    "error": "エラー"
   },
   "common": {
     "close": "閉じる"

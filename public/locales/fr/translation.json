@@ -84,13 +84,29 @@
     "write": "ÉCRITURE",
     "error": "ERREUR",
     "connection": "CONNEXION",
+    "system": "SYSTÈME",
     "filter": "Filtrer",
     "clear": "Effacer",
     "source": {
       "tcp": "TCP",
       "serial": "Série",
-      "web": "Console Web"
+      "web": "Console Web",
+      "api": "API"
     }
+  },
+  "auth": {
+    "title": "Authentification de l’API de contrôle",
+    "description": "Saisissez le jeton configuré pour ce simulateur. Il reste uniquement dans cet onglet.",
+    "token": "Jeton API",
+    "connect": "Se connecter"
+  },
+  "lifecycle": {
+    "disabled": "désactivé",
+    "starting": "démarrage",
+    "running": "actif",
+    "stopping": "arrêt",
+    "stopped": "arrêté",
+    "error": "erreur"
   },
   "common": {
     "close": "Fermer"

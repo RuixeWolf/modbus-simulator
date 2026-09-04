@@ -148,7 +148,7 @@ PORT=5000
 MODBUS_TCP_PORT=502
 ```
 
-Server settings (TCP port, slave ID, RTU serial path, baud rate, parity, log filter, log max count, etc.) can also be changed at runtime via the web dashboard or the `/api/config` endpoint.
+Server settings can also be changed at runtime through the web dashboard or the authenticated `/api/v1/config` endpoint. HTTP and Modbus TCP listeners bind to `127.0.0.1` by default. Set `MODBUS_API_TOKEN` (or use `--api-token-file`) before exposing the HTTP listener on a non-loopback interface.
 
 ## Usage
 
@@ -182,71 +182,34 @@ client.close()
 
 Configure the RTU serial path (e.g., `COM3` on Windows, `/dev/ttyUSB0` on Linux) in the dashboard settings, then connect with any standard Modbus RTU client.
 
-## API Reference
+## Automation and API v1
 
-All API routes are prefixed with `/api` and require the dev server to be running.
-
-| Method | Endpoint               | Description                                                                                                                               |
-| ------ | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/registers`       | Dump full Modbus engine state                                                                                                             |
-| POST   | `/api/registers`       | Write a coil or register. Body: `{ registerType, address, value }`                                                                        |
-| POST   | `/api/registers/batch` | Batch write registers. Body: `{ registerType, startAddress, mode, dataType, value }` or `{ registerType, startAddress, mode, hexString }` |
-| GET    | `/api/logs`            | Get all communication logs                                                                                                                |
-| DELETE | `/api/logs`            | Clear all communication logs                                                                                                              |
-| GET    | `/api/status`          | Server status: `{ tcp: boolean, rtu: boolean }`                                                                                           |
-| GET    | `/api/config`          | Get current configuration (includes `logFilter` and `logMaxCount`)                                                                        |
-| POST   | `/api/config`          | Update configuration and restart servers. Body: partial config object                                                                     |
-| GET    | `/api/serial-ports`    | List available serial ports                                                                                                               |
-| GET    | `/api/tcp-clients`     | List active TCP client connections                                                                                                        |
-| GET    | `/api/tcp-clients/:id` | Get details for a specific TCP client                                                                                                     |
-
-### Batch Write API
-
-The batch write endpoint supports two modes:
-
-**Number mode** — Convert a numeric value into registers using a typed data format:
+Version 1.1.0 provides a strict, versioned control API for scripts and AI agents. Start an isolated loopback instance and wait for real health readiness:
 
 ```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 0,
-    "mode": "number",
-    "dataType": "FloatBE",
-    "value": 3.14
-  }'
+npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-host 127.0.0.1 --tcp-port 15020 --ready-output json --ready-timeout 30 --strict-ready
 ```
 
-Supported data types: `UInt8`, `UInt16BE`, `UInt16LE`, `UInt32BE`, `UInt32LE`, `UIntBE`, `UIntLE`, `Int8`, `Int16BE`, `Int16LE`, `Int32BE`, `Int32LE`, `IntBE`, `IntLE`, `FloatBE`, `FloatLE`, `Float1234`, `Float2143`, `Float3412`, `Float4321`, `DoubleBE`, `DoubleLE`.
+Public discovery is available at `GET /api/v1` and `GET /api/v1/openapi.json`. Operational routes include health, full state and reset, bounded register ranges, typed/hex encoded writes, configuration, cursor logs, serial ports, and TCP clients. Successful JSON responses use `{ "data": ..., "meta": ... }`; failures use `{ "error": { "code", "message", "issues"? }, "meta": ... }`.
 
-**Bytes mode** — Write raw bytes from a hex string:
+When a Token is configured, send `Authorization: Bearer <token>` to protected routes. Browser Tokens are validated by `/api/v1/health` and kept only in `sessionStorage`. All bodies and query strings are strictly validated, register addresses are 0-based, range writes are atomic, and ranges are limited to 1,000 values.
 
 ```bash
-curl -X POST http://localhost:5000/api/registers/batch \
+curl http://127.0.0.1:5000/api/v1/registers/holding-registers?start=0\&count=2
+
+curl -X PUT http://127.0.0.1:5000/api/v1/registers/holding-registers/encoded \
   -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 10,
-    "mode": "bytes",
-    "hexString": "0A 45 B1 30"
-  }'
+  -d '{"address":0,"dataType":"FloatBE","value":3.14}'
 ```
+
+See [the generated OpenAPI document](http://127.0.0.1:5000/api/v1/openapi.json), the repository [Agent Skill](skills/modbus-simulator/SKILL.md), and the [1.1 migration guide](docs/MIGRATION_1.1.md).
 
 ## Project Structure
 
 ```
 modbus-simulator/
 ├── app/
-│   ├── api/                    # Next.js API routes
-│   │   ├── config/route.ts
-│   │   ├── logs/route.ts
-│   │   ├── registers/route.ts
-│   │   ├── registers/batch/route.ts
-│   │   ├── serial-ports/route.ts
-│   │   ├── status/route.ts
-│   │   ├── tcp-clients/route.ts
-│   │   └── tcp-clients/[id]/route.ts
+│   ├── api/v1/                 # Versioned control API + OpenAPI routes
 │   ├── globals.css             # Tailwind CSS v4 entry + theme variables
 │   ├── layout.tsx              # Root layout with i18n & theme
 │   └── page.tsx                # Dashboard page (client component)

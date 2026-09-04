@@ -84,13 +84,29 @@
     "write": "WRITE",
     "error": "ERROR",
     "connection": "CONNECTION",
+    "system": "SYSTEM",
     "filter": "Filter",
     "clear": "Clear",
     "source": {
       "tcp": "TCP",
       "serial": "Serial",
-      "web": "Web Console"
+      "web": "Web Console",
+      "api": "API"
     }
+  },
+  "auth": {
+    "title": "Control API authentication",
+    "description": "Enter the Token configured for this simulator. It is kept only in this browser tab.",
+    "token": "API Token",
+    "connect": "Connect"
+  },
+  "lifecycle": {
+    "disabled": "disabled",
+    "starting": "starting",
+    "running": "running",
+    "stopping": "stopping",
+    "stopped": "stopped",
+    "error": "error"
   },
   "common": {
     "close": "Close"

@@ -148,7 +148,7 @@ PORT=5000
 MODBUS_TCP_PORT=502
 ```
 
-服务器设置（TCP 端口、从站 ID、RTU 串口路径、波特率、校验位、日志过滤、日志最大数量等）也可以在运行时通过 Web 仪表板或 `/api/config` 接口进行修改。
+服务器设置也可以通过 Web 仪表板或需认证的 `/api/v1/config` 接口动态修改。HTTP 与 Modbus TCP 默认仅监听 `127.0.0.1`；监听非回环地址前必须设置 `MODBUS_API_TOKEN`（或使用 `--api-token-file`）。
 
 ## 使用说明
 
@@ -182,71 +182,24 @@ client.close()
 
 在仪表板设置中配置 RTU 串口路径（例如 Windows 上的 `COM3`，Linux 上的 `/dev/ttyUSB0`），然后使用任何标准 Modbus RTU 客户端连接即可。
 
-## API 文档
+## 自动化与 API v1
 
-所有 API 路由均以 `/api` 为前缀，需要开发服务器在运行中。
-
-| 方法   | 接口                   | 说明                                                                                                                                 |
-| ------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| GET    | `/api/registers`       | 获取完整的 Modbus 引擎状态                                                                                                           |
-| POST   | `/api/registers`       | 写入线圈或寄存器。请求体：`{ registerType, address, value }`                                                                         |
-| POST   | `/api/registers/batch` | 批量写入寄存器。请求体：`{ registerType, startAddress, mode, dataType, value }` 或 `{ registerType, startAddress, mode, hexString }` |
-| GET    | `/api/logs`            | 获取所有通信日志                                                                                                                     |
-| DELETE | `/api/logs`            | 清空所有通信日志                                                                                                                     |
-| GET    | `/api/status`          | 服务器状态：`{ tcp: boolean, rtu: boolean }`                                                                                         |
-| GET    | `/api/config`          | 获取当前配置（包含 `logFilter` 和 `logMaxCount`）                                                                                    |
-| POST   | `/api/config`          | 更新配置并重启服务器。请求体：部分配置对象                                                                                           |
-| GET    | `/api/serial-ports`    | 列出可用串口                                                                                                                         |
-| GET    | `/api/tcp-clients`     | 列出活跃的 TCP 客户端连接                                                                                                            |
-| GET    | `/api/tcp-clients/:id` | 获取指定 TCP 客户端的详细信息                                                                                                        |
-
-### 批量写入 API
-
-批量写入接口支持两种模式：
-
-**数字模式** — 使用数据类型将数值转换为寄存器值：
+版本 1.1.0 提供严格、带版本的自动化控制 API。可用以下命令启动独立回环实例，并等待真实健康状态：
 
 ```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 0,
-    "mode": "number",
-    "dataType": "FloatBE",
-    "value": 3.14
-  }'
+npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-host 127.0.0.1 --tcp-port 15020 --ready-output json --ready-timeout 30 --strict-ready
 ```
 
-支持的数据类型：`UInt8`、`UInt16BE`、`UInt16LE`、`UInt32BE`、`UInt32LE`、`UIntBE`、`UIntLE`、`Int8`、`Int16BE`、`Int16LE`、`Int32BE`、`Int32LE`、`IntBE`、`IntLE`、`FloatBE`、`FloatLE`、`Float1234`、`Float2143`、`Float3412`、`Float4321`、`DoubleBE`、`DoubleLE`。
+公开发现接口为 `GET /api/v1` 和 `GET /api/v1/openapi.json`。其余 v1 路由提供健康状态、完整状态与重置、寄存器范围、类型化/十六进制写入、配置、游标日志、串口和 TCP 客户端控制。成功响应使用 `{ "data": ..., "meta": ... }`，错误响应使用 `{ "error": { "code", "message", "issues"? }, "meta": ... }`。
 
-**字节模式** — 从十六进制字符串写入原始字节：
-
-```bash
-curl -X POST http://localhost:5000/api/registers/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registerType": "holdingRegister",
-    "startAddress": 10,
-    "mode": "bytes",
-    "hexString": "0A 45 B1 30"
-  }'
-```
+配置 Token 后，受保护路由必须发送 `Authorization: Bearer <token>`。地址从 0 开始，范围写入具有原子性，单次最多 1,000 个值。详见 [1.1 迁移指南](MIGRATION_1.1.md) 和仓库中的 [Agent Skill](../skills/modbus-simulator/SKILL.md)。
 
 ## 项目结构
 
 ```
 modbus-simulator/
 ├── app/
-│   ├── api/                    # Next.js API 路由
-│   │   ├── config/route.ts
-│   │   ├── logs/route.ts
-│   │   ├── registers/route.ts
-│   │   ├── registers/batch/route.ts
-│   │   ├── serial-ports/route.ts
-│   │   ├── status/route.ts
-│   │   ├── tcp-clients/route.ts
-│   │   └── tcp-clients/[id]/route.ts
+│   ├── api/v1/                 # 版本化控制 API 与 OpenAPI 路由
 │   ├── globals.css             # Tailwind CSS v4 入口 + 主题变量
 │   ├── layout.tsx              # 根布局，包含 i18n 和主题
 │   └── page.tsx                # 仪表板页面（客户端组件）

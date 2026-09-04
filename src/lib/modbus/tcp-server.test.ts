@@ -1,6 +1,13 @@
 import { ServerTCP } from 'modbus-serial'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getTCPPort, isTCPServerRunning, startTCPServer, stopTCPServer } from './tcp-server'
+import {
+  getTCPHost,
+  getTCPPort,
+  isTCPServerRunning,
+  startTCPServer,
+  stopTCPServer,
+  waitForTCPServerReady
+} from './tcp-server'
 
 function createMockServer() {
   const listeners: Record<string, Array<(...args: unknown[]) => void>> = {}
@@ -24,7 +31,10 @@ function createMockServer() {
       if (listeners[event]) {
         listeners[event] = listeners[event].filter((l) => l !== cb)
       }
-    })
+    }),
+    emit(event: string, ...args: unknown[]) {
+      for (const callback of listeners[event] ?? []) callback(...args)
+    }
   }
 }
 
@@ -43,11 +53,15 @@ describe('tcp-server', () => {
     vi.clearAllMocks()
   })
 
-  it('should start a TCP server with default port', () => {
+  it('reports running only after listener initialization', async () => {
     const server = startTCPServer()
     expect(server).toBe(mockServer)
-    expect(isTCPServerRunning()).toBe(true)
+    expect(isTCPServerRunning()).toBe(false)
     expect(getTCPPort()).toBe(502)
+    expect(getTCPHost()).toBe('127.0.0.1')
+    mockServer.emit('initialized')
+    await expect(waitForTCPServerReady()).resolves.toBeUndefined()
+    expect(isTCPServerRunning()).toBe(true)
   })
 
   it('should start a TCP server with custom port', () => {
@@ -72,6 +86,7 @@ describe('tcp-server', () => {
 
   it('should report not running after stop', async () => {
     startTCPServer()
+    mockServer.emit('initialized')
     expect(isTCPServerRunning()).toBe(true)
     await stopTCPServer()
     expect(isTCPServerRunning()).toBe(false)
@@ -97,7 +112,16 @@ describe('tcp-server', () => {
         setCoil: expect.any(Function),
         setRegister: expect.any(Function)
       }),
-      { host: '0.0.0.0', port: 1502, debug: false, unitID: 5 }
+      { host: '127.0.0.1', port: 1502, debug: false, unitID: 5 }
     )
+  })
+
+  it('rejects readiness and records non-running state on bind failure', async () => {
+    startTCPServer(1502, 1, '0.0.0.0')
+    const readiness = waitForTCPServerReady()
+    mockServer.emit('serverError', new Error('EADDRINUSE'))
+    await expect(readiness).rejects.toThrow('EADDRINUSE')
+    expect(isTCPServerRunning()).toBe(false)
+    expect(getTCPHost()).toBe('0.0.0.0')
   })
 })

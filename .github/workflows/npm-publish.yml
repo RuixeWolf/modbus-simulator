@@ -55,4 +55,9 @@ jobs:
       - run: npm config set registry https://registry.npmjs.org/
       - run: corepack enable && corepack prepare pnpm@latest --activate
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run format-lint
+      - run: pnpm run type-check
+      - run: pnpm run test:unit
+      - run: pnpm run test:e2e
+      - run: pnpm run publish:npm:dry-run
       - run: node scripts/publish.mjs

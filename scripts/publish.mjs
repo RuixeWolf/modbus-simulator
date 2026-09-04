@@ -78,7 +78,9 @@ const libSource = join(scriptsSource, 'lib')
 const libTarget = join(scriptsTarget, 'lib')
 if (existsSync(libSource)) {
   mkdirSync(libTarget, { recursive: true })
-  cpSync(libSource, libTarget, { recursive: true, force: true })
+  for (const file of readdirSync(libSource)) {
+    if (file.endsWith('.mjs')) copyFileSync(join(libSource, file), join(libTarget, file))
+  }
 }
 
 // Copy .next/ (regular build output) including only necessary files.
@@ -161,17 +163,13 @@ console.log(`  Package:  ${pkg.name}@${pkg.version}`)
 console.log(`  Files:    scripts/, .next/ (regular build), public/`)
 console.log(`  Deps:     ${Object.keys(pkg.dependencies).length} production dependencies`)
 
-console.log(isDryRun ? '\n🔍 Publishing to NPM (dry run)...\n' : '\n📦 Publishing to NPM...\n')
+console.log(isDryRun ? '\n🔍 Verifying NPM package (dry run)...\n' : '\n📦 Publishing to NPM...\n')
 
-const publishArgs = ['publish', '--access=public']
+const publishArgs = isDryRun ? ['pack', '--dry-run'] : ['publish', '--access=public']
 
 // Enable provenance attestation in GitHub Actions (OIDC)
 if (process.env.GITHUB_ACTIONS === 'true') {
   publishArgs.push('--provenance')
-}
-
-if (isDryRun) {
-  publishArgs.push('--dry-run')
 }
 
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
@@ -199,7 +197,7 @@ const npmPublish = spawn(npmExecutable, npmCliArgs, {
 })
 
 npmPublish.on('error', (err) => {
-  console.error(`\n❌ Failed to spawn npm publish: ${err.message}`)
+  console.error(`\n❌ Failed to spawn npm package command: ${err.message}`)
   try {
     rmSync(publishDir, { recursive: true, force: true })
   } catch {
@@ -219,7 +217,7 @@ npmPublish.on('exit', (code) => {
       console.log(`  npx ${pkg.name}@latest --help`)
     }
   } else {
-    console.error(`\n❌ Publish failed with exit code ${code}.`)
+    console.error(`\n❌ Package command failed with exit code ${code}.`)
   }
 
   // Clean up temp directory
