@@ -202,7 +202,17 @@ curl -X PUT http://127.0.0.1:5000/api/v1/registers/holding-registers/encoded \
   -d '{"address":0,"dataType":"FloatBE","value":3.14}'
 ```
 
-See [the generated OpenAPI document](http://127.0.0.1:5000/api/v1/openapi.json), the repository [Agent Skill](skills/modbus-simulator/SKILL.md), and the [1.1 migration guide](docs/MIGRATION_1.1.md).
+### Agent Skill
+
+Install the Modbus Simulator Agent Skill with [`npx skills`](https://skills.sh/) to give a supported coding agent a reusable, safe workflow for running a disposable simulator in integration tests:
+
+```bash
+npx skills add RuixeWolf/modbus-simulator --skill modbus-simulator --agent codex
+```
+
+Omit `--agent codex` to select a detected agent interactively, or replace `codex` with another supported agent. After installation, ask your agent to use the `modbus-simulator` skill when a test needs an isolated Modbus TCP/RTU device. The skill starts a process it owns on replaceable high ports, waits for health readiness, uses the control API for fixtures and assertions, collects diagnostics, and cleans up only that process.
+
+For the complete workflow and helper commands, see the repository [Agent Skill](skills/modbus-simulator/SKILL.md). See also [the generated OpenAPI document](http://127.0.0.1:5000/api/v1/openapi.json) and the [1.1 migration guide](docs/MIGRATION_1.1.md).
 
 ## Project Structure
 

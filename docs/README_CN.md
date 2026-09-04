@@ -192,7 +192,19 @@ npx --yes @ruixe/modbus-simulator@latest --host 127.0.0.1 --port 15000 --tcp-hos
 
 公开发现接口为 `GET /api/v1` 和 `GET /api/v1/openapi.json`。其余 v1 路由提供健康状态、完整状态与重置、寄存器范围、类型化/十六进制写入、配置、游标日志、串口和 TCP 客户端控制。成功响应使用 `{ "data": ..., "meta": ... }`，错误响应使用 `{ "error": { "code", "message", "issues"? }, "meta": ... }`。
 
-配置 Token 后，受保护路由必须发送 `Authorization: Bearer <token>`。地址从 0 开始，范围写入具有原子性，单次最多 1,000 个值。详见 [1.1 迁移指南](MIGRATION_1.1.md) 和仓库中的 [Agent Skill](../skills/modbus-simulator/SKILL.md)。
+配置 Token 后，受保护路由必须发送 `Authorization: Bearer <token>`。地址从 0 开始，范围写入具有原子性，单次最多 1,000 个值。
+
+### Agent Skill
+
+使用 [`npx skills`](https://skills.sh/) 安装 Modbus Simulator Agent Skill，为受支持的编程 Agent 提供在集成测试中运行一次性模拟器的可复用、安全工作流：
+
+```bash
+npx skills add RuixeWolf/modbus-simulator --skill modbus-simulator --agent codex
+```
+
+省略 `--agent codex` 可交互选择已检测到的 Agent，也可将 `codex` 替换为其他受支持的 Agent。安装后，当测试需要隔离的 Modbus TCP/RTU 设备时，请让 Agent 使用 `modbus-simulator` Skill。该 Skill 会在可替换的高端口上启动它拥有的进程、等待健康状态就绪、通过控制 API 写入测试数据和执行断言、收集诊断信息，并且只清理该进程。
+
+完整工作流和辅助命令请参阅仓库中的 [Agent Skill](../skills/modbus-simulator/SKILL.md)。另请参阅[生成的 OpenAPI 文档](http://127.0.0.1:5000/api/v1/openapi.json)和 [1.1 迁移指南](MIGRATION_1.1.md)。
 
 ## 项目结构
 
