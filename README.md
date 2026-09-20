@@ -10,7 +10,7 @@
 
 A free Modbus TCP / RTU Serial device simulator with a real-time web dashboard.
 
-> **Vibe Coding** — This project is built primarily through AI-assisted rapid development.
+> **AI-Friendly** — Ships with a companion [Agent Skill](#agent-skill) that lets AI agents launch, operate, and clean up a simulator instance fully automatically.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
@@ -55,6 +55,8 @@ Whether you are developing Modbus client applications, testing PLC integrations,
   - Light / Dark / System theme modes
 - **REST API**
   - Full HTTP API for external integration and automation, including batch register writes
+- **AI-Friendly Automation**
+  - Companion [Agent Skill](#agent-skill) for hands-off, end-to-end operation by AI agents, backed by the versioned REST API
 
 ### Web Dashboard
 

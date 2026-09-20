@@ -10,7 +10,7 @@
 
 Un simulateur de périphérique Modbus TCP / RTU série gratuit avec un tableau de bord Web en temps réel.
 
-> **Vibe Coding** — Ce projet est principalement construit grâce au développement rapide assisté par IA.
+> **Compatible IA** — Livré avec un [Agent Skill](#agent-skill) compagnon qui permet à une IA de lancer, piloter et arrêter une instance du simulateur de manière entièrement automatique.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
@@ -55,6 +55,8 @@ Que vous développiez des applications client Modbus, testiez des intégrations 
   - Modes Clair / Sombre / Système
 - **API REST**
   - API HTTP complète pour l'intégration externe et l'automatisation, incluant les écritures de registres par lots
+- **Automatisation compatible IA**
+  - [Agent Skill](#agent-skill) compagnon pour une utilisation de bout en bout entièrement automatisée par des agents IA, adossée à l'API REST versionnée
 
 ### Tableau de bord Web
 

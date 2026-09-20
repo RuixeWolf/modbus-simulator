@@ -10,7 +10,7 @@
 
 一款支持 Modbus TCP / RTU 串口的设备模拟器，配有实时 Web 仪表板。
 
-> **Vibe Coding** — 本项目绝大部分功能通过 AI 辅助编程实现。
+> **AI 友好** — 内置配套的 [Agent Skill](#agent-skill)，AI 可全自动启动、操作并清理模拟器实例。
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
@@ -55,6 +55,8 @@
   - 亮色 / 暗色 / 跟随系统
 - **REST API**
   - 完整的 HTTP API，便于外部集成和自动化，支持批量寄存器写入
+- **AI 友好自动化**
+  - 配套 [Agent Skill](#agent-skill)，由 AI 智能体端到端全自动操作，底层由版本化 REST API 驱动
 
 ### Web 仪表板
 
