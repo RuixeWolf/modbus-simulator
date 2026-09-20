@@ -10,7 +10,7 @@
 
 リアルタイム Web ダッシュボード付きの無料 Modbus TCP / RTU シリアル デバイスシミュレータ。
 
-> **Vibe Coding** — 本プロジェクトは主に AI 支援による迅速な開発で構築されています。
+> **AI フレンドリー** — 専用の [Agent Skill](#agent-skill) を備え、AI エージェントがシミュレータの起動・操作・クリーンアップを完全自動で実行できます。
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
@@ -55,6 +55,8 @@ Modbus クライアントアプリケーションの開発、PLC 統合のテス
   - ライト / ダーク / システム テーマモード
 - **REST API**
   - 外部統合と自動化用の完全な HTTP API、バッチレジスタ書き込みを含む
+- **AI フレンドリーな自動化**
+  - 専用の [Agent Skill](#agent-skill) による、AI エージェントのエンドツーエンド全自動操作に対応。バージョン管理された REST API を基盤
 
 ### Web ダッシュボード
 
